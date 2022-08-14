@@ -96,10 +96,11 @@ pub fn fixed_cube(
 
 pub fn text_mesh(
 	text_in				: &String,
+	y					: f32,
 	ass					: &Res<AssetServer>,
 	commands			: &mut Commands,
 ) {
-    let font: Handle<TextMeshFont> = ass.load("fonts/FiraMono-Medium.ttf");
+    let font: Handle<TextMeshFont> = ass.load("fonts/droidsans.ttf");//("fonts/FiraMono-Medium.ttf");
 
     commands.spawn_bundle(TextMeshBundle {
         text_mesh: TextMesh {
@@ -107,7 +108,7 @@ pub fn text_mesh(
             style: TextMeshStyle {
                 font: font.clone(),
                 font_size: SizeUnit::NonStandard(9.),
-                color: Color::rgb(0.0, 0.0, 0.0),
+                color: Color::rgb(0.2, 0.2, 0.2),
                 ..Default::default()
             },
             size: TextMeshSize {
@@ -116,7 +117,7 @@ pub fn text_mesh(
             ..Default::default()
         },
         transform: Transform {
-            translation: Vec3::new(-1., 1.75, 0.),
+            translation: Vec3::new(-1., y, 0.),
             ..Default::default()
         },
         ..Default::default()
@@ -150,5 +151,14 @@ pub fn file_text(
 		Ok(_) 		=> println!("Opened file {} for reading", display.to_string()),
 	}
 
-	text_mesh		(&save_content, ass, commands);
+	let mut lines	= save_content.lines();
+	let mut y		= 5.0;
+	loop {
+		let line 	= match lines.next() {
+			Some(l)	=> l,
+			None	=> break,
+		};
+		text_mesh	(&String::from(line), y, ass, commands);
+		y			-= 0.2;
+	}
 }
