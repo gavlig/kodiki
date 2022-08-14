@@ -2,8 +2,6 @@ use bevy			:: { prelude :: * };
 use bevy			:: { app::AppExit };
 use bevy_fly_camera	:: { FlyCamera };
 
-use std				:: { path::PathBuf };
-
 use super           :: { * };
 
 pub fn setup_world_system(
@@ -17,6 +15,8 @@ pub fn setup_world_system(
 	spawn::ground		(&mut meshes, &mut materials, &mut commands);
 
 	spawn::world_axis	(&mut meshes, &mut materials, &mut commands);
+
+	spawn::file_text	(&ass, &mut commands);
 }
 
 pub fn setup_lighting_system(

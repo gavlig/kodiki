@@ -1,4 +1,2 @@
-content/README/cargo_run.gif filter=lfs diff=lfs merge=lfs -text
-content/README/wheel_size.gif filter=lfs diff=lfs merge=lfs -text
 *.bin filter=lfs diff=lfs merge=lfs -text
 *.png filter=lfs diff=lfs merge=lfs -text
