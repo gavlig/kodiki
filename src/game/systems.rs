@@ -156,6 +156,48 @@ pub fn input_misc_system(
 	if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Escape) {
 		exit.send(AppExit);
 	}
+
+	if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Key1) {
+		run_rust_analyzer();
+	}
+}
+
+use std::io::{self, Write};
+use std::process::{Command, Stdio};
+
+fn run_rust_analyzer() {
+	// let json = r#"{"jsonrpc": "2.0", "method": "initialize", "params": { "rootPath": "/home/gavlig/workspace/project_kodiki/kodiki" }, "id": 1}"#;
+	let json = r#"{"jsonrpc": "2.0", "method": "initialize", "params": { "rootPath": "/home/gavlig/workspace/project_kodiki/kodiki", "capabilities": { "textDocument": { "dynamicRegistration": "true" } }}, "id": 1}"#;
+	let content_length = json.as_bytes().len();
+	let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
+
+	let mut child = Command::new("assets/lsp/rust-analyzer/rust-analyzer")
+	.stdin(Stdio::piped())
+	.stdout(Stdio::piped())
+	.spawn()
+	.expect("Failed to spawn child process");
+					
+	let mut stdin = child.stdin.take().expect("Failed to open stdin");
+	std::thread::spawn(move || {
+		stdin.write(request.as_bytes()).expect("Failed to write to stdin");
+		stdin.flush();
+	});
+
+				  
+	// let output = child.wait_with_output().expect("Failed to read stdout");
+    // println!("answer: {}", String::from_utf8_lossy(&output.stdout));
+
+	// let json = r#"{"jsonrpc": "2.0", "method": "textDocument/documentHighlight", "params": { "textDocument": "playground/easy_spawn.rs", "position": { "line": 0, "character": 0 } }, "id": 1}"#;
+	// let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
+
+	// let mut stdin = child.stdin.take().expect("Failed to open stdin");
+	// std::thread::spawn(move || {
+	// 	stdin.write(request.as_bytes()).expect("Failed to write to stdin");
+	// 	stdin.flush();
+	// });
+
+	// let output = child.wait_with_output().expect("Failed to read stdout");
+    // println!("answer2: {}", String::from_utf8_lossy(&output.stdout));
 }
 
 fn check_selection_recursive(
