@@ -57,7 +57,7 @@ impl Plugin for GamePlugin {
 			.insert_resource(WindowDescriptor { present_mode : PresentMode::Mailbox, ..default() })
 			
 		
- 			.add_startup_system(setup_lighting_system)
+ 			// .add_startup_system(setup_lighting_system)
  			.add_startup_system(setup_world_system)
  			.add_startup_system_to_stage(StartupStage::PostStartup, setup_camera_system)
 

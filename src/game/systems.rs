@@ -12,9 +12,9 @@ pub fn setup_world_system(
 ) {
 	spawn::camera		(&mut commands);
 
-	spawn::ground		(&mut meshes, &mut materials, &mut commands);
+	// spawn::ground		(&mut meshes, &mut materials, &mut commands);
 
-	spawn::world_axis	(&mut meshes, &mut materials, &mut commands);
+	// spawn::world_axis	(&mut meshes, &mut materials, &mut commands);
 
 	spawn::file_text	(&ass, &mut commands);
 }
