@@ -2,4 +2,10 @@
 2. (done!)update bevy_fly_camera to 0.8
 3. (done!)update bevy_text_mesh to 0.8
 2. draw file content as 3d mesh
+2.1. (done!)support mono font
+2.2. (done!)support tabs
+2.3. bug: spacing is broken
+2.4. bug: long lines overlap
 3. color highlight
+4. better camera init position
+5. try smooth camera
