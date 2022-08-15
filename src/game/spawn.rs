@@ -22,6 +22,7 @@ pub fn camera(
 			..default()
 		})
 		.insert			(FlyCamera{ yaw : 0.0, pitch : 0.0, enabled_follow : false, ..default() })
+		.insert_bundle	(PickingCameraBundle::default())
 		.id				();
 
 	// println!			("camera Entity ID {:?}", camera);
@@ -117,11 +118,11 @@ pub fn text_mesh(
 
     commands.spawn_bundle(TextMeshBundle {
         text_mesh: TextMesh {
-            text: text_in.clone(),
-            style: TextMeshStyle {
-                font: font.clone(),
+            text	: text_in.clone(),
+            style	: TextMeshStyle {
+                font     : font.clone(),
                 font_size: SizeUnit::NonStandard(9.),
-                color: Color::rgb(0.2, 0.2, 0.2),
+                color    : Color::rgb(0.2, 0.2, 0.2),
                 ..Default::default()
             },
             size: TextMeshSize {
@@ -134,7 +135,9 @@ pub fn text_mesh(
             ..Default::default()
         },
         ..Default::default()
-    });
+    })
+
+	.insert_bundle(PickableBundle::default());
 }
 
 fn file_path_to_string(buf: &Option<PathBuf>) -> String {

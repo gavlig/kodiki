@@ -61,6 +61,7 @@ impl Plugin for GamePlugin {
 
 			.add_plugin		(PickingPlugin)
 			.add_plugin		(InteractablePickingPlugin)
+			.add_plugins	(HighlightablePickingPlugins)
 
 			.insert_resource(clear_color)
 			
