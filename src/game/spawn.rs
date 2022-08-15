@@ -1,19 +1,13 @@
 use bevy				:: prelude :: { * };
-use bevy_fly_camera		:: FlyCamera;
-use bevy_prototype_lyon::prelude::tess::FillGeometryBuilder;
 use bevy_text_mesh		:: prelude :: { * };
-use bevy_prototype_lyon	:: prelude :: { * };
+use bevy_fly_camera		:: { FlyCamera };
+use bevy_infinite_grid	:: { InfiniteGridBundle };
 
 use bevy::render::mesh::shape as render_shape;
 
 use std :: io		:: { prelude :: * };
 use std :: fs		:: { File };
 use std :: path		:: { Path, PathBuf };
-
-extern crate freetype;
-use freetype as ft;
-use freetype :: Library;
-use freetype :: face :: LoadFlag;
 
 use super				:: { * };
 

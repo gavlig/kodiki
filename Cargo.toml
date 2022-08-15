@@ -17,9 +17,6 @@ directories 		= "4.0"
 ron 				= "0.7"
 serde 				= { version = "1", features = ["derive"] }
 
-freetype-rs			= "0.31.0"
-bevy_prototype_lyon = "0.6.0"
-
 bevy 				= { version = "0.8", features = ["bevy_render"] }
 
 bevy_fly_camera		= { git = "https://github.com/gavlig/bevy_fly_camera.git", branch = "gryazevichki" }
