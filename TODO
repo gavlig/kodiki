@@ -14,10 +14,16 @@
 8. (done!)make slimmer origin axis
 9. camera: fit view to code
 10. line numbers
-11. scrolling
+11. scrolling by moving camera with snapping
 12. calculate line offsets properly
 13. (done!)toggle hide mouse cursor on esc
 14. (done!)exit app on ctrl+esc
 15. unhide mouse by timeout (after inactivity in movement department)
 16. hide mouse by gesture?
 17. (done!)highlightable/pickable lines
+18. pass material instead of font color to bevy_text_mesh
+19. spawn a background object/plane for code
+
+oof
+1. detect patterns in code editing and ask if repeat. (i was deleting Default:: a lot)
+2. text wrapping is a good opportunity to flex 3d
