@@ -88,7 +88,11 @@ pub fn cursor_visibility_system(
 	mut picking		: ResMut<PickingPluginsState>,
 	mut	commands	: Commands
 ) {
-	let window 		= windows.get_primary_mut().unwrap();
+	let window 		= windows.get_primary_mut();
+	if window.is_none() {
+		return;
+	}
+	let window		= window.unwrap();
 	let cursor_visible = window.cursor_visible();
 	let window_id	= window.id();
 
