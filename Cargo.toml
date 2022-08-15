@@ -23,4 +23,5 @@ bevy_prototype_lyon = "0.6.0"
 bevy 				= { version = "0.8", features = ["bevy_render"] }
 
 bevy_fly_camera		= { git = "https://github.com/gavlig/bevy_fly_camera.git", branch = "gryazevichki" }
-bevy_text_mesh		= { git = "https://github.com/gavlig/bevy_text_mesh.git" }
+bevy_infinite_grid	= { path = "../bevy_infinite_grid" } # { git = "https://github.com/gavlig/bevy_infinite_grid"}
+bevy_text_mesh		= { path = "../bevy_text_mesh/" } # { git = "https://github.com/gavlig/bevy_text_mesh.git" }

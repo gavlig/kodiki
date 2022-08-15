@@ -84,6 +84,12 @@ pub fn world_axis(
 	});
 }
 
+pub fn infinite_grid(
+	commands		: &mut Commands,
+) {
+	commands.spawn_bundle(InfiniteGridBundle::default());
+}
+
 pub fn fixed_cube(
 	pose				: Transform,
 	hsize				: Vec3,
