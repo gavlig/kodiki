@@ -126,7 +126,8 @@ pub fn text_mesh(
                 ..Default::default()
             },
             size: TextMeshSize {
-                ..Default::default()
+				wrapping : false,
+                ..default()
             },
             ..Default::default()
         },
