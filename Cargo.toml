@@ -20,5 +20,7 @@ serde 				= { version = "1", features = ["derive"] }
 bevy 				= { version = "0.8", features = ["bevy_render"] }
 
 bevy_fly_camera		= { git = "https://github.com/gavlig/bevy_fly_camera.git", branch = "gryazevichki" }
+bevy_mod_picking	= { version = "0.8.2" } # https://github.com/aevyrie/bevy_mod_picking.git
+iyes_loopless		= { version = "0.7.0" }
 bevy_infinite_grid	= { path = "../bevy_infinite_grid" } # { git = "https://github.com/gavlig/bevy_infinite_grid"}
 bevy_text_mesh		= { path = "../bevy_text_mesh/" } # { git = "https://github.com/gavlig/bevy_text_mesh.git" }

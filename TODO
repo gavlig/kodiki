@@ -7,8 +7,14 @@
 2.3. bug: spacing is broken
 2.4. bug: long lines overlap
 3. color highlight
-4. better camera init position
+4. (done!)better camera init position
 5. try smooth camera
 6. (done!)add infinite grid
 7. (done!)better init camera position
 8. (done!)make slimmer origin axis
+9. camera: fit view to code
+10. line numbers
+11. scrolling
+12. calculate line offsets properly
+13. (done!)toggle hide mouse cursor on esc
+14. (done!)exit app on ctrl+esc

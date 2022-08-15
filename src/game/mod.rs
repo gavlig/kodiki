@@ -1,4 +1,6 @@
 use bevy				:: { prelude :: *, window :: PresentMode };
+use bevy_mod_picking	:: { * };
+use iyes_loopless		:: { prelude :: * };
 
 use std					:: { path::PathBuf };
 use serde				:: { Deserialize, Serialize };
@@ -38,6 +40,12 @@ pub struct DespawnResource {
 	pub entities: Vec<Entity>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum GameMode {
+    Editor,
+    InGame,
+}
+
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
@@ -49,17 +57,25 @@ impl Plugin for GamePlugin {
 				0xFF as f32 / 255.0,
 			));
 
-        app	.insert_resource(clear_color)
+        app	.add_loopless_state(GameMode::Editor)
+
+			.add_plugin		(PickingPlugin)
+			.add_plugin		(InteractablePickingPlugin)
+
+			.insert_resource(clear_color)
 			
 			.insert_resource(Msaa			::default())
 			.insert_resource(DespawnResource::default())
 
 			.insert_resource(WindowDescriptor { present_mode : PresentMode::Mailbox, ..default() })
 			
-		
  			.add_startup_system(setup_lighting_system)
  			.add_startup_system(setup_world_system)
  			.add_startup_system_to_stage(StartupStage::PostStartup, setup_camera_system)
+
+			// input
+			.add_system		(cursor_visibility_system)
+			.add_system		(input_misc_system)
 
 			.add_system_to_stage(CoreStage::PostUpdate, despawn_system)
  			;
