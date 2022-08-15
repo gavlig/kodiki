@@ -16,12 +16,12 @@ pub fn camera(
 ) {
 	let camera = commands.spawn_bundle(Camera3dBundle {
 			transform: Transform {
-				translation: Vec3::new(5., 7., -2.),
+				translation: Vec3::new(1.5, 3., 7.),
 				..default()
 			},
 			..default()
 		})
-		.insert			(FlyCamera{ yaw : -225.0, pitch : 45.0, enabled_follow : false, ..default() })
+		.insert			(FlyCamera{ yaw : 0.0, pitch : 0.0, enabled_follow : false, ..default() })
 		.id				();
 
 	// println!			("camera Entity ID {:?}", camera);
@@ -55,25 +55,31 @@ pub fn world_axis(
 	materials		: &mut ResMut<Assets<StandardMaterial>>,
 	commands		: &mut Commands,
 ) {
+	let min_dim		= 0.02;
+	let max_dim		= 1.0;
+	let min_color	= 0.1;
+	let max_color	= 0.8;
+	let offset		= 0.5;
+
 	// X
 	commands.spawn_bundle(PbrBundle {
-		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(1.0, 0.1, 0.1))),
-		material	: materials.add			(Color::rgb(0.8, 0.1, 0.1).into()),
-		transform	: Transform::from_xyz	(0.5, 0.0 + 0.05, 0.0),
+		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(max_dim, min_dim, min_dim))),
+		material	: materials.add			(Color::rgb(max_color, min_color, min_color).into()),
+		transform	: Transform::from_xyz	(offset, 0.0, 0.0),
 		..Default::default()
 	});
 	// Y
 	commands.spawn_bundle(PbrBundle {
-		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(0.1, 1.0, 0.1))),
-		material	: materials.add			(Color::rgb(0.1, 0.8, 0.1).into()),
-		transform	: Transform::from_xyz	(0.0, 0.5 + 0.05, 0.0),
+		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(min_dim, max_dim, min_dim))),
+		material	: materials.add			(Color::rgb(min_color, max_color, min_color).into()),
+		transform	: Transform::from_xyz	(0.0, offset, 0.0),
 		..Default::default()
 	});
 	// Z
 	commands.spawn_bundle(PbrBundle {
-		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(0.1, 0.1, 1.0))),
-		material	: materials.add			(Color::rgb(0.1, 0.1, 0.8).into()),
-		transform	: Transform::from_xyz	(0.0, 0.0 + 0.05, 0.5),
+		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(min_dim, min_dim, max_dim))),
+		material	: materials.add			(Color::rgb(min_color, min_color, max_color).into()),
+		transform	: Transform::from_xyz	(0.0, 0.0, offset),
 		..Default::default()
 	});
 }
@@ -124,7 +130,7 @@ pub fn text_mesh(
             ..Default::default()
         },
         transform: Transform {
-            translation: Vec3::new(0., y, 0.),
+            translation: Vec3::new(0.0, y, 0.),
             ..Default::default()
         },
         ..Default::default()
