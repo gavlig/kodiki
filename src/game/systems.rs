@@ -162,33 +162,141 @@ pub fn input_misc_system(
 	}
 }
 
-use std::io::{self, Write};
+use std::io::{self, Write, Read};
 use std::process::{Command, Stdio};
 
+use std :: fs		:: { File };
+use std :: path		:: { Path, PathBuf };
+
+use std::{thread, time};
+
+fn file_path_to_string(buf: &Option<PathBuf>) -> String {
+	match buf {
+		Some(path) => path.display().to_string(),
+		None => String::from(""),
+	}
+}
+
 fn run_rust_analyzer() {
-	// let json = r#"{"jsonrpc": "2.0", "method": "initialize", "params": { "rootPath": "/home/gavlig/workspace/project_kodiki/kodiki" }, "id": 1}"#;
-	let json = r#"{"jsonrpc": "2.0", "method": "initialize", "params": { "rootPath": "/home/gavlig/workspace/project_kodiki/kodiki", "capabilities": { "textDocument": { "dynamicRegistration": "true" } }}, "id": 1}"#;
-	let content_length = json.as_bytes().len();
-	let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
+	let source_file	= Some(PathBuf::from("playground/easy_spawn.rs"));
+	// let source_file	= Some(PathBuf::from("playground/test_letter_spacing.rs"));
+	let load_name 	= file_path_to_string(&source_file);
+	let path 		= Path::new(&load_name);
+	let display 	= path.display();
+
+	let mut file = match File::open(&path) {
+		Err(why) 	=> { println!("couldn't open {}: {}", display, why); return; },
+		Ok(file) 	=> file,
+	};
+
+	let mut save_content = String::new();
+	match file.read_to_string(&mut save_content) {
+		Err(why)	=> { println!("couldn't read {}: {}", display, why); return; },
+		Ok(_) 		=> println!("Opened file {} for reading", display.to_string()),
+	}
 
 	let mut child = Command::new("assets/lsp/rust-analyzer/rust-analyzer")
 	.stdin(Stdio::piped())
 	.stdout(Stdio::piped())
+	.stderr(Stdio::piped())
 	.spawn()
 	.expect("Failed to spawn child process");
 					
 	let mut stdin = child.stdin.take().expect("Failed to open stdin");
+	let mut stdout = child.stdout.take().expect("Failed to open stdout");
+	let mut stderr = child.stderr.take().expect("Failed to open stderr");
 	std::thread::spawn(move || {
+		let mut buf = Vec::<u8>::new();
+		buf.resize(1024 * 16, 0);
+
+		//
+		//
+
+		let json = r#"{"jsonrpc": "2.0", "method": "initialize", "params": { "rootPath": "/home/gavlig/workspace/project_gryazevichki/gryazevichki", "capabilities": { "textDocument": { "dynamicRegistration": "true" }, "synchronization": { "dynamicRegistration": "true" } }}, "id": 1}"#;
+		let content_length = json.as_bytes().len();
+		let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
+
 		stdin.write(request.as_bytes()).expect("Failed to write to stdin");
 		stdin.flush();
+
+		let ten_millis = time::Duration::from_millis(1);
+		let now = time::Instant::now();
+
+		while stdout.read(&mut buf).unwrap() == 0 {
+			thread::sleep(ten_millis);
+			// println!("slept ten_millis");
+		}
+
+		// println!("read1 {}", stdout.read(&mut buf).unwrap());
+
+		println!("answer1 {}", String::from_utf8_lossy(buf.as_slice()));
+		buf.clear();
+
+		//
+		//
+
+		println!("sending initialized notification");
+
+		let json = r#"{"jsonrpc": "2.0", "method": "initialized", "params": {}}"#;
+		let content_length = json.as_bytes().len();
+		let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
+
+		stdin.write(request.as_bytes()).expect("Failed to write to stdin");
+		stdin.flush();
+
+		// there is no answer
+
+		//
+		//
+
+		// let json = format!(r#"{"jsonrpc": "2.0", "method": "textDocument/didOpen", "params": { "textDocument": { "uri": "src/herringbone/spawn.rs", "languageId": "rust", "version": 0, "text": "{}" } }, "id": 3}"#, save_content);
+		let json = r#"{"jsonrpc": "2.0", "method": "textDocument/didOpen", "params": { "textDocument": { "uri": "file:///src/herringbone/spawn.rs", "languageId": "rust", "version": 0, "#;
+		let json = format!("{{\"text\": \"{}\" }} }} }}", save_content);
+		let content_length = json.as_bytes().len();
+		let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
+
+		println!("sending didOpen notification");
+
+		stdin.write(request.as_bytes()).expect("Failed to write to stdin");
+		stdin.flush();
+
+		buf.clear();
+
+		//
+		//
+		
+		let json = r#"{"jsonrpc": "2.0", "method": "textDocument/semanticTokens/full", "params": { "textDocument": { "uri": "file:///src/herringbone/spawn.rs" } }, "id": 4 }"#;
+		let content_length = json.as_bytes().len();
+		let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
+
+		println!("sending highlight request");
+
+		stdin.write(request.as_bytes()).expect("Failed to write to stdin");
+		stdin.flush();
+
+		println!("waiting for answer");
+
+		// while stderr.read(&mut buf).unwrap() == 0 {
+		// 	thread::sleep(ten_millis);
+		// 	// println!("slept ten_millis");
+		// }
+
+		// println!("err4 {}", String::from_utf8_lossy(buf.as_slice()));
+		// buf.clear();
+
+		while stdout.read(&mut buf).unwrap() == 0 {
+			thread::sleep(ten_millis);
+			// println!("slept ten_millis");
+		}
+
+		println!("answer4 {}", String::from_utf8_lossy(buf.as_slice()));
 	});
 
 				  
-	// let output = child.wait_with_output().expect("Failed to read stdout");
+	//let output = child.wait_with_output().expect("Failed to read stdout");
     // println!("answer: {}", String::from_utf8_lossy(&output.stdout));
 
-	// let json = r#"{"jsonrpc": "2.0", "method": "textDocument/documentHighlight", "params": { "textDocument": "playground/easy_spawn.rs", "position": { "line": 0, "character": 0 } }, "id": 1}"#;
-	// let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
+	
 
 	// let mut stdin = child.stdin.take().expect("Failed to open stdin");
 	// std::thread::spawn(move || {
@@ -196,7 +304,7 @@ fn run_rust_analyzer() {
 	// 	stdin.flush();
 	// });
 
-	// let output = child.wait_with_output().expect("Failed to read stdout");
+	//  let output = child.wait_with_output().expect("Failed to read stdout");
     // println!("answer2: {}", String::from_utf8_lossy(&output.stdout));
 }
 
