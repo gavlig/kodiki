@@ -20,17 +20,15 @@ use super				:: { * };
 pub fn camera(
 	commands			: &mut Commands
 ) {
-	let camera = commands.spawn_bundle(Camera2dBundle::default());
-
-	// let camera = commands.spawn_bundle(Camera3dBundle {
-	// 		transform: Transform {
-	// 			translation: Vec3::new(5., 7., -2.),
-	// 			..default()
-	// 		},
-	// 		..default()
-	// 	})
-	// 	.insert			(FlyCamera{ yaw : -225.0, pitch : 45.0, enabled_follow : false, ..default() })
-	// 	.id				();
+	let camera = commands.spawn_bundle(Camera3dBundle {
+			transform: Transform {
+				translation: Vec3::new(5., 7., -2.),
+				..default()
+			},
+			..default()
+		})
+		.insert			(FlyCamera{ yaw : -225.0, pitch : 45.0, enabled_follow : false, ..default() })
+		.id				();
 
 	// println!			("camera Entity ID {:?}", camera);
 }
@@ -126,7 +124,7 @@ pub fn text_mesh(
             ..Default::default()
         },
         transform: Transform {
-            translation: Vec3::new(-1., y, 0.),
+            translation: Vec3::new(0., y, 0.),
             ..Default::default()
         },
         ..Default::default()
@@ -140,49 +138,12 @@ fn file_path_to_string(buf: &Option<PathBuf>) -> String {
 	}
 }
 
-fn draw_curve(curve: ft::outline::Curve) {
-    match curve {
-        ft::outline::Curve::Line(pt) =>
-            println!("L {} {}", pt.x, -pt.y),
-        ft::outline::Curve::Bezier2(pt1, pt2) =>
-            println!("Q {} {} {} {}", pt1.x, -pt1.y, pt2.x, -pt2.y),
-        ft::outline::Curve::Bezier3(pt1, pt2, pt3) =>
-            println!("C {} {} {} {} {} {}", pt1.x, -pt1.y,
-                                            pt2.x, -pt2.y,
-                                            pt3.x, -pt3.y)
-    }
-}
-
 pub fn file_text(
 	ass					: &Res<AssetServer>,
 	commands			: &mut Commands
 ) {
-	// Init the library
-    let lib = Library::init().unwrap();
-    // Load a font face
-    let face = lib.new_face("assets/fonts/droidsans-mono.ttf", 0).unwrap();
-    // Set the font size
-    face.set_char_size(40 * 8, 0, 50, 0).unwrap();
-    // Load a character
-    // face.load_char('A' as usize, LoadFlag::RENDER).unwrap();
-    // // Get the glyph instance
-    // let glyph = face.glyph();
-    
-    // let metrics = glyph.metrics();
-    // let xmin = metrics.horiBearingX - 5;
-    // let width = metrics.width + 10;
-    // let ymin = -metrics.horiBearingY - 5;
-    // let height = metrics.height + 10;
-    // let outline = glyph.outline().unwrap();
-
-	// for contour in outline.contours_iter() {
-    //     let start = contour.start();
-    //     for curve in contour {
-    //         draw_curve(curve);
-    //     }
-    // }
-
-	let source_file	= Some(PathBuf::from("playground/test_simple.rs"));
+	// let source_file	= Some(PathBuf::from("playground/test_simple.rs"));
+	let source_file	= Some(PathBuf::from("playground/easy_spawn.rs"));
 	let load_name 	= file_path_to_string(&source_file);
 	let path 		= Path::new(&load_name);
 	let display 	= path.display();
@@ -200,75 +161,19 @@ pub fn file_text(
 
 	let mut lines	= save_content.lines();
 	let mut y		= 5.0;
+	let mut line_num= 0;
 	loop {
 		let line 	= match lines.next() {
 			Some(l)	=> l,
 			None	=> break,
 		};
+		text_mesh	(&String::from(line), y, ass, commands);
 		
-		let mut x	= 0.0;
-		for char in line.chars() {
-			println!("char: {}", char);
+		// if line_num > 4 {
+		// 	break;
+		// }
 
-			face.load_char(char as usize, LoadFlag::NO_SCALE).unwrap();
-			// Get the glyph instance
-			let glyph = face.glyph();
-			let outline = glyph.outline().unwrap();
-			
-			let metrics = glyph.metrics();
-
-			println!("horiAdvance: {}", metrics.horiAdvance);
-
-			let mut path_builder = PathBuilder::new();
-			let coef = 1.0 / 20.0;
-			
-			for contour in outline.contours_iter() {
-			    let start = contour.start();
-				path_builder.move_to(Vec2::new(start.x as f32, start.y as f32) * coef);
-			    for curve in contour {
-			        match curve {
-						ft::outline::Curve::Line(pt) => {
-							// println!("L {} {}", pt.x, pt.y);
-							let to = Vec2::new(pt.x as f32, pt.y as f32) * coef;
-							path_builder.line_to(to);
-						},
-						ft::outline::Curve::Bezier2(pt1, pt2) => {
-							// println!("Q {} {} {} {}", pt1.x, pt1.y, pt2.x, -pt2.y);
-							let ctrl = Vec2::new(pt1.x as f32, pt1.y as f32) * coef;
-							let to = Vec2::new(pt2.x as f32, pt2.y as f32) * coef;
-							path_builder.quadratic_bezier_to(ctrl, to);
-						},
-						ft::outline::Curve::Bezier3(pt1, pt2, pt3) => {
-							// println!("C {} {} {} {} {} {}", pt1.x, pt1.y,
-							// 								pt2.x, pt2.y,
-							// 								pt3.x, pt3.y);
-							let ctrl1 = Vec2::new(pt1.x as f32, pt1.y as f32) * coef;
-							let ctrl2 = Vec2::new(pt2.x as f32, pt2.y as f32) * coef;
-							let to = Vec2::new(pt3.x as f32, pt3.y as f32) * coef;
-							path_builder.cubic_bezier_to(ctrl1, ctrl2, to);
-						},
-					}
-			    }
-			}
-
-			let line = path_builder.build();
-
-			commands.spawn_bundle(GeometryBuilder::build_as(
-				&line,
-				//DrawMode::Stroke(StrokeMode::new(Color::BLACK, 10.0)),
-				DrawMode::Fill(FillMode::color(Color::BLACK)),
-				Transform {
-					translation : Vec3 { x: x, y: y, z: 0.0 },
-					..default()
-				},
-			));
-
-			x += metrics.horiAdvance as f32 * coef;//100.;
-		}
-
-		//text_mesh	(&String::from(line), y, ass, commands);
-
-
-		y			-= 100.;
+		line_num	+= 1;
+		y			-= 0.13;
 	}
 }
