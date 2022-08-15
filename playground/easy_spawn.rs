@@ -160,7 +160,7 @@ pub fn brick_road_iter(
 		let left	= fi.left_border;
 		let right	= fi.right_border;
 		let in_range = ((left.x <= fi.pos.x) && (fi.pos.x <= right.x)) || ((right.x <= fi.pos.x) && (fi.pos.x <= left.x))
-						|| ((left.z <= fi.pos.z) && (fi.pos.z <= right.z)) || ((right.z <= fi.pos.z) && (fi.pos.z <= left.z));
+					|| ((left.z <= fi.pos.z) && (fi.pos.z <= right.z)) || ((right.z <= fi.pos.z) && (fi.pos.z <= left.z));
 
 		spawn_tile(tile_pose, !in_range, state, config, control, sargs, &mut log)
 	} else {

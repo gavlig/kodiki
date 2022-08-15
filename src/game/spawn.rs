@@ -154,6 +154,7 @@ pub fn file_text(
 ) {
 	// let source_file	= Some(PathBuf::from("playground/test_simple.rs"));
 	let source_file	= Some(PathBuf::from("playground/easy_spawn.rs"));
+	// let source_file	= Some(PathBuf::from("playground/test_letter_spacing.rs"));
 	let load_name 	= file_path_to_string(&source_file);
 	let path 		= Path::new(&load_name);
 	let display 	= path.display();
