@@ -42,7 +42,7 @@ pub fn ground(
 			mesh		: meshes.add(Mesh::from(render_shape::Box::new(ground_size * 2.0, ground_height * 2.0, ground_size * 2.0))),
 			material	: materials.add(Color::rgb(0.8, 0.8, 0.8).into()),
 			transform	: Transform::from_xyz(0.0, -ground_height, 0.0),
-			..Default::default()
+			..default()
 		})
 		.insert			(Transform::from_xyz(0.0, -ground_height, 0.0))
 		.insert			(GlobalTransform::default())
@@ -129,13 +129,13 @@ pub fn text_mesh(
 				wrapping : false,
                 ..default()
             },
-            ..Default::default()
+            ..default()
         },
         transform: Transform {
             translation: Vec3::new(0.0, y, 0.),
-            ..Default::default()
+            ..default()
         },
-        ..Default::default()
+        ..default()
     })
 
 	.insert_bundle(PickableBundle::default());
