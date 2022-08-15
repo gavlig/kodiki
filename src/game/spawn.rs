@@ -122,7 +122,7 @@ pub fn text_mesh(
             style	: TextMeshStyle {
                 font     : font.clone(),
                 font_size: SizeUnit::NonStandard(9.),
-                color    : Color::rgb(0.2, 0.2, 0.2),
+                color    : Color::hex("dddddd").unwrap(),
                 ..Default::default()
             },
             size: TextMeshSize {

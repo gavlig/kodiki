@@ -50,12 +50,7 @@ pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
 	fn build(&self, app: &mut App) {
-		let clear_color = ClearColor(
-			Color::rgb(
-				0xF9 as f32 / 255.0,
-				0xF9 as f32 / 255.0,
-				0xFF as f32 / 255.0,
-			));
+		let clear_color = ClearColor(Color::hex("282c34").unwrap());
 
         app	.add_loopless_state(GameMode::Editor)
 
