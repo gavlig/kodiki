@@ -171,6 +171,7 @@ use std::process::{Command, Stdio};
 use std :: fs		:: { File };
 use std :: path		:: { Path, PathBuf };
 
+use std::str::FromStr;
 use std::{thread, time};
 
 fn file_path_to_string(buf: &Option<PathBuf>) -> String {
@@ -202,7 +203,7 @@ fn run_rust_analyzer() {
 	.stdin(Stdio::piped())
 	.stdout(Stdio::piped())
 	// .stderr(Stdio::piped())
-	// .env("RA_LOG", "debug")
+	.env("RA_LOG", "info")
 	.spawn()
 	.expect("Failed to spawn child process");
 					
@@ -225,9 +226,12 @@ fn run_rust_analyzer() {
 		// let json = r#"{"jsonrpc": "2.0", "method": "initialize", "params": { "workspaceFolders": [{ uri: "file:///home/gavlig/workspace/project_gryazevichki/gryazevichki"}], "capabilities": { "textDocument": { "dynamicRegistration": "true" }, "synchronization": { "dynamicRegistration": "true" } }}, "id": 1}"#;
 		// let json = r#"{"jsonrpc": "2.0", "method": "initialize", "params": { "workspaceFolders": [{ uri: "file:///home/gavlig/workspace/fgl_exercise/bevy_fgl_exercise/"}], "capabilities": { "textDocument": { "dynamicRegistration": "true" }, "synchronization": { "dynamicRegistration": "true" } }}, "id": 1}"#;
 
-		#[derive(Serialize, Deserialize, Debug)]
-		struct Uri {
-			pub uri: &'static str
+		// let json = format!(r#"{"jsonrpc": "2.0", "method": "textDocument/didOpen", "params": { "textDocument": { "uri": "src/herringbone/spawn.rs", "languageId": "rust", "version": 0, "text": "{}" } }, "id": 3}"#, save_content);
+
+		#[derive(Serialize, Deserialize, Debug, Clone)]
+		struct WorkspaceFolder {
+			pub uri: String,
+			pub name: String,
 		}
 
 		#[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -241,33 +245,66 @@ fn run_rust_analyzer() {
 		}
 
 		#[derive(Serialize, Deserialize, Debug, Clone)]
-        struct Params {
-            //workspaceFolders: Vec<Uri>,
-			pub rootPath: &'static str,
+        struct InitializeParams {
+            pub workspaceFolders: Vec<WorkspaceFolder>,
 			pub capabilities: Capabilities,
+        }
+
+		#[derive(Serialize, Deserialize, Debug, Clone)]
+        struct TextDocumentItem {
+			uri: String,
+			languageId: String,
+			version: u32,
+			text: String,
+        }
+
+		#[derive(Serialize, Deserialize, Debug, Clone)]
+        struct DidOpenTextDocumentParams {
+			pub textDocument: TextDocumentItem,
         }
 
 		#[derive(Serialize, Deserialize, Debug, Clone)]
 		pub struct Request {
 			pub id: i32,
 			pub method: &'static str,
-			pub params: Params,
+			pub params: InitializeParams,
 		}
 
-		let req = Request {
-			id: 1,
-			method: "initialize",
-			params: Params{ rootPath: "/home/gavlig/workspace/project_gryazevichki/gryazevichki",
-			capabilities: Capabilities { synchronization: Synchronization { dynamicRegistration: true } } } };
+		#[derive(Serialize, Deserialize, Debug, Clone)]
+		pub struct Notification {
+			pub method: &'static str,
+			pub params: DidOpenTextDocumentParams,
+		}
 
 		#[derive(Serialize)]
-        struct JsonRpc {
+        struct JsonRpcNotification {
+            jsonrpc: &'static str,
+            #[serde(flatten)]
+            msg: Notification,
+        }
+
+		#[derive(Serialize)]
+        struct JsonRpcRequest {
             jsonrpc: &'static str,
             #[serde(flatten)]
             msg: Request,
         }
-        let json = serde_json::to_string(&JsonRpc { jsonrpc: "2.0", msg: req }).unwrap();
-		// let json = r#"{"jsonrpc": "2.0", "method": "initialize", "params": { "rootPath": "/home/gavlig/workspace/project_gryazevichki/gryazevichki", "capabilities": { } }, "id": 1}"#;
+
+		///
+
+		let ws = WorkspaceFolder { uri: String::from("file:///home/gavlig/workspace/playground/"), name: String::from("playground") };
+
+		let req = Request {
+			id: 1,
+			method: "initialize",
+			params: InitializeParams {
+				//rootPath: "/home/gavlig/workspace/project_gryazevichki/gryazevichki",
+				workspaceFolders: vec![ ws ],
+				capabilities: Capabilities { synchronization: Synchronization { dynamicRegistration: true } }
+			}
+		};
+
+        let json = serde_json::to_string(&JsonRpcRequest { jsonrpc: "2.0", msg: req }).unwrap();
 
 		let content_length = json.as_bytes().len();
 		let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
@@ -275,9 +312,8 @@ fn run_rust_analyzer() {
 		stdin.write(request.as_bytes()).expect("Failed to write to stdin");
 		stdin.flush();
 
-		// println!("\n\n{}\n\nwaiting for output", request);
 
-		thread::sleep(time::Duration::from_millis(5000));
+		thread::sleep(time::Duration::from_millis(1000));
 
 		println!("KODIKI about to read stdout");
 		let read_bytes = stdout.read(&mut buf).unwrap();
@@ -313,26 +349,31 @@ fn run_rust_analyzer() {
 		//
 		//
 
-		// let json = format!(r#"{"jsonrpc": "2.0", "method": "textDocument/didOpen", "params": { "textDocument": { "uri": "src/herringbone/spawn.rs", "languageId": "rust", "version": 0, "text": "{}" } }, "id": 3}"#, save_content);
+		let not = Notification {
+			method: "textDocument/didOpen",
+			params: DidOpenTextDocumentParams {
+				textDocument: TextDocumentItem {
+					uri: String::from("file:///home/gavlig/workspace/playground/"),
+					languageId: String::from("rust"),
+					version: 0,
+					text: save_content
+				}
+			}
+		};
 
-		// let json = r#"{"jsonrpc": "2.0", "method": "textDocument/didOpen", "params": { "textDocument": { "uri": "file:///home/gavlig/workspace/project_gryazevichki/gryazevichki/src/herringbone/spawn.rs", "languageId": "rust", "version": 0, "#;
-		// let json = format!("{{\"text\": \"{}\" }} }} }}", save_content);
-		// let content_length = json.as_bytes().len();
-		// let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
+        let json = serde_json::to_string(&JsonRpcNotification { jsonrpc: "2.0", msg: not }).unwrap();
 
-		// println!("KODIKI sending didOpen notification");
+		let content_length = json.as_bytes().len();
+		let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
 
-		// stdin.write(request.as_bytes()).expect("Failed to write to stdin");
-		// stdin.flush();
+		println!("KODIKI sending didOpen notification:\n{}", request);
 
-		println!("KODIKI ALL DONE");
+		stdin.write(request.as_bytes()).expect("Failed to write to stdin");
+		stdin.flush();
 
-		loop {
-			thread::sleep(time::Duration::from_millis(3000));
-			println!("loop");
-		}
+		
 
-		// thread::sleep(time::Duration::from_millis(1000));
+		thread::sleep(time::Duration::from_millis(1000));
 
 		// println!("\nabout to read stderr");
 		// let read_bytes = stderr.read(&mut buf_log).unwrap();
@@ -342,21 +383,28 @@ fn run_rust_analyzer() {
 		//
 		//
 		
-		// let json = r#"{"jsonrpc": "2.0", "method": "textDocument/semanticTokens/full", "params": { "textDocument": { "uri": "file:///src/herringbone/spawn.rs" } }, "id": 4 }"#;
+		// let json = r#"{"jsonrpc": "2.0", "method": "textDocument/semanticTokens/full", "params": { "textDocument": { "uri": "file:///home/gavlig/workspace/playground/easy_spawn.rs" } }, "id": 4 }"#;
 		// let content_length = json.as_bytes().len();
 		// let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
 
-		// println!("sending highlight request");
+		// println!("KODIKI sending highlight request");
 
 		// stdin.write(request.as_bytes()).expect("Failed to write to stdin");
 		// stdin.flush();
 
-		// thread::sleep(ten_millis);
+		// thread::sleep(time::Duration::from_millis(1000));
 
-		// println!("\nabout to read stdout");
+		// println!("KODIKI about to read stdout");
 		// let read_bytes = stdout.read(&mut buf).unwrap();
-		// println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf.as_slice()));
+		// println!("KODIKI read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf.as_slice()));
 		// buf.clear();
+
+		println!("KODIKI ALL DONE");
+
+		loop {
+			thread::sleep(time::Duration::from_millis(3000));
+			println!("loop");
+		}
 
 		// println!("\nabout to read stderr");
 		// let read_bytes = stderr.read(&mut buf_log).unwrap();
