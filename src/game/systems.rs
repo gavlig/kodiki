@@ -231,8 +231,13 @@ fn run_rust_analyzer() {
 		}
 
 		#[derive(Serialize, Deserialize, Debug, Clone, Default)]
-		struct Capabilities {
+		struct Synchronization {
+			pub dynamicRegistration: bool,
+		}
 
+		#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+		struct Capabilities {
+			pub synchronization: Synchronization,
 		}
 
 		#[derive(Serialize, Deserialize, Debug, Clone)]
@@ -250,7 +255,11 @@ fn run_rust_analyzer() {
 		}
 
 		let v = json!({ "params": {"rootPath": "/home/gavlig/workspace/project_gryazevichki/gryazevichki"} });
-		let req = Request { id: 1, method: "initialize", params: Params{ rootPath: "/home/gavlig/workspace/project_gryazevichki/gryazevichki", capabilities: Capabilities { } } };
+		let req = Request {
+			id: 1,
+			method: "initialize",
+			params: Params{ rootPath: "/home/gavlig/workspace/project_gryazevichki/gryazevichki",
+			capabilities: Capabilities { synchronization: Synchronization { dynamicRegistration: true } } } };
 
 		#[derive(Serialize)]
         struct JsonRpc {
@@ -259,8 +268,6 @@ fn run_rust_analyzer() {
             msg: Request,
         }
         let json = serde_json::to_string(&JsonRpc { jsonrpc: "2.0", msg: req }).unwrap();
-		println!("json!!!! {}", json);
-
 		// let json = r#"{"jsonrpc": "2.0", "method": "initialize", "params": { "rootPath": "/home/gavlig/workspace/project_gryazevichki/gryazevichki", "capabilities": { } }, "id": 1}"#;
 
 		let content_length = json.as_bytes().len();
@@ -268,11 +275,6 @@ fn run_rust_analyzer() {
 
 		stdin.write(request.as_bytes()).expect("Failed to write to stdin");
 		stdin.flush();
-
-		let ten_millis = time::Duration::from_millis(500);
-		let now = time::Instant::now();
-
-		// let mut started = false;
 
 		// println!("\n\n{}\n\nwaiting for output", request);
 
@@ -323,39 +325,36 @@ fn run_rust_analyzer() {
 		stdin.write(request.as_bytes()).expect("Failed to write to stdin");
 		stdin.flush();
 
-		thread::sleep(ten_millis);
-
-		//
-		//
-		
-		let json = r#"{"jsonrpc": "2.0", "method": "textDocument/semanticTokens/full", "params": { "textDocument": { "uri": "file:///src/herringbone/spawn.rs" } }, "id": 4 }"#;
-		let content_length = json.as_bytes().len();
-		let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
-
-		println!("sending highlight request");
-
-		stdin.write(request.as_bytes()).expect("Failed to write to stdin");
-		stdin.flush();
-
-		thread::sleep(ten_millis);
-
-		println!("\nabout to read stdout");
-		let read_bytes = stdout.read(&mut buf).unwrap();
-		println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf.as_slice()));
-		buf.clear();
+		thread::sleep(time::Duration::from_millis(1000));
 
 		println!("\nabout to read stderr");
 		let read_bytes = stderr.read(&mut buf_log).unwrap();
 		println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf_log.as_slice()));
 		buf_log.clear();
 
-		// loop {
-		// 	thread::sleep(ten_millis);
-		// 	println!("\nabout to read stdout");
-		// 	let read_bytes = stdout.read(&mut buf).unwrap();
-		// 	println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf.as_slice()));
-		// 	buf.clear();
-		// }
+		//
+		//
+		
+		// let json = r#"{"jsonrpc": "2.0", "method": "textDocument/semanticTokens/full", "params": { "textDocument": { "uri": "file:///src/herringbone/spawn.rs" } }, "id": 4 }"#;
+		// let content_length = json.as_bytes().len();
+		// let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
+
+		// println!("sending highlight request");
+
+		// stdin.write(request.as_bytes()).expect("Failed to write to stdin");
+		// stdin.flush();
+
+		// thread::sleep(ten_millis);
+
+		// println!("\nabout to read stdout");
+		// let read_bytes = stdout.read(&mut buf).unwrap();
+		// println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf.as_slice()));
+		// buf.clear();
+
+		// println!("\nabout to read stderr");
+		// let read_bytes = stderr.read(&mut buf_log).unwrap();
+		// println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf_log.as_slice()));
+		// buf_log.clear();
 	});
 
 				  
