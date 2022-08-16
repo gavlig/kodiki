@@ -203,7 +203,7 @@ fn run_rust_analyzer() {
 	.stdin(Stdio::piped())
 	.stdout(Stdio::piped())
 	// .stderr(Stdio::piped())
-	.env("RA_LOG", "info")
+	.env("RA_LOG", "debug")
 	.spawn()
 	.expect("Failed to spawn child process");
 					
@@ -227,6 +227,7 @@ fn run_rust_analyzer() {
 		// let json = r#"{"jsonrpc": "2.0", "method": "initialize", "params": { "workspaceFolders": [{ uri: "file:///home/gavlig/workspace/fgl_exercise/bevy_fgl_exercise/"}], "capabilities": { "textDocument": { "dynamicRegistration": "true" }, "synchronization": { "dynamicRegistration": "true" } }}, "id": 1}"#;
 
 		// let json = format!(r#"{"jsonrpc": "2.0", "method": "textDocument/didOpen", "params": { "textDocument": { "uri": "src/herringbone/spawn.rs", "languageId": "rust", "version": 0, "text": "{}" } }, "id": 3}"#, save_content);
+		// let json = r#"{"jsonrpc": "2.0", "method": "textDocument/semanticTokens/full", "params": { "textDocument": { "uri": "file:///home/gavlig/workspace/playground/easy_spawn.rs" } }, "id": 4 }"#;
 
 		#[derive(Serialize, Deserialize, Debug, Clone)]
 		struct WorkspaceFolder {
@@ -245,12 +246,6 @@ fn run_rust_analyzer() {
 		}
 
 		#[derive(Serialize, Deserialize, Debug, Clone)]
-        struct InitializeParams {
-            pub workspaceFolders: Vec<WorkspaceFolder>,
-			pub capabilities: Capabilities,
-        }
-
-		#[derive(Serialize, Deserialize, Debug, Clone)]
         struct TextDocumentItem {
 			uri: String,
 			languageId: String,
@@ -259,42 +254,72 @@ fn run_rust_analyzer() {
         }
 
 		#[derive(Serialize, Deserialize, Debug, Clone)]
+		struct TextDocumentIdentifier {
+			uri: String,
+		}
+
+		#[derive(Serialize, Deserialize, Debug, Clone)]
+        struct InitializeParams {
+            pub workspaceFolders: Vec<WorkspaceFolder>,
+			pub capabilities: Capabilities,
+        }
+
+		#[derive(Serialize, Deserialize, Debug, Clone)]
         struct DidOpenTextDocumentParams {
 			pub textDocument: TextDocumentItem,
         }
 
 		#[derive(Serialize, Deserialize, Debug, Clone)]
-		pub struct Request {
+        struct SemanticTokensFullParams {
+			pub textDocument: TextDocumentIdentifier,
+        }
+
+		#[derive(Serialize, Deserialize, Debug, Clone)]
+		pub struct RequestInitialize {
 			pub id: i32,
 			pub method: &'static str,
 			pub params: InitializeParams,
 		}
 
 		#[derive(Serialize, Deserialize, Debug, Clone)]
-		pub struct Notification {
+		pub struct RequestSemanticTokensFull {
+			pub id: i32,
+			pub method: &'static str,
+			pub params: SemanticTokensFullParams,
+		}
+
+		#[derive(Serialize, Deserialize, Debug, Clone)]
+		pub struct NotificationDidOpenTextDocument {
 			pub method: &'static str,
 			pub params: DidOpenTextDocumentParams,
 		}
 
 		#[derive(Serialize)]
-        struct JsonRpcNotification {
+        struct JsonRpcRequestSemanticTokensFull {
             jsonrpc: &'static str,
             #[serde(flatten)]
-            msg: Notification,
+            msg: RequestSemanticTokensFull,
+        }
+
+		#[derive(Serialize)]
+        struct JsonRpcNotificationDidOpenTextDocument {
+            jsonrpc: &'static str,
+            #[serde(flatten)]
+            msg: NotificationDidOpenTextDocument,
         }
 
 		#[derive(Serialize)]
         struct JsonRpcRequest {
             jsonrpc: &'static str,
             #[serde(flatten)]
-            msg: Request,
+            msg: RequestInitialize,
         }
 
 		///
 
 		let ws = WorkspaceFolder { uri: String::from("file:///home/gavlig/workspace/playground/"), name: String::from("playground") };
 
-		let req = Request {
+		let req = RequestInitialize {
 			id: 1,
 			method: "initialize",
 			params: InitializeParams {
@@ -349,11 +374,11 @@ fn run_rust_analyzer() {
 		//
 		//
 
-		let not = Notification {
+		let not = NotificationDidOpenTextDocument {
 			method: "textDocument/didOpen",
 			params: DidOpenTextDocumentParams {
 				textDocument: TextDocumentItem {
-					uri: String::from("file:///home/gavlig/workspace/playground/"),
+					uri: String::from("file:///home/gavlig/workspace/playground/easy_spawn.rs"),
 					languageId: String::from("rust"),
 					version: 0,
 					text: save_content
@@ -361,7 +386,7 @@ fn run_rust_analyzer() {
 			}
 		};
 
-        let json = serde_json::to_string(&JsonRpcNotification { jsonrpc: "2.0", msg: not }).unwrap();
+        let json = serde_json::to_string(&JsonRpcNotificationDidOpenTextDocument { jsonrpc: "2.0", msg: not }).unwrap();
 
 		let content_length = json.as_bytes().len();
 		let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
@@ -375,29 +400,34 @@ fn run_rust_analyzer() {
 
 		thread::sleep(time::Duration::from_millis(1000));
 
-		// println!("\nabout to read stderr");
-		// let read_bytes = stderr.read(&mut buf_log).unwrap();
-		// println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf_log.as_slice()));
-		// buf_log.clear();
 
-		//
-		//
-		
-		// let json = r#"{"jsonrpc": "2.0", "method": "textDocument/semanticTokens/full", "params": { "textDocument": { "uri": "file:///home/gavlig/workspace/playground/easy_spawn.rs" } }, "id": 4 }"#;
-		// let content_length = json.as_bytes().len();
-		// let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
 
-		// println!("KODIKI sending highlight request");
+		let req = RequestSemanticTokensFull {
+			id: 4,
+			method: "textDocument/semanticTokens/full",
+			params: SemanticTokensFullParams { textDocument: TextDocumentIdentifier { uri: String::from("file:///home/gavlig/workspace/playground/easy_spawn.rs") } }
+		};
 
-		// stdin.write(request.as_bytes()).expect("Failed to write to stdin");
-		// stdin.flush();
+        let json = serde_json::to_string(&JsonRpcRequestSemanticTokensFull { jsonrpc: "2.0", msg: req }).unwrap();
 
-		// thread::sleep(time::Duration::from_millis(1000));
+		let content_length = json.as_bytes().len();
+		let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
 
-		// println!("KODIKI about to read stdout");
-		// let read_bytes = stdout.read(&mut buf).unwrap();
-		// println!("KODIKI read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf.as_slice()));
-		// buf.clear();
+		println!("KODIKI sending highlight request");
+
+		stdin.write(request.as_bytes()).expect("Failed to write to stdin");
+		stdin.flush();
+
+
+
+		thread::sleep(time::Duration::from_millis(1000));
+
+
+
+		println!("KODIKI about to read stdout");
+		let read_bytes = stdout.read(&mut buf).unwrap();
+		println!("KODIKI read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf.as_slice()));
+		buf.clear();
 
 		println!("KODIKI ALL DONE");
 
@@ -405,27 +435,7 @@ fn run_rust_analyzer() {
 			thread::sleep(time::Duration::from_millis(3000));
 			println!("loop");
 		}
-
-		// println!("\nabout to read stderr");
-		// let read_bytes = stderr.read(&mut buf_log).unwrap();
-		// println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf_log.as_slice()));
-		// buf_log.clear();
 	});
-
-				  
-	//let output = child.wait_with_output().expect("Failed to read stdout");
-    // println!("answer: {}", String::from_utf8_lossy(&output.stdout));
-
-	
-
-	// let mut stdin = child.stdin.take().expect("Failed to open stdin");
-	// std::thread::spawn(move || {
-	// 	stdin.write(request.as_bytes()).expect("Failed to write to stdin");
-	// 	stdin.flush();
-	// });
-
-	//  let output = child.wait_with_output().expect("Failed to read stdout");
-    // println!("answer2: {}", String::from_utf8_lossy(&output.stdout));
 }
 
 fn check_selection_recursive(
