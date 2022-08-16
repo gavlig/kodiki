@@ -201,14 +201,14 @@ fn run_rust_analyzer() {
 	let mut child = Command::new("assets/lsp/rust-analyzer/rust-analyzer")
 	.stdin(Stdio::piped())
 	.stdout(Stdio::piped())
-	.stderr(Stdio::piped())
-	.env("RA_LOG", "debug")
+	// .stderr(Stdio::piped())
+	// .env("RA_LOG", "debug")
 	.spawn()
 	.expect("Failed to spawn child process");
 					
 	let mut stdin = child.stdin.take().expect("Failed to open stdin");
 	let mut stdout = child.stdout.take().expect("Failed to open stdout");
-	let mut stderr = child.stderr.take().expect("Failed to open stderr");
+	// let mut stderr = child.stderr.take().expect("Failed to open stderr");
 	std::thread::spawn(move || {
 		let mut buf = Vec::<u8>::new();
 		buf.resize(1024 * 16, 0);
@@ -247,14 +247,13 @@ fn run_rust_analyzer() {
 			pub capabilities: Capabilities,
         }
 
-		#[derive(Debug, Serialize, Deserialize, Clone)]
+		#[derive(Serialize, Deserialize, Debug, Clone)]
 		pub struct Request {
 			pub id: i32,
 			pub method: &'static str,
 			pub params: Params,
 		}
 
-		let v = json!({ "params": {"rootPath": "/home/gavlig/workspace/project_gryazevichki/gryazevichki"} });
 		let req = Request {
 			id: 1,
 			method: "initialize",
@@ -280,20 +279,20 @@ fn run_rust_analyzer() {
 
 		thread::sleep(time::Duration::from_millis(5000));
 
-		println!("about to read stdout");
+		println!("KODIKI about to read stdout");
 		let read_bytes = stdout.read(&mut buf).unwrap();
-		println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf.as_slice()));
+		println!("KODIKI read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf.as_slice()));
 		buf.clear();
 
-		println!("\nabout to read stderr");
-		let read_bytes = stderr.read(&mut buf_log).unwrap();
-		println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf_log.as_slice()));
-		buf_log.clear();
+		// println!("\nabout to read stderr");
+		// let read_bytes = stderr.read(&mut buf_log).unwrap();
+		// println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf_log.as_slice()));
+		// buf_log.clear();
 
 		//
 		//
 
-		println!("sending initialized notification");
+		println!("KODIKI sending initialized notification");
 
 		let json = r#"{"jsonrpc": "2.0", "method": "initialized", "params": {}}"#;
 		let content_length = json.as_bytes().len();
@@ -306,31 +305,39 @@ fn run_rust_analyzer() {
 
 		thread::sleep(time::Duration::from_millis(1000));
 
-		println!("\nabout to read stderr3");
-		let read_bytes = stderr.read(&mut buf_log).unwrap();
-		println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf_log.as_slice()));
-		buf_log.clear();
+		// println!("\nabout to read stderr3");
+		// let read_bytes = stderr.read(&mut buf_log).unwrap();
+		// println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf_log.as_slice()));
+		// buf_log.clear();
 
 		//
 		//
 
 		// let json = format!(r#"{"jsonrpc": "2.0", "method": "textDocument/didOpen", "params": { "textDocument": { "uri": "src/herringbone/spawn.rs", "languageId": "rust", "version": 0, "text": "{}" } }, "id": 3}"#, save_content);
-		let json = r#"{"jsonrpc": "2.0", "method": "textDocument/didOpen", "params": { "textDocument": { "uri": "file:///home/gavlig/workspace/project_gryazevichki/gryazevichki/src/herringbone/spawn.rs", "languageId": "rust", "version": 0, "#;
-		let json = format!("{{\"text\": \"{}\" }} }} }}", save_content);
-		let content_length = json.as_bytes().len();
-		let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
 
-		println!("sending didOpen notification");
+		// let json = r#"{"jsonrpc": "2.0", "method": "textDocument/didOpen", "params": { "textDocument": { "uri": "file:///home/gavlig/workspace/project_gryazevichki/gryazevichki/src/herringbone/spawn.rs", "languageId": "rust", "version": 0, "#;
+		// let json = format!("{{\"text\": \"{}\" }} }} }}", save_content);
+		// let content_length = json.as_bytes().len();
+		// let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
 
-		stdin.write(request.as_bytes()).expect("Failed to write to stdin");
-		stdin.flush();
+		// println!("KODIKI sending didOpen notification");
 
-		thread::sleep(time::Duration::from_millis(1000));
+		// stdin.write(request.as_bytes()).expect("Failed to write to stdin");
+		// stdin.flush();
 
-		println!("\nabout to read stderr");
-		let read_bytes = stderr.read(&mut buf_log).unwrap();
-		println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf_log.as_slice()));
-		buf_log.clear();
+		println!("KODIKI ALL DONE");
+
+		loop {
+			thread::sleep(time::Duration::from_millis(3000));
+			println!("loop");
+		}
+
+		// thread::sleep(time::Duration::from_millis(1000));
+
+		// println!("\nabout to read stderr");
+		// let read_bytes = stderr.read(&mut buf_log).unwrap();
+		// println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf_log.as_slice()));
+		// buf_log.clear();
 
 		//
 		//
