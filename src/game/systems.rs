@@ -4,6 +4,9 @@ use bevy_fly_camera	:: { FlyCamera };
 use bevy_mod_picking:: { * };
 use iyes_loopless	:: { prelude :: * };
 
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde_json::json;
+
 use super           :: { * };
 
 pub fn setup_world_system(
@@ -199,6 +202,7 @@ fn run_rust_analyzer() {
 	.stdin(Stdio::piped())
 	.stdout(Stdio::piped())
 	.stderr(Stdio::piped())
+	.env("RA_LOG", "debug")
 	.spawn()
 	.expect("Failed to spawn child process");
 					
@@ -209,28 +213,80 @@ fn run_rust_analyzer() {
 		let mut buf = Vec::<u8>::new();
 		buf.resize(1024 * 16, 0);
 
+		let mut buf_log = Vec::<u8>::new();
+		buf_log.resize(1024 * 1024, 0);
+
 		//
 		//
 
-		let json = r#"{"jsonrpc": "2.0", "method": "initialize", "params": { "rootPath": "/home/gavlig/workspace/project_gryazevichki/gryazevichki", "capabilities": { "textDocument": { "dynamicRegistration": "true" }, "synchronization": { "dynamicRegistration": "true" } }}, "id": 1}"#;
+		// let json = r#"{"jsonrpc": "2.0", "method": "initialize", "params": { "rootPath": "/home/gavlig/workspace/project_gryazevichki/gryazevichki", "capabilities": { "textDocument": { "dynamicRegistration": "true" }, "synchronization": { "dynamicRegistration": "true" }, "rust-analyzer.trace.server": "verbose" }}, "id": 1}"#;
+		// let json = r#"{"jsonrpc": "2.0", "method": "initialize", "params": { "rootPath": "/home/gavlig/workspace/project_gryazevichki/gryazevichki", "capabilities": { "textDocument": { "dynamicRegistration": "true" }, "synchronization": { "dynamicRegistration": "true" } }}, "id": 1}"#;
+
+		// let json = r#"{"jsonrpc": "2.0", "method": "initialize", "params": { "workspaceFolders": [{ uri: "file:///home/gavlig/workspace/project_gryazevichki/gryazevichki"}], "capabilities": { "textDocument": { "dynamicRegistration": "true" }, "synchronization": { "dynamicRegistration": "true" } }}, "id": 1}"#;
+		// let json = r#"{"jsonrpc": "2.0", "method": "initialize", "params": { "workspaceFolders": [{ uri: "file:///home/gavlig/workspace/fgl_exercise/bevy_fgl_exercise/"}], "capabilities": { "textDocument": { "dynamicRegistration": "true" }, "synchronization": { "dynamicRegistration": "true" } }}, "id": 1}"#;
+
+		#[derive(Serialize, Deserialize, Debug)]
+		struct Uri {
+			pub uri: &'static str
+		}
+
+		#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+		struct Capabilities {
+
+		}
+
+		#[derive(Serialize, Deserialize, Debug, Clone)]
+        struct Params {
+            //workspaceFolders: Vec<Uri>,
+			pub rootPath: &'static str,
+			pub capabilities: Capabilities,
+        }
+
+		#[derive(Debug, Serialize, Deserialize, Clone)]
+		pub struct Request {
+			pub id: i32,
+			pub method: &'static str,
+			pub params: Params,
+		}
+
+		let v = json!({ "params": {"rootPath": "/home/gavlig/workspace/project_gryazevichki/gryazevichki"} });
+		let req = Request { id: 1, method: "initialize", params: Params{ rootPath: "/home/gavlig/workspace/project_gryazevichki/gryazevichki", capabilities: Capabilities { } } };
+
+		#[derive(Serialize)]
+        struct JsonRpc {
+            jsonrpc: &'static str,
+            #[serde(flatten)]
+            msg: Request,
+        }
+        let json = serde_json::to_string(&JsonRpc { jsonrpc: "2.0", msg: req }).unwrap();
+		println!("json!!!! {}", json);
+
+		// let json = r#"{"jsonrpc": "2.0", "method": "initialize", "params": { "rootPath": "/home/gavlig/workspace/project_gryazevichki/gryazevichki", "capabilities": { } }, "id": 1}"#;
+
 		let content_length = json.as_bytes().len();
 		let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
 
 		stdin.write(request.as_bytes()).expect("Failed to write to stdin");
 		stdin.flush();
 
-		let ten_millis = time::Duration::from_millis(1);
+		let ten_millis = time::Duration::from_millis(500);
 		let now = time::Instant::now();
 
-		while stdout.read(&mut buf).unwrap() == 0 {
-			thread::sleep(ten_millis);
-			// println!("slept ten_millis");
-		}
+		// let mut started = false;
 
-		// println!("read1 {}", stdout.read(&mut buf).unwrap());
+		// println!("\n\n{}\n\nwaiting for output", request);
 
-		println!("answer1 {}", String::from_utf8_lossy(buf.as_slice()));
+		thread::sleep(time::Duration::from_millis(5000));
+
+		println!("about to read stdout");
+		let read_bytes = stdout.read(&mut buf).unwrap();
+		println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf.as_slice()));
 		buf.clear();
+
+		println!("\nabout to read stderr");
+		let read_bytes = stderr.read(&mut buf_log).unwrap();
+		println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf_log.as_slice()));
+		buf_log.clear();
 
 		//
 		//
@@ -244,13 +300,20 @@ fn run_rust_analyzer() {
 		stdin.write(request.as_bytes()).expect("Failed to write to stdin");
 		stdin.flush();
 
-		// there is no answer
+		// 
+
+		thread::sleep(time::Duration::from_millis(1000));
+
+		println!("\nabout to read stderr3");
+		let read_bytes = stderr.read(&mut buf_log).unwrap();
+		println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf_log.as_slice()));
+		buf_log.clear();
 
 		//
 		//
 
 		// let json = format!(r#"{"jsonrpc": "2.0", "method": "textDocument/didOpen", "params": { "textDocument": { "uri": "src/herringbone/spawn.rs", "languageId": "rust", "version": 0, "text": "{}" } }, "id": 3}"#, save_content);
-		let json = r#"{"jsonrpc": "2.0", "method": "textDocument/didOpen", "params": { "textDocument": { "uri": "file:///src/herringbone/spawn.rs", "languageId": "rust", "version": 0, "#;
+		let json = r#"{"jsonrpc": "2.0", "method": "textDocument/didOpen", "params": { "textDocument": { "uri": "file:///home/gavlig/workspace/project_gryazevichki/gryazevichki/src/herringbone/spawn.rs", "languageId": "rust", "version": 0, "#;
 		let json = format!("{{\"text\": \"{}\" }} }} }}", save_content);
 		let content_length = json.as_bytes().len();
 		let request = format!("Content-Length: {}\r\n\r\n{}", content_length, json);
@@ -260,7 +323,7 @@ fn run_rust_analyzer() {
 		stdin.write(request.as_bytes()).expect("Failed to write to stdin");
 		stdin.flush();
 
-		buf.clear();
+		thread::sleep(ten_millis);
 
 		//
 		//
@@ -274,22 +337,25 @@ fn run_rust_analyzer() {
 		stdin.write(request.as_bytes()).expect("Failed to write to stdin");
 		stdin.flush();
 
-		println!("waiting for answer");
+		thread::sleep(ten_millis);
 
-		// while stderr.read(&mut buf).unwrap() == 0 {
+		println!("\nabout to read stdout");
+		let read_bytes = stdout.read(&mut buf).unwrap();
+		println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf.as_slice()));
+		buf.clear();
+
+		println!("\nabout to read stderr");
+		let read_bytes = stderr.read(&mut buf_log).unwrap();
+		println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf_log.as_slice()));
+		buf_log.clear();
+
+		// loop {
 		// 	thread::sleep(ten_millis);
-		// 	// println!("slept ten_millis");
+		// 	println!("\nabout to read stdout");
+		// 	let read_bytes = stdout.read(&mut buf).unwrap();
+		// 	println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf.as_slice()));
+		// 	buf.clear();
 		// }
-
-		// println!("err4 {}", String::from_utf8_lossy(buf.as_slice()));
-		// buf.clear();
-
-		while stdout.read(&mut buf).unwrap() == 0 {
-			thread::sleep(ten_millis);
-			// println!("slept ten_millis");
-		}
-
-		println!("answer4 {}", String::from_utf8_lossy(buf.as_slice()));
 	});
 
 				  

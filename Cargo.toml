@@ -16,6 +16,7 @@ opt-level = 3
 directories 		= "4.0"
 ron 				= "0.7"
 serde 				= { version = "1", features = ["derive"] }
+serde_json			= { version = "1.0.83" }
 
 bevy 				= { version = "0.8", features = ["bevy_render"] }
 
