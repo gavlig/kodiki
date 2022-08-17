@@ -203,7 +203,7 @@ fn run_rust_analyzer() {
 	.stdin(Stdio::piped())
 	.stdout(Stdio::piped())
 	// .stderr(Stdio::piped())
-	.env("RA_LOG", "debug")
+	// .env("RA_LOG", "info")
 	.spawn()
 	.expect("Failed to spawn child process");
 					
@@ -241,8 +241,19 @@ fn run_rust_analyzer() {
 		}
 
 		#[derive(Serialize, Deserialize, Debug, Clone, Default)]
-		struct Capabilities {
+		struct SemanticTokensClientRequests {
+			pub full : bool,
+		}
+
+		#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+		struct SemanticTokensClientCapabilities {
+			pub requests: SemanticTokensClientRequests,
+		}
+
+		#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+		struct TextDocumentClientCapabilities {
 			pub synchronization: Synchronization,
+			pub semanticTokens: SemanticTokensClientCapabilities,
 		}
 
 		#[derive(Serialize, Deserialize, Debug, Clone)]
@@ -261,7 +272,7 @@ fn run_rust_analyzer() {
 		#[derive(Serialize, Deserialize, Debug, Clone)]
         struct InitializeParams {
             pub workspaceFolders: Vec<WorkspaceFolder>,
-			pub capabilities: Capabilities,
+			pub capabilities: TextDocumentClientCapabilities,
         }
 
 		#[derive(Serialize, Deserialize, Debug, Clone)]
@@ -318,14 +329,18 @@ fn run_rust_analyzer() {
 		///
 
 		let ws = WorkspaceFolder { uri: String::from("file:///home/gavlig/workspace/playground/"), name: String::from("playground") };
+		// let ws = WorkspaceFolder { uri: String::from("file:///home/gavlig/workspace/fgl_exercise/bevy_fgl_exercise"), name: String::from("fgl_exercise") };
+		// let ws = WorkspaceFolder { uri: String::from("file:///home/gavlig/workspace/project_gryazevichki/gryazevichki/"), name: String::from("gryazevichki") };
 
 		let req = RequestInitialize {
 			id: 1,
 			method: "initialize",
 			params: InitializeParams {
-				//rootPath: "/home/gavlig/workspace/project_gryazevichki/gryazevichki",
 				workspaceFolders: vec![ ws ],
-				capabilities: Capabilities { synchronization: Synchronization { dynamicRegistration: true } }
+				capabilities: TextDocumentClientCapabilities {
+					synchronization: Synchronization { dynamicRegistration: true },
+					semanticTokens: SemanticTokensClientCapabilities { requests: SemanticTokensClientRequests { full: true } },
+				}
 			}
 		};
 
@@ -345,12 +360,6 @@ fn run_rust_analyzer() {
 		println!("KODIKI read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf.as_slice()));
 		buf.clear();
 
-		// println!("\nabout to read stderr");
-		// let read_bytes = stderr.read(&mut buf_log).unwrap();
-		// println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf_log.as_slice()));
-		// buf_log.clear();
-
-		//
 		//
 
 		println!("KODIKI sending initialized notification");
@@ -366,11 +375,6 @@ fn run_rust_analyzer() {
 
 		thread::sleep(time::Duration::from_millis(1000));
 
-		// println!("\nabout to read stderr3");
-		// let read_bytes = stderr.read(&mut buf_log).unwrap();
-		// println!("read {} bytes:\n{}", read_bytes, String::from_utf8_lossy(buf_log.as_slice()));
-		// buf_log.clear();
-
 		//
 		//
 
@@ -379,6 +383,9 @@ fn run_rust_analyzer() {
 			params: DidOpenTextDocumentParams {
 				textDocument: TextDocumentItem {
 					uri: String::from("file:///home/gavlig/workspace/playground/easy_spawn.rs"),
+					// uri: String::from("file:///home/gavlig/workspace/fgl_exercise/bevy_fgl_exercise/src/game/systems.rs"),
+					//  uri: String::from("file:///home/gavlig/workspace/project_gryazevichki/gryazevichki/src/easy_spawn.rs"),
+					
 					languageId: String::from("rust"),
 					version: 0,
 					text: save_content
@@ -403,9 +410,11 @@ fn run_rust_analyzer() {
 
 
 		let req = RequestSemanticTokensFull {
-			id: 4,
+			id: 2,
 			method: "textDocument/semanticTokens/full",
 			params: SemanticTokensFullParams { textDocument: TextDocumentIdentifier { uri: String::from("file:///home/gavlig/workspace/playground/easy_spawn.rs") } }
+			// params: SemanticTokensFullParams { textDocument: TextDocumentIdentifier { uri: String::from("file:///home/gavlig/workspace/fgl_exercise/bevy_fgl_exercise/src/game/systems.rs") } }
+			// params: SemanticTokensFullParams { textDocument: TextDocumentIdentifier { uri: String::from("file:///home/gavlig/workspace/project_gryazevichki/gryazevichki/src/easy_spawn.rs") } }
 		};
 
         let json = serde_json::to_string(&JsonRpcRequestSemanticTokensFull { jsonrpc: "2.0", msg: req }).unwrap();
