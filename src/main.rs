@@ -1,3 +1,4 @@
+#![feature(rustc_private)]
 #![allow(non_snake_case, dead_code)]
 
 use bevy			:: prelude :: { * };

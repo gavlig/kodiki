@@ -3,6 +3,9 @@ name = "kodiki"
 version = "0.1.0"
 edition = "2021"
 
+[package.metadata.rust-analyzer]
+rustc_private = true
+
 # 1 Enable only a small amount of optimization in debug mode
 [profile.dev]
 opt-level = 1
