@@ -172,9 +172,10 @@ pub fn file_text(
 	ass				: &Res<AssetServer>,
 	commands		: &mut Commands
 ) {
-	// let source_file	= Some(PathBuf::from("playground/test_simple.rs"));
+	// let source_file_path	= Some(PathBuf::from("playground/test_tabs.rs"));
+	// let source_file_path	= Some(PathBuf::from("playground/test_simple.rs"));
 	let source_file_path = Some(PathBuf::from("playground/easy_spawn.rs"));
-	// let source_file	= Some(PathBuf::from("playground/test_letter_spacing.rs"));
+	// let source_file_path	= Some(PathBuf::from("playground/test_letter_spacing.rs"));
 	let load_name 	= file_path_to_string(&source_file_path);
 	let path 		= Path::new(&load_name);
 	let display 	= path.display();
@@ -198,14 +199,15 @@ pub fn file_text(
 	let mut reference_glyph : Glyph = font.glyph_from_char('a').unwrap();
 
 	let font_size = 9.;
+	let tab_size = 4; //.editorconfig
 
 	rustc_span::create_session_if_not_set_then(Edition::Edition2021, |_| {
 		let parser_session = ParseSess::with_silent_emitter(Some(String::from("FATAL MESSAGE AGGHHH")));
 
 		let mut lines	= file_content.lines();
 		let mut y		= 5.0;
-		let mut column	= 0;
-		let mut row		= 0;
+		let mut column	= 0 as u32;
+		let mut row		= 0 as u32;
 
 		loop {
 			let line_raw = match lines.next() {
@@ -216,6 +218,7 @@ pub fn file_text(
 			let line_clone = line.clone();
 			
 			let mut cursor_lexer = rustc_lexer::tokenize(line_raw);
+			let mut token_offset = 0;
 
 			loop {
 				let token_meta = cursor_lexer.next();
@@ -225,13 +228,11 @@ pub fn file_text(
 				let token = token_meta.unwrap();
 				// println!("lexer {:?}", token);
 
-				let token_start : usize = column;
-				let token_end : usize = column + token.len as usize;
+				let token_start : usize = token_offset;
+				let token_end : usize = token_offset + token.len as usize;
 				let token_str = &line_raw[token_start..token_end];
 
 				let mut color = Color::hex("bbbbbb").unwrap();
-
-				println!("{}", token_str);
 
 				// it's a word
 				match token.kind {
@@ -240,33 +241,90 @@ pub fn file_text(
 						let span = Span::with_root_ctxt(BytePos(token_start as u32), BytePos(token_end as u32));
 						let token_kind_ast = rustc_ast::token::TokenKind::Ident(sym, false);
 						let token_ast = rustc_ast::token::Token { kind: token_kind_ast, span: span };
-						
-						// println!("is keyword: {}", token_ast.is_used_keyword());
+
 
 						if token_ast.is_used_keyword() {
 							color = Color::hex("e06c75").unwrap();
 						}
+
+						if token_ast.is_keyword(rustc_span::symbol::kw::Let) {
+							color = Color::hex("56b6c2").unwrap();
+						}
+
+						if token_ast.is_bool_lit() {
+							color = Color::hex("56b6c2").unwrap();
+						}
+
+						let chars : Vec<char> = token_str.chars().collect();
+						if token.len > 1 && chars[0].is_uppercase() && !chars[1].is_uppercase() {
+							color = Color::hex("61afef").unwrap();
+						}
+
+						if token.len > 1 && chars[0].is_uppercase() && chars[1].is_uppercase() {
+							color = Color::hex("56b6c2").unwrap();
+						}
+
+						if token_ast.is_op() {
+							println!("what is op? [{}]", token_str);
+						}
 					},
+					TokenKind::OpenBrace | TokenKind::OpenBracket | TokenKind::OpenParen => {
+						color = Color::hex("da70d6").unwrap();
+					},
+					TokenKind::CloseBrace | TokenKind::CloseBracket | TokenKind::CloseParen => {
+						color = Color::hex("da70d6").unwrap();
+					},
+					TokenKind::LineComment { doc_style } => {
+						color = Color::hex("676f7d").unwrap();
+					},
+					TokenKind::Literal { kind, suffix_start } => {
+						let k = kind;
+						match k {
+							rustc_lexer::LiteralKind::Int { base: Base, empty_int: bool } => {
+								color = Color::hex("c678dd").unwrap();
+							},
+							rustc_lexer::LiteralKind::Float { base: Base, empty_exponent: bool } => {
+								color = Color::hex("c678dd").unwrap();
+							},
+							_ => {
+								color = Color::hex("e5c07b").unwrap();
+							},
+						}
+					}
 					_ => {
+						color = Color::hex("e06c75").unwrap();
+
+						let sym = nfc_normalize(token_str);
+						let nt = rustc_ast::token::NonterminalKind::from_symbol(sym, || -> Edition { Edition::Edition2021 });
 					},
 				}
 
+				// println!("[{} {} {}] [{}]", column, token_offset, token.len, token_str);
+
 				if token.kind != TokenKind::Whitespace {
-					let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar
+					let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
 					let x		= (column as f32) * reference_glyph.inner.advance * font_size_scalar;
-					println!("x: {} column: {} advance: {} font_size: {}", x, column, reference_glyph.inner.advance, font_size);
+					// println!("x: {} column: {} advance: {} font_size: {}", x, column, reference_glyph.inner.advance, font_size);
 					let pos		= Vec2::new(x, y);
 					let mesh_string = String::from(token_str);
 
 					text_mesh	(&mesh_string, pos, &font_handle, SizeUnit::NonStandard(font_size), color, ass, commands);
 				}
 
-				column += token.len as usize;
+				let mut len : u32 = token.len;
+				
+				if token_str.chars().next().unwrap() == '\t' {
+					len = (token.len - 1) * tab_size; 
+
+					let leftovers = tab_size - (column % tab_size);
+
+					len += leftovers;
+				}
+				column += len;
+				token_offset += token.len as usize; // amount of tokens != amount of symbols so we need to keep track of both 
 			}
 
-			// text_mesh	(&line_clone, y, SizeUnit::NonStandard(font_size), ass, commands);
-			
-			// if row >= 0 {
+			// if row >= 9 {
 			// 	break;
 			// }
 

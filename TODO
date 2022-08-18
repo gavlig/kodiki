@@ -12,7 +12,9 @@
 3.3. (done!)use rustc parser to do syntax highlighting
 3.4. (done!)draw words separately for highlighting
 3.5. optionally draw letters separately?
-3.6. bug: indentation is broken after words became separate
+3.6. (fixed!)bug: indentation is broken after words became separate
+3.7. (done!)draw 3-4 more colors
+3.8. nonterminal tokens?
 4. (done!)better camera init position
 5. try smooth camera
 6. (done!)add infinite grid
@@ -20,7 +22,9 @@
 8. (done!)make slimmer origin axis
 9. camera: fit view to code
 10. line numbers
-11. scrolling by moving camera with snapping
+11. CAMERA
+11.1. scrolling by moving camera with snapping
+11.2. following text cursor
 12. calculate line offsets properly
 13. (done!)toggle hide mouse cursor on esc
 14. (done!)exit app on ctrl+esc
@@ -31,6 +35,10 @@
 19. spawn a background object/plane for code
 20. lines/words/letters need a background object for picking if we're going for that
 21. load fonts on startup or something
+22. visualize tabs and spaces
+23. simulate plugin that changes brace color
+24. goto line
+25. text cursor movement (originally on file)
 
 oof
 1. detect patterns in code editing and ask if repeat. (i was deleting Default:: a lot)
@@ -42,3 +50,4 @@ oof
 7. for rust show if main.rs and or cargo.toml missing via "empty" files with needed filenames
 8. show errors with lamps/whatever effects.
 9. mods will be epic. a corridor with each file as a door. flying spaceship with files/planets.
+10. attach words to their positions with joints and let them loose
