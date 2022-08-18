@@ -21,7 +21,7 @@ pub fn camera(
 			},
 			..default()
 		})
-		.insert			(FlyCamera{ yaw : 0.0, pitch : 0.0, enabled_follow : false, ..default() })
+		.insert			(FlyCamera{ yaw : 0.0, pitch : 0.0, enabled_follow : false, max_speed : 0.07, ..default() })
 		.insert_bundle	(PickingCameraBundle::default())
 		.id				();
 
