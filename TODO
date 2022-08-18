@@ -7,6 +7,11 @@
 2.3. (fixed!)bug: spacing is broken
 2.4. (fixed!)bug: long lines overlap
 3. color highlight
+3.1. (prototype done with lsp!)try to hook up rust-analyzer
+3.2. (done!)try to hook up rustc_ast and parser
+3.3. use rustc parser to do syntax highlighting
+3.4. draw words separately for highlighting
+3.5. optionally draw letters separately?
 4. (done!)better camera init position
 5. try smooth camera
 6. (done!)add infinite grid
@@ -28,3 +33,10 @@
 oof
 1. detect patterns in code editing and ask if repeat. (i was deleting Default:: a lot)
 2. text wrapping is a good opportunity to flex 3d
+3. filtered view with only certain stuff rendered
+4. ngon with a file on each face
+5. project visualization with nodes etc
+6. callstack visualization with links between files
+7. for rust show if main.rs and or cargo.toml missing via "empty" files with needed filenames
+8. show errors with lamps/whatever effects.
+9. mods will be epic. a corridor with each file as a door. flying spaceship with files/planets.
