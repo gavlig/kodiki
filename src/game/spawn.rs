@@ -9,6 +9,8 @@ use std :: io		:: { prelude :: * };
 use std :: fs		:: { File };
 use std :: path		:: { Path, PathBuf };
 
+use ttf2mesh :: { TTFFile, Value, Glyph };
+
 use super				:: { * };
 
 pub fn camera(
@@ -127,19 +129,20 @@ use std::io::{ Read };
 
 pub fn text_mesh(
 	text_in				: &String,
-	y					: f32,
+	pos					: Vec2,
+	font_handle			: &Handle<TextMeshFont>,
+	font_size			: SizeUnit,
+	color				: Color,
 	ass					: &Res<AssetServer>,
 	commands			: &mut Commands,
 ) {
-    let font: Handle<TextMeshFont> = ass.load("fonts/droidsans-mono.ttf"); //("fonts/FiraMono-Medium.ttf");
-
     commands.spawn_bundle(TextMeshBundle {
         text_mesh: TextMesh {
             text	: text_in.clone(),
             style	: TextMeshStyle {
-                font     : font.clone(),
-                font_size: SizeUnit::NonStandard(9.),
-                color    : Color::hex("bbbbbb").unwrap(),
+                font     : font_handle.clone(),
+                font_size: font_size,
+                color    : color,
                 ..Default::default()
             },
             size: TextMeshSize {
@@ -149,7 +152,7 @@ pub fn text_mesh(
             ..default()
         },
         transform: Transform {
-            translation: Vec3::new(0.0, y, 0.),
+            translation: Vec3::new(pos.x, pos.y, 0.),
             ..default()
         },
         ..default()
@@ -170,9 +173,9 @@ pub fn file_text(
 	commands		: &mut Commands
 ) {
 	// let source_file	= Some(PathBuf::from("playground/test_simple.rs"));
-	let source_file	= Some(PathBuf::from("playground/easy_spawn.rs"));
+	let source_file_path = Some(PathBuf::from("playground/easy_spawn.rs"));
 	// let source_file	= Some(PathBuf::from("playground/test_letter_spacing.rs"));
-	let load_name 	= file_path_to_string(&source_file);
+	let load_name 	= file_path_to_string(&source_file_path);
 	let path 		= Path::new(&load_name);
 	let display 	= path.display();
 
@@ -187,7 +190,15 @@ pub fn file_text(
 		Ok(_) 		=> println!("Opened file {} for reading", display.to_string()),
 	}
 
-	// let file_content_copy = file_content.clone();
+	// TODO: load fonts on startup or something to get it as asset here already
+	let font_handle : Handle<TextMeshFont> = ass.load("fonts/droidsans-mono.ttf"); //("fonts/FiraMono-Medium.ttf");
+
+	let font_file_path = Some(PathBuf::from("assets/fonts/droidsans-mono.ttf"));
+	let mut font = ttf2mesh::TTFFile::from_file(font_file_path.unwrap()).unwrap();
+	let mut reference_glyph : Glyph = font.glyph_from_char('a').unwrap();
+
+	let font_size = 9.;
+
 	rustc_span::create_session_if_not_set_then(Edition::Edition2021, |_| {
 		let parser_session = ParseSess::with_silent_emitter(Some(String::from("FATAL MESSAGE AGGHHH")));
 
@@ -204,70 +215,60 @@ pub fn file_text(
 			let line = String::from(line_raw);
 			let line_clone = line.clone();
 			
-			// let mut parser =
-			// rustc_parse::new_parser_from_source_str(
-			// 	&parser_session,
-			// 	FileName::Custom(String::from("temp")),
-			// 	line
-			// );
-
-			// let tokens = parser.parse_tokens();
-			// let mut cursor_parser = tokens.trees();
-
 			let mut cursor_lexer = rustc_lexer::tokenize(line_raw);
+
 			loop {
 				let token_meta = cursor_lexer.next();
 				if token_meta.is_none() {
 					break;
 				}
 				let token = token_meta.unwrap();
-				println!("lexer {:?}", token);
+				// println!("lexer {:?}", token);
 
 				let token_start : usize = column;
 				let token_end : usize = column + token.len as usize;
+				let token_str = &line_raw[token_start..token_end];
+
+				let mut color = Color::hex("bbbbbb").unwrap();
+
+				println!("{}", token_str);
 
 				// it's a word
 				match token.kind {
 					TokenKind::Ident => {
-						let sym = nfc_normalize(&line_raw[token_start..token_end]);
+						let sym = nfc_normalize(token_str);
 						let span = Span::with_root_ctxt(BytePos(token_start as u32), BytePos(token_end as u32));
-						
 						let token_kind_ast = rustc_ast::token::TokenKind::Ident(sym, false);
-						
 						let token_ast = rustc_ast::token::Token { kind: token_kind_ast, span: span };
+						
+						// println!("is keyword: {}", token_ast.is_used_keyword());
 
-						println!("token_ast: {:?}", token_ast.is_keyword(kw));
+						if token_ast.is_used_keyword() {
+							color = Color::hex("e06c75").unwrap();
+						}
 					},
-					TokenKind::Whitespace => {
+					_ => {
+					},
+				}
 
-					},
-					_ => (),
+				if token.kind != TokenKind::Whitespace {
+					let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar
+					let x		= (column as f32) * reference_glyph.inner.advance * font_size_scalar;
+					println!("x: {} column: {} advance: {} font_size: {}", x, column, reference_glyph.inner.advance, font_size);
+					let pos		= Vec2::new(x, y);
+					let mesh_string = String::from(token_str);
+
+					text_mesh	(&mesh_string, pos, &font_handle, SizeUnit::NonStandard(font_size), color, ass, commands);
 				}
 
 				column += token.len as usize;
 			}
 
-			// loop {
-			// 	let token_meta = cursor_parser.next();
-			// 	if token_meta.is_none() {
-			// 		break;
-			// 	}
-			// 	match token_meta.unwrap() {
-			// 		TokenTree::Token(token, spacing) => {
-			// 			println!("token: {:?} spacing: {:?}\n", token, spacing);
-			// 		},
-			// 		TokenTree::Delimited(delim_span, delimiter, token_stream) => {
-			// 			println!("delim_span: {:?} delimiter: {:?}\ntoken_stream: {:?}", delim_span, delimiter, token_stream);
-			// 		},
-			// 	}
-			// }
-
-
-			text_mesh	(&line_clone, y, ass, commands);
+			// text_mesh	(&line_clone, y, SizeUnit::NonStandard(font_size), ass, commands);
 			
-			if row >= 0 {
-				break;
-			}
+			// if row >= 0 {
+			// 	break;
+			// }
 
 			y			-= 0.13;
 			column		 = 0;

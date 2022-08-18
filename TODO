@@ -9,9 +9,10 @@
 3. color highlight
 3.1. (prototype done with lsp!)try to hook up rust-analyzer
 3.2. (done!)try to hook up rustc_ast and parser
-3.3. use rustc parser to do syntax highlighting
-3.4. draw words separately for highlighting
+3.3. (done!)use rustc parser to do syntax highlighting
+3.4. (done!)draw words separately for highlighting
 3.5. optionally draw letters separately?
+3.6. bug: indentation is broken after words became separate
 4. (done!)better camera init position
 5. try smooth camera
 6. (done!)add infinite grid
@@ -29,6 +30,7 @@
 18. pass material instead of font color to bevy_text_mesh
 19. spawn a background object/plane for code
 20. lines/words/letters need a background object for picking if we're going for that
+21. load fonts on startup or something
 
 oof
 1. detect patterns in code editing and ask if repeat. (i was deleting Default:: a lot)
