@@ -39,6 +39,9 @@
 23. simulate plugin that changes brace color
 24. goto line
 25. text cursor movement (originally on file)
+26. show scopes with vertical lines like vscode or something else
+27. rust-analyzer
+27.1. autocomplete
 
 oof
 1. detect patterns in code editing and ask if repeat. (i was deleting Default:: a lot)

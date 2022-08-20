@@ -1,6 +1,8 @@
 use bevy				:: { prelude :: *, window :: PresentMode };
 use bevy_mod_picking	:: { * };
 use iyes_loopless		:: { prelude :: * };
+use bevy_asset_loader	:: { prelude :: * };
+use bevy_text_mesh		:: { prelude :: * };
 
 use std					:: { path::PathBuf };
 use serde				:: { Deserialize, Serialize };
@@ -41,22 +43,38 @@ pub struct DespawnResource {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum GameMode {
+pub enum AppMode {
+	AssetLoading,
+	AssetsLoaded,
+	Main,
     Editor,
-    InGame,
 }
 
-pub struct GamePlugin;
+pub struct AppPlugin;
 
-impl Plugin for GamePlugin {
+impl Plugin for AppPlugin {
 	fn build(&self, app: &mut App) {
 		let clear_color = ClearColor(Color::hex("282c34").unwrap());
 
-        app	.add_loopless_state(GameMode::Editor)
+        app	
+			// .add_loopless_state(AppMode::AssetLoading)
 
-			.add_plugin		(PickingPlugin)
-			.add_plugin		(InteractablePickingPlugin)
-			.add_plugins	(HighlightablePickingPlugins)
+			// .add_loading_state(
+			// 	LoadingState::new(AppMode::AssetLoading)
+			// 		.continue_to_state(AppMode::AssetsLoaded)
+			// 		.with_collection::<FontAssets>(),
+			// )
+
+			// .add_system_set(
+			// 	ConditionSet::new()
+			// 		.run_in_state(MyStates::Next)
+			// 		.with_system(setup_world_system)
+			// 		.into(),
+			// )
+
+			// .add_plugin		(PickingPlugin)
+			// .add_plugin		(InteractablePickingPlugin)
+			// .add_plugins	(HighlightablePickingPlugins)
 
 			.insert_resource(clear_color)
 			
@@ -65,9 +83,12 @@ impl Plugin for GamePlugin {
 
 			.insert_resource(WindowDescriptor { present_mode : PresentMode::Mailbox, ..default() })
 			
- 			.add_startup_system(setup_lighting_system)
- 			.add_startup_system(setup_world_system)
- 			.add_startup_system_to_stage(StartupStage::PostStartup, setup_camera_system)
+ 			// .add_startup_system(setup_lighting_system)
+ 			// .add_startup_system(setup_world_system)
+ 			// .add_startup_system_to_stage(StartupStage::PostStartup, setup_camera_system)
+
+			// .add_enter_system(AppMode::AssetsLoaded, setup_world_system.run_if_resource_equals(AppMode::AssetsLoaded))
+			// .add_system_set	(SystemSet::on_enter(AppMode::MainMode).with_system(setup_world_system))
 
 			// input
 			.add_system		(cursor_visibility_system)
@@ -77,4 +98,3 @@ impl Plugin for GamePlugin {
  			;
 	}
 }
-
