@@ -18,7 +18,7 @@ pub fn camera(
 ) {
 	let camera = commands.spawn_bundle(Camera3dBundle {
 			transform: Transform {
-				translation: Vec3::new(1.5, 3., 7.),
+				translation: Vec3::new(1.5, 0., 7.),
 				..default()
 			},
 			..default()
@@ -110,6 +110,23 @@ pub fn fixed_cube(
 	.insert				(GlobalTransform::default());
 }
 
+pub fn fixed_sphere(
+	pose				: Transform,
+	radius				: f32,
+	color				: Color,
+	meshes				: &mut ResMut<Assets<Mesh>>,
+	materials			: &mut ResMut<Assets<StandardMaterial>>,
+	commands			: &mut Commands
+) {
+	commands.spawn_bundle(PbrBundle {
+		mesh			: meshes.add	(Mesh::from(render_shape::UVSphere { radius: radius, ..default() } )),
+		material		: materials.add	(StandardMaterial { base_color: color, unlit: true, ..default() }),
+		..default()
+	})
+	.insert				(pose)
+	.insert				(GlobalTransform::default());
+}
+
 extern crate rustc_ast;
 extern crate rustc_session;
 extern crate rustc_span;
@@ -128,26 +145,33 @@ use rustc_parse::lexer::nfc_normalize;
 use std::io::{ Read };
 
 pub fn file_text(
+	file_path		: &str,
 	font_handle 	: &Handle<TextMeshFont>,
 	mut font		: &mut ttf2mesh::TTFFile,
+	world_position	: Vec3,
 	commands		: &mut Commands
 ) {
-	let mut file_content = load_text_file("playground/easy_spawn.rs").unwrap();
+	let mut file_content = load_text_file(file_path).unwrap();
 
 	let mut reference_glyph : Glyph = font.glyph_from_char('a').unwrap();
 
 	let font_size = 9.;
 	let tab_size = 4; //.editorconfig
 
+	let header_string = format!("[{}] ", file_path);
+	text_mesh	(&header_string, world_position, &font_handle, SizeUnit::NonStandard(font_size), Color::hex("bbbbbb").unwrap(), commands);
+
 	rustc_span::create_session_if_not_set_then(Edition::Edition2021, |_| {
 		let parser_session = ParseSess::with_silent_emitter(Some(String::from("FATAL MESSAGE AGGHHH")));
 
 		let mut lines	= file_content.lines();
-		let mut y		= 5.0;
+		let mut y		= 0.0;
 		let mut column	= 0 as u32;
-		let mut row		= 0 as u32;
+		let mut row		= 2 as u32;
 
 		loop {
+			y			 = row as f32 * -0.13;
+
 			let line_raw = match lines.next() {
 				Some(l)	=> l,
 				None	=> break,
@@ -241,7 +265,7 @@ pub fn file_text(
 				// line/row numbers
 				if column == 0 {
 					let row_num_string = format!("{:>5} ", row);
-					let pos		= Vec2::new(0., y);
+					let pos		= world_position + (Vec3::Y * y);
 					text_mesh	(&row_num_string, pos, &font_handle, SizeUnit::NonStandard(font_size), Color::hex("495162").unwrap(), commands);
 				}
 
@@ -251,7 +275,7 @@ pub fn file_text(
 					let column_offset = (column as f32) * reference_glyph.inner.advance * font_size_scalar;
 					let x		= row_num_offset + column_offset;
 					// println!("x: {} column: {} advance: {} font_size: {}", x, column, reference_glyph.inner.advance, font_size);
-					let pos		= Vec2::new(x, y);
+					let pos		= world_position + Vec3::new(x, y, 0.0);
 					let mesh_string = String::from(token_str);
 
 					text_mesh	(&mesh_string, pos, &font_handle, SizeUnit::NonStandard(font_size), color, commands);
@@ -275,7 +299,6 @@ pub fn file_text(
 			// 	break;
 			// }
 
-			y			-= 0.13;
 			column		 = 0;
 			row			+= 1;
 		}
@@ -284,7 +307,7 @@ pub fn file_text(
 
 pub fn text_mesh(
 	text_in				: &String,
-	pos					: Vec2,
+	pos					: Vec3,
 	font_handle			: &Handle<TextMeshFont>,
 	font_size			: SizeUnit,
 	color				: Color,
@@ -306,7 +329,7 @@ pub fn text_mesh(
             ..default()
         },
         transform: Transform {
-            translation: Vec3::new(pos.x, pos.y, 0.),
+            translation: pos,
             ..default()
         },
         ..default()

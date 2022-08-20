@@ -21,11 +21,48 @@ pub fn setup_world_system(
 
 	// spawn::infinite_grid(&mut commands);
 
-	spawn::world_axis	(&mut meshes, &mut materials, &mut commands);
+	// spawn::world_axis	(&mut meshes, &mut materials, &mut commands);
+
+	spawn::fixed_sphere	(Transform::identity(), 0.02, Color::LIME_GREEN, &mut meshes, &mut materials, &mut commands);
 
 	// without font we can't go further
 	let mut font		= fonts.get_mut(&font_handles.droid_sans_mono).unwrap();
-	spawn::file_text	(&font_handles.droid_sans_mono, &mut font.ttf_font, &mut commands);
+	
+	let mut pos			= Vec3::new(0.0, 0.0, 0.0);
+	spawn::file_text	(
+		"playground/herringbone_spawn.rs",
+		&font_handles.droid_sans_mono,
+		&mut font.ttf_font,
+		pos,
+		&mut commands
+	);
+
+	// pos.x				+= 10.0;
+	// spawn::file_text	(
+	// 	"playground/rapier_parallel_solver_constraints.rs",
+	// 	&font_handles.droid_sans_mono,
+	// 	&mut font.ttf_font,
+	// 	pos,
+	// 	&mut commands
+	// );
+
+	// pos.x				+= 10.0;
+	// spawn::file_text	(
+	// 	"playground/rustc_ast.rs",
+	// 	&font_handles.droid_sans_mono,
+	// 	&mut font.ttf_font,
+	// 	pos,
+	// 	&mut commands
+	// );
+
+	// pos.x				+= 10.0;
+	// spawn::file_text	(
+	// 	"playground/salva_dfsph_solver.rs",
+	// 	&font_handles.droid_sans_mono,
+	// 	&mut font.ttf_font,
+	// 	pos,
+	// 	&mut commands
+	// );
 
 	commands.insert_resource(NextState(AppMode::Main));
 }
@@ -171,85 +208,6 @@ pub fn input_misc_system(
 			camera.enabled_rotation = toggle;
 		}
 	}
-}
-
-extern crate rustc_ast;
-extern crate rustc_error_messages;
-extern crate rustc_error_codes;
-extern crate rustc_errors;
-extern crate rustc_hash;
-extern crate rustc_hir;
-extern crate rustc_interface;
-extern crate rustc_session;
-extern crate rustc_span;
-extern crate rustc_parse;
-extern crate rustc_lexer;
-extern crate rustc_data_structures;
-
-use rustc_session::parse::{ ParseSess} ;
-use rustc_span::{ FileName, RealFileName };
-use rustc_span::edition::Edition;
-
-use rustc_ast::tokenstream::TokenTree;
-
-use std::io::{ Read };
-
-use std :: fs		:: { File };
-use std :: path		:: { Path, PathBuf };
-
-fn file_path_to_string(buf: &Option<PathBuf>) -> String {
-	match buf {
-		Some(path) => path.display().to_string(),
-		None => String::from(""),
-	}
-}
-
-fn parse_source_file() {
-    // let source_file	= Some(PathBuf::from("/home/gavlig/workspace/playground/easy_spawn.rs"));
-	let source_file	= Some(PathBuf::from("/home/gavlig/workspace/project_kodiki/kodiki/TODO"));
-	let load_name 	= file_path_to_string(&source_file);
-	let path 		= Path::new(&load_name);
-	let display 	= path.display();
-
-	let mut file = match File::open(&path) {
-		Err(why) 	=> { println!("couldn't open {}: {}", display, why); return; },
-		Ok(file) 	=> file,
-	};
-
-	let mut file_content = String::new();
-	match file.read_to_string(&mut file_content) {
-		Err(why)	=> { println!("couldn't read {}: {}", display, why); return; },
-		Ok(_) 		=> println!("Opened file {} for reading", display.to_string()),
-	}
-
-    rustc_span::create_session_if_not_set_then(Edition::Edition2021, |_| {
-        println!("inside create_session");
-
-        let parser_session = ParseSess::with_silent_emitter(Some(String::from("FATAL MESSAGE AGGHHH")));
-        let file_name = FileName::Real(RealFileName::LocalPath(source_file.unwrap()));
-
-        let mut parser = rustc_parse::new_parser_from_source_str(&parser_session, file_name, file_content);
-
-        let tokens = parser.parse_tokens();
-        let mut cursor = tokens.trees();
-
-        loop {
-            let token_meta = cursor.next();
-            if token_meta.is_none() {
-                println!("last token parsed! screw you guys i'm going home");
-                break;
-            }
-            let token_meta = token_meta.unwrap();
-            match token_meta {
-                TokenTree::Token(token, spacing) => {
-                    println!("token: {:?} spacing: {:?}\n", token, spacing);
-                },
-                TokenTree::Delimited(delim_span, delimiter, token_stream) => {
-                    println!("delim_span: {:?} delimiter: {:?}\ntoken_stream: {:?}", delim_span, delimiter, token_stream);
-                },
-            }
-        }
-    });
 }
 
 fn check_selection_recursive(
