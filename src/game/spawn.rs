@@ -127,69 +127,12 @@ use rustc_parse::lexer::nfc_normalize;
 
 use std::io::{ Read };
 
-pub fn text_mesh(
-	text_in				: &String,
-	pos					: Vec2,
-	font_handle			: &Handle<TextMeshFont>,
-	font_size			: SizeUnit,
-	color				: Color,
-	commands			: &mut Commands,
-) {
-    commands.spawn_bundle(TextMeshBundle {
-        text_mesh: TextMesh {
-            text	: text_in.clone(),
-            style	: TextMeshStyle {
-                font     : font_handle.clone(),
-                font_size: font_size,
-                color    : color,
-                ..Default::default()
-            },
-            size: TextMeshSize {
-				wrapping : false,
-                ..default()
-            },
-            ..default()
-        },
-        transform: Transform {
-            translation: Vec3::new(pos.x, pos.y, 0.),
-            ..default()
-        },
-        ..default()
-    })
-
-	.insert_bundle(PickableBundle::default());
-}
-
-fn file_path_to_string(buf: &Option<PathBuf>) -> String {
-	match buf {
-		Some(path) => path.display().to_string(),
-		None => String::from(""),
-	}
-}
-
 pub fn file_text(
 	font_handle 	: &Handle<TextMeshFont>,
 	mut font		: &mut ttf2mesh::TTFFile,
 	commands		: &mut Commands
 ) {
-	// let source_file_path	= Some(PathBuf::from("playground/test_tabs.rs"));
-	// let source_file_path	= Some(PathBuf::from("playground/test_simple.rs"));
-	let source_file_path = Some(PathBuf::from("playground/easy_spawn.rs"));
-	// let source_file_path	= Some(PathBuf::from("playground/test_letter_spacing.rs"));
-	let load_name 	= file_path_to_string(&source_file_path);
-	let path 		= Path::new(&load_name);
-	let display 	= path.display();
-
-	let mut file = match File::open(&path) {
-		Err(why) 	=> { println!("couldn't open {}: {}", display, why); return; },
-		Ok(file) 	=> file,
-	};
-
-	let mut file_content = String::new();
-	match file.read_to_string(&mut file_content) {
-		Err(why)	=> { println!("couldn't read {}: {}", display, why); return; },
-		Ok(_) 		=> println!("Opened file {} for reading", display.to_string()),
-	}
+	let mut file_content = load_text_file("playground/easy_spawn.rs").unwrap();
 
 	let mut reference_glyph : Glyph = font.glyph_from_char('a').unwrap();
 
@@ -328,6 +271,7 @@ pub fn file_text(
 				token_offset += token.len as usize; // amount of tokens != amount of symbols so we need to keep track of both 
 			}
 
+			// Cheat/Debug
 			// if row >= 9 {
 			// 	break;
 			// }
@@ -336,7 +280,37 @@ pub fn file_text(
 			column		 = 0;
 			row			+= 1;
 		}
-
-		
     });
+}
+
+pub fn text_mesh(
+	text_in				: &String,
+	pos					: Vec2,
+	font_handle			: &Handle<TextMeshFont>,
+	font_size			: SizeUnit,
+	color				: Color,
+	commands			: &mut Commands,
+) {
+    commands.spawn_bundle(TextMeshBundle {
+        text_mesh: TextMesh {
+            text	: text_in.clone(),
+            style	: TextMeshStyle {
+                font     : font_handle.clone(),
+                font_size: font_size,
+                color    : color,
+                ..default()
+            },
+            size: TextMeshSize {
+				wrapping : false,
+                ..default()
+            },
+            ..default()
+        },
+        transform: Transform {
+            translation: Vec3::new(pos.x, pos.y, 0.),
+            ..default()
+        },
+        ..default()
+    })
+	.insert_bundle(PickableBundle::default());
 }
