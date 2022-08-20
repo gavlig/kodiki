@@ -180,7 +180,6 @@ pub fn file_text(
 						let token_kind_ast = rustc_ast::token::TokenKind::Ident(sym, false);
 						let token_ast = rustc_ast::token::Token { kind: token_kind_ast, span: span };
 
-
 						if token_ast.is_used_keyword() {
 							color = Color::hex("e06c75").unwrap();
 						}
