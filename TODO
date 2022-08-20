@@ -20,21 +20,22 @@
 6. (done!)add infinite grid
 7. (done!)better init camera position
 8. (done!)make slimmer origin axis
-9. bug: when cursor is hidden mouse picking still works
+(!)9. bug: when cursor is hidden mouse picking still works
 10. (done!)line numbers
 11. CAMERA
-11.1. scrolling by moving camera with snapping
-11.2. following text cursor
+(!)11.1. smooth scrolling by moving camera with snapping to lines
+11.2. following text cursor when out of visibility
 11.3. (done!)orthographic projection
 11.4. fit view to code
 11.5. goto line
+(!)11.6. speed up movement optionally (scroll and shift)
 12. hide mouse by timeout (after inactivity in movement department)
 13. (done!)toggle hide mouse cursor on esc
 14. (done!)exit app on ctrl+esc
 15. (done!)highlightable/pickable lines
 16. hide mouse by gesture?
 17. TEXT EDITOR
-17.1. Movable cursor attached to file with row+col as position
+(!)17.1. Movable cursor attached to file with row+col as position
 17.2. Erase symbols with backspace
 17.3. Type symbols
 18. pass material instead of font color to bevy_text_mesh
@@ -44,13 +45,18 @@
 
 21. (done!)load fonts on startup or something
 
-22. visualize tabs and spaces
-23. simulate vscode plugin that changes brace color
-26. show scopes with vertical lines like vscode or something else
+22. TEXT VIEW
+22.1. visualize tabs and spaces
+22.2. simulate vscode plugin that changes brace color
+22.3. show scopes with vertical lines like vscode or something else
+22.4. (done!)show file name on top of it
 
-27. RUST-ANALYZER
-27.1. autocomplete
-28. 
+23. RUST-ANALYZER
+23.1. autocomplete
+23.2. outline 
+
+24. open files without hardcode
+25. bevy console
 
 oof
 1. detect patterns in code editing and ask if repeat. (i was deleting Default:: a lot)
