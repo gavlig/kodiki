@@ -50,6 +50,12 @@ pub enum AppMode {
     Editor,
 }
 
+#[derive(AssetCollection)]
+struct FontAssets {
+    #[asset(path = "fonts/droidsans-mono.ttf")]
+    single_file: Handle<Image>,
+}
+
 pub struct AppPlugin;
 
 impl Plugin for AppPlugin {
@@ -57,24 +63,17 @@ impl Plugin for AppPlugin {
 		let clear_color = ClearColor(Color::hex("282c34").unwrap());
 
         app	
-			// .add_loopless_state(AppMode::AssetLoading)
+			.add_loopless_state(AppMode::AssetLoading)
 
-			// .add_loading_state(
-			// 	LoadingState::new(AppMode::AssetLoading)
-			// 		.continue_to_state(AppMode::AssetsLoaded)
-			// 		.with_collection::<FontAssets>(),
-			// )
+			.add_loading_state(
+				LoadingState::new(AppMode::AssetLoading)
+					.continue_to_state(AppMode::AssetsLoaded)
+					.with_collection::<FontAssets>(),
+			)
 
-			// .add_system_set(
-			// 	ConditionSet::new()
-			// 		.run_in_state(MyStates::Next)
-			// 		.with_system(setup_world_system)
-			// 		.into(),
-			// )
-
-			// .add_plugin		(PickingPlugin)
-			// .add_plugin		(InteractablePickingPlugin)
-			// .add_plugins	(HighlightablePickingPlugins)
+			.add_plugin		(PickingPlugin)
+			.add_plugin		(InteractablePickingPlugin)
+			.add_plugins	(HighlightablePickingPlugins)
 
 			.insert_resource(clear_color)
 			
@@ -83,12 +82,13 @@ impl Plugin for AppPlugin {
 
 			.insert_resource(WindowDescriptor { present_mode : PresentMode::Mailbox, ..default() })
 			
- 			// .add_startup_system(setup_lighting_system)
- 			// .add_startup_system(setup_world_system)
- 			// .add_startup_system_to_stage(StartupStage::PostStartup, setup_camera_system)
-
-			// .add_enter_system(AppMode::AssetsLoaded, setup_world_system.run_if_resource_equals(AppMode::AssetsLoaded))
-			// .add_system_set	(SystemSet::on_enter(AppMode::MainMode).with_system(setup_world_system))
+			.add_enter_system_set(
+				AppMode::AssetsLoaded,
+				SystemSet::new()
+				.with_system(setup_world_system)
+				.with_system(setup_lighting_system)
+				.with_system(setup_camera_system)
+			)
 
 			// input
 			.add_system		(cursor_visibility_system)

@@ -89,52 +89,52 @@ pub fn cursor_visibility_system(
 	key				: Res<Input<KeyCode>>,
 	time			: Res<Time>,
 	mut q_camera	: Query<&mut FlyCamera>,
-		// app_mode	: Res<CurrentState<AppMode>>,
-	// mut picking		: ResMut<CurrentState<PickingPluginsState>>,
+		app_mode	: Res<CurrentState<AppMode>>,
+	mut picking		: ResMut<PickingPluginsState>,
 	mut	commands	: Commands
 ) {
-	// let window 		= windows.get_primary_mut();
-	// if window.is_none() {
-	// 	return;
-	// }
-	// let window		= window.unwrap();
-	// let cursor_visible = window.cursor_visible();
-	// let window_id	= window.id();
+	let window 		= windows.get_primary_mut();
+	if window.is_none() {
+		return;
+	}
+	let window		= window.unwrap();
+	let cursor_visible = window.cursor_visible();
+	let window_id	= window.id();
 
-	// let mut set_cursor_visibility = |v| {
-	// 	window.set_cursor_visibility(v);
-	// 	window.set_cursor_lock_mode(!v);
-	// };
+	let mut set_cursor_visibility = |v| {
+		window.set_cursor_visibility(v);
+		window.set_cursor_lock_mode(!v);
+	};
 
-	// let mut set_visibility = |v| {
-	// 	set_cursor_visibility(v);
+	let mut set_visibility = |v| {
+		set_cursor_visibility(v);
 
-	// 	picking.enable_picking = v;
-	// 	picking.enable_highlighting = v;
-	// 	picking.enable_interacting = v;
+		picking.enable_picking = v;
+		picking.enable_highlighting = v;
+		picking.enable_interacting = v;
 
-	// 	commands.insert_resource(NextState(
-	// 		if v { AppMode::Editor } else { AppMode::Main }
-	// 	));
-	// };
+		commands.insert_resource(NextState(
+			if v { AppMode::Editor } else { AppMode::Main }
+		));
+	};
 
-	// if key.just_pressed(KeyCode::Escape) {
-	// 	let toggle 	= !cursor_visible;
-	// 	set_visibility(toggle);
-	// }
+	if key.just_pressed(KeyCode::Escape) {
+		let toggle 	= !cursor_visible;
+		set_visibility(toggle);
+	}
 
-	// if btn.just_pressed(MouseButton::Left) && app_mode.0 == AppMode::Main{
-	// 	set_cursor_visibility(false);
-	// }
+	if btn.just_pressed(MouseButton::Left) && app_mode.0 == AppMode::Main{
+		set_cursor_visibility(false);
+	}
 
-	// // #[cfg(debug_assertions)]
-	// if time.seconds_since_startup() > 1.0 {
-	// 	let is_editor = app_mode.0 == AppMode::Editor;
-	// 	set_cursor_visibility(is_editor);
+	// #[cfg(debug_assertions)]
+	if time.seconds_since_startup() > 1.0 {
+		let is_editor = app_mode.0 == AppMode::Editor;
+		set_cursor_visibility(is_editor);
 
-	// 	let mut camera 	= q_camera.single_mut();
-	// 	camera.enabled_rotation = !is_editor;
-	// }
+		let mut camera 	= q_camera.single_mut();
+		camera.enabled_rotation = !is_editor;
+	}
 }
 
 pub fn input_misc_system(
