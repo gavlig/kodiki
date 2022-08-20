@@ -59,10 +59,10 @@ pub fn world_axis(
 	commands		: &mut Commands,
 ) {
 	let min_dim		= 0.02;
-	let max_dim		= 1.0;
+	let max_dim		= 0.2;
 	let min_color	= 0.1;
 	let max_color	= 0.8;
-	let offset		= 0.5;
+	let offset		= 0.1;
 
 	// X
 	commands.spawn_bundle(PbrBundle {
