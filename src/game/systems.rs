@@ -150,7 +150,17 @@ pub fn input_misc_system(
 		q_selection	: Query<&Selection>,
 		q_children	: Query<&Children>,
 ) {
-	for mut camera in q_camera.iter_mut() {
+	if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Escape) {
+		exit.send(AppExit);
+	}
+
+	if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Key1) {
+		// parse_source_file();
+	}
+
+	if !q_camera.is_empty() {
+		let (mut camera) = q_camera.single_mut();
+
 		if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Space) {
 			let toggle 	= !camera.enabled_follow;
 			camera.enabled_follow = toggle;
@@ -160,14 +170,6 @@ pub fn input_misc_system(
 			let toggle 	= !camera.enabled_rotation;
 			camera.enabled_rotation = toggle;
 		}
-	}
-
-	if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Escape) {
-		exit.send(AppExit);
-	}
-
-	if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Key1) {
-		// parse_source_file();
 	}
 }
 
@@ -203,7 +205,8 @@ fn file_path_to_string(buf: &Option<PathBuf>) -> String {
 }
 
 fn parse_source_file() {
-    let source_file	= Some(PathBuf::from("/home/gavlig/workspace/playground/easy_spawn.rs"));
+    // let source_file	= Some(PathBuf::from("/home/gavlig/workspace/playground/easy_spawn.rs"));
+	let source_file	= Some(PathBuf::from("/home/gavlig/workspace/project_kodiki/kodiki/TODO"));
 	let load_name 	= file_path_to_string(&source_file);
 	let path 		= Path::new(&load_name);
 	let display 	= path.display();

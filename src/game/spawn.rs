@@ -191,8 +191,6 @@ pub fn file_text(
 		Ok(_) 		=> println!("Opened file {} for reading", display.to_string()),
 	}
 
-	// let font_file_path = Some(PathBuf::from("assets/fonts/droidsans-mono.ttf"));
-	// let mut font = ttf2mesh::TTFFile::from_file(font_file_path.unwrap()).unwrap();
 	let mut reference_glyph : Glyph = font.glyph_from_char('a').unwrap();
 
 	let font_size = 9.;
