@@ -6,7 +6,7 @@
 2.2. (done!)support tabs
 2.3. (fixed!)bug: spacing is broken
 2.4. (fixed!)bug: long lines overlap
-3. color highlight
+3. (done!)color highlight
 3.1. (prototype done with lsp!)try to hook up rust-analyzer
 3.2. (done!)try to hook up rustc_ast and parser
 3.3. (done!)use rustc parser to do syntax highlighting
@@ -42,6 +42,7 @@
 26. show scopes with vertical lines like vscode or something else
 27. rust-analyzer
 27.1. autocomplete
+28. bug: when cursor is hidden mouse picking still works
 
 oof
 1. detect patterns in code editing and ask if repeat. (i was deleting Default:: a lot)

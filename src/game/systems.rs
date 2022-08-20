@@ -12,16 +12,20 @@ use super           :: { * };
 pub fn setup_world_system(
 	mut	meshes			: ResMut<Assets<Mesh>>,
 	mut	materials		: ResMut<Assets<StandardMaterial>>,
+		font_handles	: Res<FontAssetHandles>,
+	mut fonts			: ResMut<Assets<TextMeshFont>>,
 		ass				: Res<AssetServer>,
 	mut commands		: Commands,
 ) {
 	spawn::camera		(&mut commands);
 
-	spawn::infinite_grid(&mut commands);
+	// spawn::infinite_grid(&mut commands);
 
 	spawn::world_axis	(&mut meshes, &mut materials, &mut commands);
 
-	spawn::file_text	(&ass, &mut commands);
+	// without font we can't go further
+	let mut font		= fonts.get_mut(&font_handles.droid_sans_mono).unwrap();
+	spawn::file_text	(&font_handles.droid_sans_mono, &mut font.ttf_font, &mut commands);
 
 	commands.insert_resource(NextState(AppMode::Main));
 }

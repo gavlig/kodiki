@@ -51,9 +51,9 @@ pub enum AppMode {
 }
 
 #[derive(AssetCollection)]
-struct FontAssets {
-    #[asset(path = "fonts/droidsans-mono.ttf")]
-    single_file: Handle<Image>,
+pub struct FontAssetHandles {
+	#[asset(path = "fonts/droidsans-mono.ttf")]
+	pub droid_sans_mono: Handle<TextMeshFont>,
 }
 
 pub struct AppPlugin;
@@ -68,7 +68,7 @@ impl Plugin for AppPlugin {
 			.add_loading_state(
 				LoadingState::new(AppMode::AssetLoading)
 					.continue_to_state(AppMode::AssetsLoaded)
-					.with_collection::<FontAssets>(),
+					.with_collection::<FontAssetHandles>(),
 			)
 
 			.add_plugin		(PickingPlugin)
