@@ -25,6 +25,7 @@
 11. CAMERA
 11.1. scrolling by moving camera with snapping
 11.2. following text cursor
+11.3. (done!)orthographic projection
 12. calculate line offsets properly
 13. (done!)toggle hide mouse cursor on esc
 14. (done!)exit app on ctrl+esc
