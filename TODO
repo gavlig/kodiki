@@ -16,34 +16,41 @@
 3.7. (done!)draw 3-4 more colors
 3.8. nonterminal tokens?
 4. (done!)better camera init position
-5. try smooth camera
+5. (done!)try smooth camera (not worth it for now)
 6. (done!)add infinite grid
 7. (done!)better init camera position
 8. (done!)make slimmer origin axis
-9. camera: fit view to code
+9. bug: when cursor is hidden mouse picking still works
 10. (done!)line numbers
 11. CAMERA
 11.1. scrolling by moving camera with snapping
 11.2. following text cursor
 11.3. (done!)orthographic projection
-12. calculate line offsets properly
+11.4. fit view to code
+11.5. goto line
+12. hide mouse by timeout (after inactivity in movement department)
 13. (done!)toggle hide mouse cursor on esc
 14. (done!)exit app on ctrl+esc
-15. unhide mouse by timeout (after inactivity in movement department)
+15. (done!)highlightable/pickable lines
 16. hide mouse by gesture?
-17. (done!)highlightable/pickable lines
+17. TEXT EDITOR
+17.1. Movable cursor attached to file with row+col as position
+17.2. Erase symbols with backspace
+17.3. Type symbols
 18. pass material instead of font color to bevy_text_mesh
+
 19. spawn a background object/plane for code
 20. lines/words/letters need a background object for picking if we're going for that
-21. load fonts on startup or something
+
+21. (done!)load fonts on startup or something
+
 22. visualize tabs and spaces
-23. simulate plugin that changes brace color
-24. goto line
-25. text cursor movement (originally on file)
+23. simulate vscode plugin that changes brace color
 26. show scopes with vertical lines like vscode or something else
-27. rust-analyzer
+
+27. RUST-ANALYZER
 27.1. autocomplete
-28. bug: when cursor is hidden mouse picking still works
+28. 
 
 oof
 1. detect patterns in code editing and ask if repeat. (i was deleting Default:: a lot)
@@ -52,7 +59,6 @@ oof
 4. ngon with a file on each face
 5. project visualization with nodes etc
 6. callstack visualization with links between files
-7. for rust show if main.rs and or cargo.toml missing via "empty" files with needed filenames
-8. show errors with lamps/whatever effects.
-9. mods will be epic. a corridor with each file as a door. flying spaceship with files/planets.
-10. attach words to their positions with joints and let them loose
+7. show errors with lamps/whatever effects.
+8. mods will be epic. a corridor with each file as a door. flying spaceship with files/planets.
+9. attach words to their positions with joints and let them loose
