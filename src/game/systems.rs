@@ -12,16 +12,22 @@ use super           :: { * };
 pub fn setup_world_system(
 	mut	meshes			: ResMut<Assets<Mesh>>,
 	mut	materials		: ResMut<Assets<StandardMaterial>>,
+		font_handles	: Res<FontAssetHandles>,
+	mut fonts			: ResMut<Assets<TextMeshFont>>,
 		ass				: Res<AssetServer>,
 	mut commands		: Commands,
 ) {
 	spawn::camera		(&mut commands);
 
-	spawn::infinite_grid(&mut commands);
+	// spawn::infinite_grid(&mut commands);
 
 	spawn::world_axis	(&mut meshes, &mut materials, &mut commands);
 
-	spawn::file_text	(&ass, &mut commands);
+	// without font we can't go further
+	let mut font		= fonts.get_mut(&font_handles.droid_sans_mono).unwrap();
+	spawn::file_text	(&font_handles.droid_sans_mono, &mut font.ttf_font, &mut commands);
+
+	commands.insert_resource(NextState(AppMode::Main));
 }
 
 pub fn setup_lighting_system(
@@ -87,7 +93,7 @@ pub fn cursor_visibility_system(
 	key				: Res<Input<KeyCode>>,
 	time			: Res<Time>,
 	mut q_camera	: Query<&mut FlyCamera>,
-		game_mode	: Res<CurrentState<GameMode>>,
+		app_mode	: Res<CurrentState<AppMode>>,
 	mut picking		: ResMut<PickingPluginsState>,
 	mut	commands	: Commands
 ) {
@@ -112,7 +118,7 @@ pub fn cursor_visibility_system(
 		picking.enable_interacting = v;
 
 		commands.insert_resource(NextState(
-			if v { GameMode::Editor } else { GameMode::InGame }
+			if v { AppMode::Editor } else { AppMode::Main }
 		));
 	};
 
@@ -121,13 +127,13 @@ pub fn cursor_visibility_system(
 		set_visibility(toggle);
 	}
 
-	if btn.just_pressed(MouseButton::Left) && game_mode.0 == GameMode::InGame{
+	if btn.just_pressed(MouseButton::Left) && app_mode.0 == AppMode::Main{
 		set_cursor_visibility(false);
 	}
 
 	// #[cfg(debug_assertions)]
 	if time.seconds_since_startup() > 1.0 {
-		let is_editor = game_mode.0 == GameMode::Editor;
+		let is_editor = app_mode.0 == AppMode::Editor;
 		set_cursor_visibility(is_editor);
 
 		let mut camera 	= q_camera.single_mut();

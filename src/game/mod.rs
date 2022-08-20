@@ -1,6 +1,8 @@
 use bevy				:: { prelude :: *, window :: PresentMode };
 use bevy_mod_picking	:: { * };
 use iyes_loopless		:: { prelude :: * };
+use bevy_asset_loader	:: { prelude :: * };
+use bevy_text_mesh		:: { prelude :: * };
 
 use std					:: { path::PathBuf };
 use serde				:: { Deserialize, Serialize };
@@ -41,18 +43,33 @@ pub struct DespawnResource {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum GameMode {
+pub enum AppMode {
+	AssetLoading,
+	AssetsLoaded,
+	Main,
     Editor,
-    InGame,
 }
 
-pub struct GamePlugin;
+#[derive(AssetCollection)]
+pub struct FontAssetHandles {
+	#[asset(path = "fonts/droidsans-mono.ttf")]
+	pub droid_sans_mono: Handle<TextMeshFont>,
+}
 
-impl Plugin for GamePlugin {
+pub struct AppPlugin;
+
+impl Plugin for AppPlugin {
 	fn build(&self, app: &mut App) {
 		let clear_color = ClearColor(Color::hex("282c34").unwrap());
 
-        app	.add_loopless_state(GameMode::Editor)
+        app	
+			.add_loopless_state(AppMode::AssetLoading)
+
+			.add_loading_state(
+				LoadingState::new(AppMode::AssetLoading)
+					.continue_to_state(AppMode::AssetsLoaded)
+					.with_collection::<FontAssetHandles>(),
+			)
 
 			.add_plugin		(PickingPlugin)
 			.add_plugin		(InteractablePickingPlugin)
@@ -65,9 +82,13 @@ impl Plugin for GamePlugin {
 
 			.insert_resource(WindowDescriptor { present_mode : PresentMode::Mailbox, ..default() })
 			
- 			.add_startup_system(setup_lighting_system)
- 			.add_startup_system(setup_world_system)
- 			.add_startup_system_to_stage(StartupStage::PostStartup, setup_camera_system)
+			.add_enter_system_set(
+				AppMode::AssetsLoaded,
+				SystemSet::new()
+				.with_system(setup_world_system)
+				.with_system(setup_lighting_system)
+				.with_system(setup_camera_system)
+			)
 
 			// input
 			.add_system		(cursor_visibility_system)
@@ -77,4 +98,3 @@ impl Plugin for GamePlugin {
  			;
 	}
 }
-

@@ -133,7 +133,6 @@ pub fn text_mesh(
 	font_handle			: &Handle<TextMeshFont>,
 	font_size			: SizeUnit,
 	color				: Color,
-	ass					: &Res<AssetServer>,
 	commands			: &mut Commands,
 ) {
     commands.spawn_bundle(TextMeshBundle {
@@ -169,7 +168,8 @@ fn file_path_to_string(buf: &Option<PathBuf>) -> String {
 }
 
 pub fn file_text(
-	ass				: &Res<AssetServer>,
+	font_handle 	: &Handle<TextMeshFont>,
+	mut font		: &mut ttf2mesh::TTFFile,
 	commands		: &mut Commands
 ) {
 	// let source_file_path	= Some(PathBuf::from("playground/test_tabs.rs"));
@@ -191,11 +191,8 @@ pub fn file_text(
 		Ok(_) 		=> println!("Opened file {} for reading", display.to_string()),
 	}
 
-	// TODO: load fonts on startup or something to get it as asset here already
-	let font_handle : Handle<TextMeshFont> = ass.load("fonts/droidsans-mono.ttf"); //("fonts/FiraMono-Medium.ttf");
-
-	let font_file_path = Some(PathBuf::from("assets/fonts/droidsans-mono.ttf"));
-	let mut font = ttf2mesh::TTFFile::from_file(font_file_path.unwrap()).unwrap();
+	// let font_file_path = Some(PathBuf::from("assets/fonts/droidsans-mono.ttf"));
+	// let mut font = ttf2mesh::TTFFile::from_file(font_file_path.unwrap()).unwrap();
 	let mut reference_glyph : Glyph = font.glyph_from_char('a').unwrap();
 
 	let font_size = 9.;
@@ -308,7 +305,7 @@ pub fn file_text(
 					let pos		= Vec2::new(x, y);
 					let mesh_string = String::from(token_str);
 
-					text_mesh	(&mesh_string, pos, &font_handle, SizeUnit::NonStandard(font_size), color, ass, commands);
+					text_mesh	(&mesh_string, pos, &font_handle, SizeUnit::NonStandard(font_size), color, commands);
 				}
 
 				let mut len : u32 = token.len;
