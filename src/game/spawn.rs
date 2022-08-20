@@ -296,9 +296,18 @@ pub fn file_text(
 
 				// println!("[{} {} {}] [{}]", column, token_offset, token.len, token_str);
 
+				// line/row numbers
+				if column == 0 {
+					let row_num_string = format!("{:>5} ", row);
+					let pos		= Vec2::new(0., y);
+					text_mesh	(&row_num_string, pos, &font_handle, SizeUnit::NonStandard(font_size), Color::hex("495162").unwrap(), commands);
+				}
+
 				if token.kind != TokenKind::Whitespace {
 					let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
-					let x		= (column as f32) * reference_glyph.inner.advance * font_size_scalar;
+					let row_num_offset = 6. * reference_glyph.inner.advance * font_size_scalar; 
+					let column_offset = (column as f32) * reference_glyph.inner.advance * font_size_scalar;
+					let x		= row_num_offset + column_offset;
 					// println!("x: {} column: {} advance: {} font_size: {}", x, column, reference_glyph.inner.advance, font_size);
 					let pos		= Vec2::new(x, y);
 					let mesh_string = String::from(token_str);
