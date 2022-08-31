@@ -1,7 +1,9 @@
 use bevy				:: prelude :: { * };
+use bevy				:: core_pipeline :: clear_color :: ClearColorConfig;
 use bevy_text_mesh		:: prelude :: { * };
 use bevy_fly_camera		:: { FlyCamera };
-use bevy_infinite_grid	:: { InfiniteGridBundle };
+// use bevy_infinite_grid	:: { InfiniteGridBundle };
+use bevy_shadertoy_wgsl	:: { * };
 
 use bevy::render::mesh::shape as render_shape;
 
@@ -16,18 +18,29 @@ use super				:: { * };
 pub fn camera(
 	commands			: &mut Commands
 ) {
+	// for 2d background
+	commands.spawn_bundle(Camera2dBundle::default());
+
 	let camera = commands.spawn_bundle(Camera3dBundle {
 			transform: Transform {
 				translation: Vec3::new(1.5, 0., 7.),
 				..default()
 			},
+			camera_3d: Camera3d {
+				// don't clear the color while rendering this camera
+				clear_color: ClearColorConfig::None,
+				..default()
+			},
+			camera: Camera {
+				// renders after / on top of the main camera
+				priority: 1,
+				..default()
+			},
 			..default()
 		})
 		.insert			(FlyCamera{ yaw : 0.0, pitch : 0.0, enabled_follow : false, max_speed : 0.07, ..default() })
-		.insert_bundle	(PickingCameraBundle::default())
+		// .insert_bundle	(PickingCameraBundle::default())
 		.id				();
-
-	// println!			("camera Entity ID {:?}", camera);
 }
 
 pub fn ground(
@@ -90,7 +103,7 @@ pub fn world_axis(
 pub fn infinite_grid(
 	commands		: &mut Commands,
 ) {
-	commands.spawn_bundle(InfiniteGridBundle::default());
+	// commands.spawn_bundle(InfiniteGridBundle::default());
 }
 
 pub fn fixed_cube(

@@ -2,6 +2,7 @@ use bevy				:: { prelude :: *, window :: PresentMode };
 use bevy_mod_picking	:: { * };
 use iyes_loopless		:: { prelude :: * };
 use bevy_text_mesh		:: { prelude :: * };
+use bevy_shadertoy_wgsl :: { * };
 
 use std					:: { path::PathBuf };
 use serde				:: { Deserialize, Serialize };
@@ -62,12 +63,17 @@ impl Plugin for AppPlugin {
 	fn build(&self, app: &mut App) {
 		let clear_color = ClearColor(Color::hex("282c34").unwrap());
 
+		let w = 800;
+    	let h = 600;
+
         app	
 			.add_loopless_state(AppMode::AssetLoading)
 
 			.insert_resource(FontAssetHandles::default())
 			.add_startup_system(load_assets)
 			.add_system		(asset_loading_events)
+
+			.add_startup_system(setup_shadertoy)
 
 			.add_plugin		(PickingPlugin)
 			.add_plugin		(InteractablePickingPlugin)
@@ -78,7 +84,22 @@ impl Plugin for AppPlugin {
 			.insert_resource(Msaa			::default())
 			.insert_resource(DespawnResource::default())
 
-			.insert_resource(WindowDescriptor { present_mode : PresentMode::Mailbox, ..default() })
+			.insert_resource(WindowDescriptor {
+				width : w as f32,
+            	height : h as f32,
+				present_mode : PresentMode::Mailbox,
+				scale_factor_override : Some(1.0),
+				// decorations: false,
+				// mode: WindowMode::SizedFullscreen,
+				..default()
+			})
+
+			.insert_resource(ShadertoyCanvas {
+				width: w,
+				height: h,
+				borders: 0.0,
+				position: Vec3::new(0.0, 0.0, 0.0),
+			})
 			
 			.add_enter_system_set(
 				AppMode::AssetsLoaded,

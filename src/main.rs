@@ -4,7 +4,8 @@
 use bevy			:: prelude :: { * };
 use bevy_fly_camera	:: { FlyCameraPlugin };
 use bevy_text_mesh	:: prelude :: { * };
-use bevy_infinite_grid :: { InfiniteGridPlugin };
+// use bevy_infinite_grid :: { InfiniteGridPlugin };
+use bevy_shadertoy_wgsl	:: { * };
 
 mod game;
 use game			:: { AppPlugin };
@@ -17,6 +18,7 @@ fn main() {
 		.add_plugin(FlyCameraPlugin)
 		.add_plugin(TextMeshPlugin)
 		// .add_plugin(InfiniteGridPlugin)
+		.add_plugin(ShadertoyPlugin)
 
 		.run();
 }

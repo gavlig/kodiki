@@ -3,6 +3,7 @@ use bevy			:: { app::AppExit };
 use bevy_fly_camera	:: { FlyCamera };
 use bevy_mod_picking:: { * };
 use iyes_loopless	:: { prelude :: * };
+use bevy_shadertoy_wgsl :: { * };
 
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::json;
@@ -270,6 +271,20 @@ pub fn asset_loading_events(
             }
         }
     }
+}
+
+pub fn setup_shadertoy(
+	mut commands: Commands,
+	asset_server: Res<AssetServer>,
+	mut st_res: ResMut<ShadertoyResources>,
+) {
+	let shadertoy_name = "nightsky";
+	st_res.include_debugger = false;
+
+	let all_shader_handles: ShaderHandles =
+		bevy_shadertoy_wgsl::make_and_load_shaders3(shadertoy_name, &asset_server, st_res.include_debugger);
+
+	commands.insert_resource(all_shader_handles);
 }
 
 pub fn despawn_system(mut commands: Commands, time: Res<Time>, mut despawn: ResMut<DespawnResource>) {
