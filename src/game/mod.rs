@@ -63,8 +63,8 @@ impl Plugin for AppPlugin {
 	fn build(&self, app: &mut App) {
 		let clear_color = ClearColor(Color::hex("282c34").unwrap());
 
-		let w = 800;
-    	let h = 600;
+		let w = 1280;
+    	let h = 720;
 
         app	
 			.add_loopless_state(AppMode::AssetLoading)
@@ -82,17 +82,6 @@ impl Plugin for AppPlugin {
 			.insert_resource(clear_color)
 			
 			.insert_resource(Msaa			::default())
-			.insert_resource(DespawnResource::default())
-
-			.insert_resource(WindowDescriptor {
-				width : w as f32,
-            	height : h as f32,
-				present_mode : PresentMode::Mailbox,
-				scale_factor_override : Some(1.0),
-				// decorations: false,
-				// mode: WindowMode::SizedFullscreen,
-				..default()
-			})
 
 			.insert_resource(ShadertoyCanvas {
 				width: w,
@@ -117,6 +106,7 @@ impl Plugin for AppPlugin {
 			)
 
 			.add_system_to_stage(CoreStage::PostUpdate, despawn_system)
+			.insert_resource(DespawnResource::default())
  			;
 	}
 }
