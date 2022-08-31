@@ -57,6 +57,12 @@ pub struct FontAssetHandles {
 	pub droid_sans_mono: Handle<TextMeshFont>,
 }
 
+#[derive(Default)]
+pub struct CameraIDs {
+	pub camera2d: Option<Entity>,
+	pub camera3d: Option<Entity>,
+}
+
 pub struct AppPlugin;
 
 impl Plugin for AppPlugin {
@@ -66,7 +72,11 @@ impl Plugin for AppPlugin {
 		let w = 1280;
     	let h = 720;
 
-        app	
+        app
+			.add_plugin		(PickingPlugin)
+			.add_plugin		(InteractablePickingPlugin)
+			.add_plugins	(HighlightablePickingPlugins)
+
 			.add_loopless_state(AppMode::AssetLoading)
 
 			.insert_resource(FontAssetHandles::default())
@@ -75,13 +85,9 @@ impl Plugin for AppPlugin {
 
 			.add_startup_system(setup_shadertoy)
 
-			.add_plugin		(PickingPlugin)
-			.add_plugin		(InteractablePickingPlugin)
-			.add_plugins	(HighlightablePickingPlugins)
-
+			.insert_resource(CameraIDs::default())
 			.insert_resource(clear_color)
-			
-			.insert_resource(Msaa			::default())
+			.insert_resource(Msaa::default())
 
 			.insert_resource(ShadertoyCanvas {
 				width: w,

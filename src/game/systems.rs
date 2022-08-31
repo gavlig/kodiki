@@ -1,5 +1,6 @@
 use bevy			:: { prelude :: * };
 use bevy			:: { app::AppExit };
+use bevy			:: core_pipeline :: clear_color :: ClearColorConfig;
 use bevy_fly_camera	:: { FlyCamera };
 use bevy_mod_picking:: { * };
 use iyes_loopless	:: { prelude :: * };
@@ -15,10 +16,11 @@ pub fn setup_world_system(
 	mut	materials		: ResMut<Assets<StandardMaterial>>,
 		font_handles	: Res<FontAssetHandles>,
 	mut fonts			: ResMut<Assets<TextMeshFont>>,
+	mut camera_ids		: ResMut<CameraIDs>,
 		ass				: Res<AssetServer>,
 	mut commands		: Commands,
 ) {
-	spawn::camera		(&mut commands);
+	spawn::camera		(&mut camera_ids, &mut commands);
 
 	// spawn::infinite_grid(&mut commands);
 
@@ -183,8 +185,11 @@ pub fn input_system(
 		btn			: Res<Input<MouseButton>>,
 		key			: Res<Input<KeyCode>>,
 		time		: Res<Time>,
+	mut camera_ids	: ResMut<CameraIDs>,
 	mut exit		: EventWriter<AppExit>,
-	mut q_camera	: Query<&mut FlyCamera>,
+	mut q_camera	: Query<&mut Camera>,
+	mut q_camera3d	: Query<&mut Camera3d>,
+	mut q_fly_camera: Query<&mut FlyCamera>,
 		q_selection	: Query<&Selection>,
 		q_children	: Query<&Children>,
 ) {
@@ -196,8 +201,21 @@ pub fn input_system(
 		// parse_source_file();
 	}
 
-	if !q_camera.is_empty() {
-		let (mut camera) = q_camera.single_mut();
+	if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Key0) {
+		let mut camera = q_camera.get_mut(camera_ids.camera2d.unwrap()).unwrap();
+		let toggle = !camera.is_active;
+
+		camera.is_active = toggle;
+
+		let mut camera = q_camera.get_mut(camera_ids.camera3d.unwrap()).unwrap();
+		camera.priority = if toggle { 1 } else { 0 };
+
+		let mut camera3d = q_camera3d.get_mut(camera_ids.camera3d.unwrap()).unwrap();
+		camera3d.clear_color = if toggle { ClearColorConfig::None } else { ClearColorConfig::Default };
+	}
+
+	if !q_fly_camera.is_empty() {
+		let mut camera = q_fly_camera.single_mut();
 
 		if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Space) {
 			let toggle 	= !camera.enabled_follow;

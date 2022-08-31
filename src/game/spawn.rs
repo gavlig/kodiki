@@ -7,21 +7,18 @@ use bevy_shadertoy_wgsl	:: { * };
 
 use bevy::render::mesh::shape as render_shape;
 
-use std :: io		:: { prelude :: * };
-use std :: fs		:: { File };
-use std :: path		:: { Path, PathBuf };
-
-use ttf2mesh :: { TTFFile, Value, Glyph };
+use ttf2mesh 			:: { Glyph };
 
 use super				:: { * };
 
 pub fn camera(
+	camera_ids			: &mut ResMut<CameraIDs>,
 	commands			: &mut Commands
 ) {
 	// for 2d background
-	commands.spawn_bundle(Camera2dBundle::default());
+	let camera2d = commands.spawn_bundle(Camera2dBundle::default()).id();
 
-	let camera = commands.spawn_bundle(Camera3dBundle {
+	let camera3d = commands.spawn_bundle(Camera3dBundle {
 			transform: Transform {
 				translation: Vec3::new(1.5, 0., 7.),
 				..default()
@@ -41,6 +38,9 @@ pub fn camera(
 		.insert			(FlyCamera{ yaw : 0.0, pitch : 0.0, enabled_follow : false, max_speed : 0.07, ..default() })
 		// .insert_bundle	(PickingCameraBundle::default())
 		.id				();
+
+	camera_ids.camera2d = Some(camera2d);
+	camera_ids.camera3d = Some(camera3d);
 }
 
 pub fn ground(
