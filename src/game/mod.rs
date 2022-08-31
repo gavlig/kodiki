@@ -94,6 +94,7 @@ impl Plugin for AppPlugin {
 				height: h,
 				borders: 0.0,
 				position: Vec3::new(0.0, 0.0, 0.0),
+				active: true,
 			})
 			
 			.add_enter_system_set(

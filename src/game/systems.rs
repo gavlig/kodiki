@@ -186,6 +186,7 @@ pub fn input_system(
 		key			: Res<Input<KeyCode>>,
 		time		: Res<Time>,
 	mut camera_ids	: ResMut<CameraIDs>,
+	mut shadertoy_canvas : ResMut<ShadertoyCanvas>,
 	mut exit		: EventWriter<AppExit>,
 	mut q_camera	: Query<&mut Camera>,
 	mut q_camera3d	: Query<&mut Camera3d>,
@@ -212,6 +213,8 @@ pub fn input_system(
 
 		let mut camera3d = q_camera3d.get_mut(camera_ids.camera3d.unwrap()).unwrap();
 		camera3d.clear_color = if toggle { ClearColorConfig::None } else { ClearColorConfig::Default };
+
+		shadertoy_canvas.active = toggle;
 	}
 
 	if !q_fly_camera.is_empty() {
