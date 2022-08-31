@@ -178,7 +178,7 @@ pub fn cursor_visibility_system(
 	}
 }
 
-pub fn input_misc_system(
+pub fn input_system(
 		btn			: Res<Input<MouseButton>>,
 		key			: Res<Input<KeyCode>>,
 		time		: Res<Time>,
@@ -242,6 +242,34 @@ fn check_selection_recursive(
 	}
 
 	selection_found
+}
+
+pub fn load_assets(
+	mut font_handles	: ResMut<FontAssetHandles>,
+	mut ass				: ResMut<AssetServer>,
+) {
+	font_handles.droid_sans_mono = ass.load("fonts/droidsans-mono.ttf");
+}
+
+pub fn asset_loading_events(
+	mut font_handles	: ResMut<FontAssetHandles>,
+	mut ev_asset		: EventReader<AssetEvent<TextMeshFont>>,
+	mut commands		: Commands
+) {
+	for ev in ev_asset.iter() {
+        match ev {
+            AssetEvent::Created { handle } => {
+				// we only have 1 asset now so it's that simple
+                if font_handles.droid_sans_mono == *handle {
+					commands.insert_resource(NextState(AppMode::AssetsLoaded));
+				}
+            }
+            AssetEvent::Modified { handle } => {
+            }
+            AssetEvent::Removed { handle } => {
+            }
+        }
+    }
 }
 
 pub fn despawn_system(mut commands: Commands, time: Res<Time>, mut despawn: ResMut<DespawnResource>) {

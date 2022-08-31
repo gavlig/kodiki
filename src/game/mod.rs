@@ -1,7 +1,6 @@
 use bevy				:: { prelude :: *, window :: PresentMode };
 use bevy_mod_picking	:: { * };
 use iyes_loopless		:: { prelude :: * };
-use bevy_asset_loader	:: { prelude :: * };
 use bevy_text_mesh		:: { prelude :: * };
 
 use std					:: { path::PathBuf };
@@ -52,9 +51,8 @@ pub enum AppMode {
     Editor,
 }
 
-#[derive(AssetCollection)]
+#[derive(Default)]
 pub struct FontAssetHandles {
-	#[asset(path = "fonts/droidsans-mono.ttf")]
 	pub droid_sans_mono: Handle<TextMeshFont>,
 }
 
@@ -67,11 +65,9 @@ impl Plugin for AppPlugin {
         app	
 			.add_loopless_state(AppMode::AssetLoading)
 
-			.add_loading_state(
-				LoadingState::new(AppMode::AssetLoading)
-					.continue_to_state(AppMode::AssetsLoaded)
-					.with_collection::<FontAssetHandles>(),
-			)
+			.insert_resource(FontAssetHandles::default())
+			.add_startup_system(load_assets)
+			.add_system		(asset_loading_events)
 
 			.add_plugin		(PickingPlugin)
 			.add_plugin		(InteractablePickingPlugin)
@@ -87,14 +83,17 @@ impl Plugin for AppPlugin {
 			.add_enter_system_set(
 				AppMode::AssetsLoaded,
 				SystemSet::new()
-				.with_system(setup_world_system)
+				.with_system(setup_world_system.label("world_spawner"))
 				.with_system(setup_lighting_system)
 				.with_system(setup_camera_system)
 			)
 
-			// input
-			.add_system		(cursor_visibility_system)
-			.add_system		(input_misc_system)
+			.add_system_set(
+				SystemSet::new()
+				.with_system(input_system)
+				.with_system(cursor_visibility_system)
+				.after("world_spawner")
+			)
 
 			.add_system_to_stage(CoreStage::PostUpdate, despawn_system)
  			;

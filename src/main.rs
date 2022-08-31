@@ -6,9 +6,6 @@ use bevy_fly_camera	:: { FlyCameraPlugin };
 use bevy_text_mesh	:: prelude :: { * };
 use bevy_infinite_grid :: { InfiniteGridPlugin };
 
-use iyes_loopless		:: { prelude :: * };
-use bevy_asset_loader	:: { prelude :: * };
-
 mod game;
 use game			:: { AppPlugin };
 
