@@ -11,32 +11,36 @@ use serde_json::json;
 
 use super           :: { * };
 
+use crate			:: text;
+
 pub fn setup_world_system(
-	mut	meshes			: ResMut<Assets<Mesh>>,
-	mut	materials		: ResMut<Assets<StandardMaterial>>,
-		font_handles	: Res<FontAssetHandles>,
-	mut fonts			: ResMut<Assets<TextMeshFont>>,
-	mut camera_ids		: ResMut<CameraIDs>,
-		ass				: Res<AssetServer>,
-	mut commands		: Commands,
+	mut	meshes		: ResMut<Assets<Mesh>>,
+	mut	materials	: ResMut<Assets<StandardMaterial>>,
+		font_handles: Res<FontAssetHandles>,
+	mut fonts		: ResMut<Assets<TextMeshFont>>,
+	mut camera_ids	: ResMut<CameraIDs>,
+		ass			: Res<AssetServer>,
+	mut commands	: Commands,
 ) {
-	spawn::camera		(&mut camera_ids, &mut commands);
+	spawn::camera	(&mut camera_ids, &mut commands);
 
 	// spawn::infinite_grid(&mut commands);
 
 	// spawn::world_axis	(&mut meshes, &mut materials, &mut commands);
 
-	spawn::fixed_sphere	(Transform::identity(), 0.02, Color::LIME_GREEN, &mut meshes, &mut materials, &mut commands);
+	spawn::fixed_sphere	(Transform::identity(), 0.02, Color::SEA_GREEN, &mut meshes, &mut materials, &mut commands);
 
 	// without font we can't go further
 	let mut font		= fonts.get_mut(&font_handles.droid_sans_mono).unwrap();
 	
 	let mut pos			= Vec3::new(0.0, 0.0, 0.0);
-	spawn::file_text	(
-		"playground/herringbone_spawn.rs",
+	text::spawn::file(
+		"playground/herringbone_spawn.rs", // rustc_ast.rs",
 		&font_handles.droid_sans_mono,
 		&mut font.ttf_font,
 		pos,
+		&mut meshes,
+		&mut materials,
 		&mut commands
 	);
 

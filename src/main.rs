@@ -9,6 +9,7 @@ use bevy_shadertoy_wgsl	:: { * };
 
 mod game;
 use game			:: { AppPlugin };
+mod text;
 
 fn main() {
 	App::new()
