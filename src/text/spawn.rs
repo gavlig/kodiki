@@ -22,6 +22,49 @@ fn calc_vertical_offset(row : f32) -> f32 {
 	row * -0.13
 }
 
+fn quad(
+	quad_pos_in		: Vec3,
+	quad_size		: Vec2,
+	meshes			: &mut ResMut<Assets<Mesh>>,
+	materials		: &mut ResMut<Assets<StandardMaterial>>,
+	commands		: &mut Commands
+) -> Entity {
+	let quad_width		= quad_size.x;
+	let quad_height		= quad_size.y;
+
+    let quad_handle		= meshes.add(
+		Mesh::from(
+			shape::Quad::new(
+				Vec2::new(
+					quad_width,
+					quad_height
+    			)
+			)
+		)
+	);
+	let quad_pos		= quad_pos_in + Vec3::new(quad_width / 2.0, 0., 0.);//-quad_height / 2.0, 0.0);
+
+    let blue_material_handle = materials.add(StandardMaterial {
+        base_color		: Color::hex("282c34").unwrap(),
+        // alpha_mode	: AlphaMode::Opaque,
+        unlit			: true,
+        // double_sided	: true,
+        ..default()
+    });
+
+	commands.spawn_bundle(PbrBundle {
+		mesh			: quad_handle,
+		material		: blue_material_handle,
+		transform		: Transform {
+			translation	: quad_pos,
+			// rotation	: Quat::from_rotation_y(std::f32::consts::PI), // winding ccw something something
+			..default()
+		},
+		..default()
+	})
+	.id()
+}
+
 pub fn file(
 	file_path		: &str,
 	font_handle 	: &Handle<TextMeshFont>,
@@ -33,11 +76,16 @@ pub fn file(
 ) {
 	let file_content = load_text_file(file_path).unwrap();
 
+	let tab_size	= 4; //.editorconfig
+	let font_size	= 9.;
+	let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
+
 	let reference_glyph : Glyph = font.glyph_from_char('a').unwrap(); // and omega
+	let glyph_width	= reference_glyph.inner.advance * font_size_scalar;
+	let row_num_offset = 6. * glyph_width;
+	let vertical_overlap = 0.05;
 
 	let local_position = Vec3::ZERO;
-	let font_size	= 9.;
-	let tab_size	= 4; //.editorconfig
 
 	let mut children : Vec<Entity> = Vec::new();
 
@@ -45,7 +93,7 @@ pub fn file(
 	children.push(
 		spawn_mesh(
 			&header_string,
-			local_position + Vec3::Y * calc_vertical_offset(1.0),
+			local_position + Vec3::new(row_num_offset, calc_vertical_offset(1.0), 0.0),
 			&font_handle,
 			SizeUnit::NonStandard(font_size),
 			Color::hex("bbbbbb").unwrap(),
@@ -62,7 +110,7 @@ pub fn file(
 		let _parser_session = ParseSess::with_silent_emitter(Some(String::from("FATAL MESSAGE AGGHHH")));
 
 		loop {
-			y		= calc_vertical_offset(row as f32);
+			y = calc_vertical_offset(row as f32);
 
 			let line_raw = match lines.next() {
 				Some(l)	=> l,
@@ -73,6 +121,9 @@ pub fn file(
 			let mut token_offset = 0;
 
 			loop {
+				let column_offset = (column as f32) * glyph_width;
+				let x = row_num_offset + column_offset;
+
 				let token_meta = cursor_lexer.next();
 				if token_meta.is_none() {
 					break;
@@ -105,11 +156,6 @@ pub fn file(
 
 				// 
 				if token.kind != TokenKind::Whitespace {
-					let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
-					let row_num_offset = 6. * reference_glyph.inner.advance * font_size_scalar; 
-					let column_offset = (column as f32) * reference_glyph.inner.advance * font_size_scalar;
-					let x		= row_num_offset + column_offset;
-
 					// println!("x: {} column: {} advance: {} font_size: {}", x, column, reference_glyph.inner.advance, font_size);
 
 					let pos		= local_position + Vec3::new(x, y, 0.0);
@@ -127,6 +173,20 @@ pub fn file(
 					);
 				}
 
+				// background quad
+				// let quad_width		= token_str.len() as f32 * glyph_width;
+				// let quad_height		= calc_vertical_offset(1.);
+				// let quad_pos		= Vec3::new(x, y, 0.0);
+				// children.push(
+				// 	quad(
+				// 		quad_pos,
+				// 		Vec2::new(quad_width, quad_height),
+				// 		meshes,
+				// 		materials,
+				// 		commands
+				// 	)
+				// );
+
 				let mut len : u32 = token.len;
 				
 				if token_str.chars().next().unwrap() == '\t' {
@@ -140,6 +200,19 @@ pub fn file(
 				token_offset += token.len as usize; // amount of tokens != amount of symbols so we need to keep track of both 
 			}
 
+			let quad_width		= column as f32 * glyph_width;
+			let quad_height		= calc_vertical_offset(1.).abs() + vertical_overlap;
+			let quad_pos		= Vec3::new(row_num_offset, y + vertical_overlap, 0.0);
+			children.push(
+				quad(
+					quad_pos,
+					Vec2::new(quad_width, quad_height),
+					meshes,
+					materials,
+					commands
+				)
+			);
+
 			// Cheat/Debug
 			// if row >= 9 {
 			// 	break;
@@ -149,42 +222,6 @@ pub fn file(
 			row			+= 1;
 		}
 	});
-
-	let quad_width		= 10.0;
-	let quad_height		= calc_vertical_offset(row as f32);
-    let quad_handle		= meshes.add(
-		Mesh::from(
-			shape::Quad::new(
-				Vec2::new(
-					quad_width,
-					quad_height
-    			)
-			)
-		)
-	);
-	let quad_position	= Vec3::new(quad_width / 2.0, quad_height / 2.0, 0.0);
-
-    let blue_material_handle = materials.add(StandardMaterial {
-        base_color		: Color::hex("282c34").unwrap(),
-        // alpha_mode	: AlphaMode::Opaque,
-        unlit			: true,
-        // double_sided	: true,
-        ..default()
-    });
-
-	children.push(
-		commands.spawn_bundle(PbrBundle {
-			mesh			: quad_handle,
-			material		: blue_material_handle,
-			transform		: Transform {
-				translation	: quad_position,
-				rotation	: Quat::from_rotation_y(std::f32::consts::PI),
-				..default()
-			},
-			..default()
-		})
-		.id()
-	);
 
 	//
 	//

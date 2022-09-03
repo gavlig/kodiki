@@ -36,12 +36,12 @@
 16. hide mouse by gesture?
 17. TEXT EDITOR
 (!)17.1. Movable cursor attached to file with row+col as position
-17.2. Erase symbols with backspace
-17.3. Type symbols
+17.2. (?maybe helix integration instead)Erase symbols with backspace
+17.3. (?maybe helix integration instead)Type symbols
 18. pass material instead of font color to bevy_text_mesh
 
 19. (done!)spawn a background object/plane for code
-20. lines/words/letters need a background object for picking if we're going for that
+20. (done!)lines/words/letters need a background object for picking if we're going for that
 
 21. (done!)load fonts on startup or something
 
@@ -58,6 +58,11 @@
 24. open files without hardcode
 25. bevy console
 26. (done!)shadertoy support
+
+27. Helix integration
+27.1. research source code
+27.2. ???
+27.3. profit
 
 oof
 1. detect patterns in code editing and ask if repeat. (i was deleting Default:: a lot)
