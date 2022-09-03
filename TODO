@@ -24,6 +24,7 @@
 10. (done!)line numbers
 11. CAMERA
 (!)11.1. smooth scrolling by moving camera with snapping to lines
+11.1.1. we need to navigate (get coordinates?) of a certain character on a certain row and move camera by column changing only rows
 11.2. following text cursor when out of visibility
 11.3. (done!)orthographic projection
 11.4. fit view to code
