@@ -202,7 +202,7 @@ pub fn file(
 
 			let quad_width		= column as f32 * glyph_width;
 			let quad_height		= calc_vertical_offset(1.).abs() + vertical_overlap;
-			let quad_pos		= Vec3::new(row_num_offset, y + vertical_overlap, 0.0);
+			let quad_pos		= Vec3::new(row_num_offset, y + vertical_overlap, -0.25 / 72.);
 			children.push(
 				quad(
 					quad_pos,
