@@ -66,6 +66,45 @@ fn quad(
 }
 
 const DEFAULT_FONT_SIZE  : f32 = 36.;
+const DEFAULT_FONT_WIDTH : f32 = DEFAULT_FONT_SIZE * 10.;
+const DEFAULT_FONT_HEIGHT: f32 = DEFAULT_FONT_SIZE * 5.;
+const DEFAULT_FONT_DEPTH : f32 = DEFAULT_FONT_SIZE * 0.10;
+
+pub fn mesh(
+	text_in				: &String,
+	pos					: Vec3,
+	font_handle			: &Handle<TextMeshFont>,
+	font_size			: SizeUnit,
+	font_depth			: f32,
+	color				: Color,
+	commands			: &mut Commands,
+) -> Entity {
+    commands.spawn_bundle(TextMeshBundle {
+        text_mesh: TextMesh {
+            text		: text_in.clone(),
+            style		: TextMeshStyle {
+				color	: color,
+                font     : font_handle.clone(),
+                font_size : font_size,
+                ..default()
+            },
+            size: TextMeshSize {
+				depth	: Some(SizeUnit::NonStandard(DEFAULT_FONT_SIZE * font_depth)),
+				wrapping : false,
+                ..default()
+            },
+            ..default()
+        },
+        transform: Transform {
+            translation: pos,
+            ..default()
+        },
+        ..default()
+    })
+	// .insert_bundle(PickableBundle::default())
+	.id()
+}
+
 pub fn file(
 	file_path		: &str,
 	font_handle 	: &Handle<TextMeshFont>,

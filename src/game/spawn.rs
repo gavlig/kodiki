@@ -7,6 +7,7 @@ use bevy::render::mesh::shape as render_shape;
 use super				:: { * };
 
 pub fn camera(
+	root_entity			: Entity,
 	camera_ids			: &mut ResMut<CameraIDs>,
 	commands			: &mut Commands
 ) {
@@ -30,7 +31,16 @@ pub fn camera(
 			},
 			..default()
 		})
-		.insert			(FlyCamera{ yaw : 0.0, pitch : 0.0, enabled_follow : false, max_speed : 0.07, ..default() })
+		.insert(
+			FlyCamera {
+				yaw				: 0.0,
+				pitch			: 0.0,
+				enabled_follow	: false,
+				max_speed		: 0.07,
+				target			: Some(root_entity),
+				..default()
+			}
+		)
 		// .insert_bundle	(PickingCameraBundle::default())
 		.id				();
 
