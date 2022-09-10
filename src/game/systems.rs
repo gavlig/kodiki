@@ -31,9 +31,10 @@ pub fn setup_world_system(
 	spawn::fixed_sphere	(Transform::identity(), 0.02, Color::SEA_GREEN, &mut meshes, &mut materials, &mut commands);
 
 	// without font we can't go further
-	let mut font		= fonts.get_mut(&font_handles.droid_sans_mono).unwrap();
+	let mut font	= fonts.get_mut(&font_handles.droid_sans_mono).unwrap();
 	
-	let mut pos			= Vec3::new(0.0, 0.0, 0.0);
+	let mut pos		= Vec3::new(0.0, 0.0, 0.0);
+	let file_entity =
 	text::spawn::file(
 		"playground/herringbone_spawn.rs", // rustc_ast.rs",
 		&font_handles.droid_sans_mono,
@@ -43,6 +44,8 @@ pub fn setup_world_system(
 		&mut materials,
 		&mut commands
 	);
+
+	spawn::camera	(file_entity, &mut camera_ids, &mut commands);
 
 	// pos.x				+= 10.0;
 	// spawn::file_text	(
@@ -232,6 +235,7 @@ pub fn input_system(
 		if key.just_pressed(KeyCode::Escape) {
 			let toggle 	= !camera.enabled_rotation;
 			camera.enabled_rotation = toggle;
+			camera.enabled_translation = toggle;
 		}
 	}
 }

@@ -12,7 +12,7 @@ extern crate rustc_span;
 extern crate rustc_parse;
 extern crate rustc_lexer;
 
-use rustc_session		:: parse :: { ParseSess} ;
+use rustc_session		:: parse :: { ParseSess };
 use rustc_span			:: edition :: Edition;
 use rustc_lexer			:: TokenKind;
 
@@ -65,6 +65,7 @@ fn quad(
 	.id()
 }
 
+const DEFAULT_FONT_SIZE  : f32 = 36.;
 pub fn file(
 	file_path		: &str,
 	font_handle 	: &Handle<TextMeshFont>,
@@ -73,11 +74,13 @@ pub fn file(
 	meshes			: &mut ResMut<Assets<Mesh>>,
 	materials		: &mut ResMut<Assets<StandardMaterial>>,
 	commands		: &mut Commands
-) {
+) -> Entity
+{
 	let file_content = load_text_file(file_path).unwrap();
 
 	let tab_size	= 4; //.editorconfig
 	let font_size	= 9.;
+	let font_depth	= 0.1;
 	let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
 
 	let reference_glyph : Glyph = font.glyph_from_char('a').unwrap(); // and omega
@@ -96,6 +99,7 @@ pub fn file(
 			local_position + Vec3::new(row_num_offset, calc_vertical_offset(1.0), 0.0),
 			&font_handle,
 			SizeUnit::NonStandard(font_size),
+			font_depth,
 			Color::hex("bbbbbb").unwrap(),
 			commands
 		)
@@ -148,6 +152,7 @@ pub fn file(
 							pos,
 							&font_handle,
 							SizeUnit::NonStandard(font_size),
+							font_depth,
 							Color::hex("495162").unwrap(),
 							commands
 						)
@@ -167,6 +172,7 @@ pub fn file(
 							pos,
 							&font_handle,
 							SizeUnit::NonStandard(font_size),
+							font_depth,
 							color,
 							commands
 						)
@@ -239,37 +245,6 @@ pub fn file(
 	.id();
 
 	commands.entity(root_entity).push_children(children.as_slice());
-}
 
-pub fn mesh(
-	text_in				: &String,
-	pos					: Vec3,
-	font_handle			: &Handle<TextMeshFont>,
-	font_size			: SizeUnit,
-	color				: Color,
-	commands			: &mut Commands,
-) -> Entity {
-    commands.spawn_bundle(TextMeshBundle {
-        text_mesh: TextMesh {
-            text		: text_in.clone(),
-            style		: TextMeshStyle {
-                font     : font_handle.clone(),
-                font_size: font_size,
-                color    : color,
-                ..default()
-            },
-            size: TextMeshSize {
-				wrapping : false,
-                ..default()
-            },
-            ..default()
-        },
-        transform: Transform {
-            translation: pos,
-            ..default()
-        },
-        ..default()
-    })
-	// .insert_bundle(PickableBundle::default())
-	.id()
+	root_entity
 }
