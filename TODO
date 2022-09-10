@@ -20,18 +20,18 @@
 6. (done!)add infinite grid
 7. (done!)better init camera position
 8. (done!)make slimmer origin axis
-(!)9. bug: when cursor is hidden mouse picking still works
+9. bug: when cursor is hidden mouse picking still works
 10. (done!)line numbers
 
 11. CAMERA
-(!)11.1. smooth scrolling by moving camera with snapping to lines
-11.1.1. we need to navigate (get coordinates?) of a certain character on a certain row and move camera by column changing only rows
-
+11.1. (done!)smooth scrolling by moving camera with snapping to lines
 11.2. following text cursor when out of visibility
 11.3. (done!)orthographic projection
 11.4. fit view to code
 11.5. goto line
-(!)11.6. speed up movement optionally (scroll and shift)
+11.6. speed up movement optionally (scroll and shift)
+11.7. set time threshold for camera leaning to avoid jitter
+
 12. hide mouse by timeout (after inactivity in movement department)
 13. (done!)toggle hide mouse cursor on esc
 14. (done!)exit app on ctrl+esc
@@ -55,7 +55,9 @@
 22.3. show scopes with vertical lines like vscode or something else
 22.4. (done!)show file name on top of it
 22.5. zoom out in ortho camera mode
+22.6. highlight current line in reader mode
 
+(?maybe helix integration instead)
 23. RUST-ANALYZER
 23.1. autocomplete
 23.2. outline 
