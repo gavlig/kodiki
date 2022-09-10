@@ -22,9 +22,11 @@
 8. (done!)make slimmer origin axis
 (!)9. bug: when cursor is hidden mouse picking still works
 10. (done!)line numbers
+
 11. CAMERA
 (!)11.1. smooth scrolling by moving camera with snapping to lines
 11.1.1. we need to navigate (get coordinates?) of a certain character on a certain row and move camera by column changing only rows
+
 11.2. following text cursor when out of visibility
 11.3. (done!)orthographic projection
 11.4. fit view to code
@@ -35,6 +37,7 @@
 14. (done!)exit app on ctrl+esc
 15. (done!)highlightable/pickable lines
 16. hide mouse by gesture?
+
 17. TEXT EDITOR
 (!)17.1. Movable cursor attached to file with row+col as position
 17.2. (?maybe helix integration instead)Erase symbols with backspace
@@ -51,6 +54,7 @@
 22.2. simulate vscode plugin that changes brace color
 22.3. show scopes with vertical lines like vscode or something else
 22.4. (done!)show file name on top of it
+22.5. zoom out in ortho camera mode
 
 23. RUST-ANALYZER
 23.1. autocomplete
@@ -60,18 +64,23 @@
 25. bevy console
 26. (done!)shadertoy support
 
-27. Helix integration
+27. HELIX INTEGRATION
 27.1. research source code
 27.2. ???
 27.3. profit
 
+28. bug: some tabs and characters are still misaligned
+
 oof
 1. detect patterns in code editing and ask if repeat. (i was deleting Default:: a lot)
-2. text wrapping is a good opportunity to flex 3d
+2. text wrapping is a good opportunity to flex 3d?
 3. filtered view with only certain stuff rendered
 4. ngon with a file on each face
 5. project visualization with nodes etc
 6. callstack visualization with links between files
 7. show errors with lamps/whatever effects.
-8. mods will be epic. a corridor with each file as a door. flying spaceship with files/planets.
+8. mods will be epic. a corridor with each file as a door. flying spaceship with files/planets, custom 3d fonts, custom caret model you name it.
 9. attach words to their positions with joints and let them loose
+10. real constellations on nightsky shadertoy on background?
+11. record all activity for nice timelapses
+12. minimap for scrolling
