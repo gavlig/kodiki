@@ -30,14 +30,18 @@ pub fn setup_world_system(
 
 	spawn::fixed_sphere	(Transform::identity(), 0.02, Color::SEA_GREEN, &mut meshes, &mut materials, &mut commands);
 
+	let font_handle = &font_handles.share_tech;
+
 	// without font we can't go further
-	let mut font	= fonts.get_mut(&font_handles.droid_sans_mono).unwrap();
+	// let mut font	= fonts.get_mut(&font_handles.droid_sans_mono).unwrap();
+	// let mut font	= fonts.get_mut(&font_handles.open_dyslexic).unwrap();
+	let mut font	= fonts.get_mut(font_handle).unwrap();
 	
 	let mut pos		= Vec3::new(0.0, 0.0, 0.0);
 	let file_entity =
 	text::spawn::file(
 		"playground/herringbone_spawn.rs", // rustc_ast.rs",
-		&font_handles.droid_sans_mono,
+		font_handle,
 		&mut font.ttf_font,
 		pos,
 		&mut meshes,
@@ -228,8 +232,8 @@ pub fn input_system(
 		let mut camera = q_fly_camera.single_mut();
 
 		if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Space) {
-			let toggle 	= !camera.enabled_follow;
-			camera.enabled_follow = toggle;
+			let toggle 	= !camera.enabled_reader;
+			camera.enabled_reader = toggle;
 		}
 
 		if key.just_pressed(KeyCode::Escape) {
@@ -279,6 +283,10 @@ pub fn load_assets(
 	mut ass				: ResMut<AssetServer>,
 ) {
 	font_handles.droid_sans_mono = ass.load("fonts/droidsans-mono.ttf");
+	font_handles.open_dyslexic = ass.load("fonts/OpenDyslexic3-Regular.ttf");
+	font_handles.source_code_pro = ass.load("fonts/SourceCodePro-Regular.ttf");
+	font_handles.B612 = ass.load("fonts/B612Mono-Regular.ttf");
+	font_handles.share_tech = ass.load("fonts/ShareTechMono-Regular.ttf");
 }
 
 pub fn asset_loading_events(
@@ -289,17 +297,30 @@ pub fn asset_loading_events(
 	for ev in ev_asset.iter() {
         match ev {
             AssetEvent::Created { handle } => {
-				// we only have 1 asset now so it's that simple
-                if font_handles.droid_sans_mono == *handle {
-					commands.insert_resource(NextState(AppMode::AssetsLoaded));
+				font_handles.loaded_cnt += 1;
+				if font_handles.droid_sans_mono == *handle {
+					println!("droid sans loaded!");
+				}
+
+				if font_handles.open_dyslexic == *handle {
+					println!("open_dyslexic loaded!");
+				}
+
+				if font_handles.source_code_pro == *handle {
+					println!("source_code_pro loaded!");
 				}
             }
-            AssetEvent::Modified { handle } => {
+            AssetEvent::Modified { handle: _ } => {
             }
-            AssetEvent::Removed { handle } => {
+            AssetEvent::Removed { handle: _ } => {
             }
         }
     }
+
+	if font_handles.loaded_cnt == 5 {
+		commands.insert_resource(NextState(AppMode::AssetsLoaded));
+		println!("assets loaded!");
+	}
 }
 
 pub fn setup_shadertoy(

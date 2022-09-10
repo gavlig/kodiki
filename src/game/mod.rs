@@ -55,6 +55,12 @@ pub enum AppMode {
 #[derive(Default)]
 pub struct FontAssetHandles {
 	pub droid_sans_mono: Handle<TextMeshFont>,
+	pub open_dyslexic: Handle<TextMeshFont>,
+	pub source_code_pro: Handle<TextMeshFont>,
+	pub B612: Handle<TextMeshFont>,
+	pub share_tech: Handle<TextMeshFont>,
+
+	pub loaded_cnt: u32,
 }
 
 #[derive(Default)]
@@ -81,7 +87,7 @@ impl Plugin for AppPlugin {
 
 			.insert_resource(FontAssetHandles::default())
 			.add_startup_system(load_assets)
-			.add_system		(asset_loading_events)
+			.add_system		(asset_loading_events.run_in_state(AppMode::AssetLoading))
 
 			.add_startup_system(setup_shadertoy)
 
@@ -100,16 +106,25 @@ impl Plugin for AppPlugin {
 			.add_enter_system_set(
 				AppMode::AssetsLoaded,
 				SystemSet::new()
-				.with_system(setup_world_system.label("world_spawner"))
+				.with_system(setup_world_system)
 				.with_system(setup_lighting_system)
 				.with_system(setup_camera_system)
 			)
 
 			.add_system_set(
-				SystemSet::new()
+				ConditionSet::new()
+				.run_in_state(AppMode::Main)
 				.with_system(input_system)
 				.with_system(cursor_visibility_system)
-				.after("world_spawner")
+				.into()
+			)
+
+			.add_system_set(
+				ConditionSet::new()
+				.run_in_state(AppMode::Editor)
+				.with_system(input_system)
+				.with_system(cursor_visibility_system)
+				.into()
 			)
 
 			.add_system_to_stage(CoreStage::PostUpdate, despawn_system)
