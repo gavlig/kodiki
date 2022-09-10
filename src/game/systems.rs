@@ -22,8 +22,6 @@ pub fn setup_world_system(
 		ass			: Res<AssetServer>,
 	mut commands	: Commands,
 ) {
-	spawn::camera	(&mut camera_ids, &mut commands);
-
 	// spawn::infinite_grid(&mut commands);
 
 	// spawn::world_axis	(&mut meshes, &mut materials, &mut commands);
