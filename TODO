@@ -11,10 +11,10 @@
 3.2. (done!)try to hook up rustc_ast and parser
 3.3. (done!)use rustc parser to do syntax highlighting
 3.4. (done!)draw words separately for highlighting
-3.5. optionally draw letters separately?
+3.5. (nope!)optionally draw letters separately?
 3.6. (fixed!)bug: indentation is broken after words became separate
 3.7. (done!)draw 3-4 more colors
-3.8. nonterminal tokens?
+3.8. (nope!)nonterminal tokens?
 4. (done!)better camera init position
 5. (done!)try smooth camera (not worth it for now)
 6. (done!)add infinite grid
@@ -30,7 +30,9 @@
 11.4. fit view to code
 11.5. goto line
 11.6. speed up movement optionally (scroll and shift)
-11.7. set time threshold for camera leaning to avoid jitter
+11.7. (done!)smooth out camera leaning target pitch calculation to avoid jitter
+11.8. better init position with loaded file
+11.9. lock to column in reader mode
 
 12. hide mouse by timeout (after inactivity in movement department)
 13. (done!)toggle hide mouse cursor on esc
@@ -72,6 +74,7 @@
 27.3. profit
 
 28. bug: some tabs and characters are still misaligned
+29. automatically load all fonts from assets
 
 oof
 1. detect patterns in code editing and ask if repeat. (i was deleting Default:: a lot)
@@ -86,3 +89,4 @@ oof
 10. real constellations on nightsky shadertoy on background?
 11. record all activity for nice timelapses
 12. minimap for scrolling
+13. use system fonts as well
