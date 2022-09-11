@@ -239,7 +239,7 @@ pub fn file(
 					// background quad
 					let quad_width		= glyph_width * token_len as f32;
 					let quad_height		= calc_vertical_offset(1., &reference_glyph).abs();
-					let quad_pos		= Vec3::new(x, y, 0.0);
+					let quad_pos		= Vec3::new(x, y, -0.25 / 72.);
 					let quad_entity_id	= 
 					quad(
 						quad_pos,
