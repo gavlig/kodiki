@@ -241,6 +241,27 @@ pub fn input_system(
 			let toggle 	= !camera.enabled_rotation;
 			camera.enabled_rotation = toggle;
 			camera.enabled_translation = toggle;
+			camera.enabled_zoom = toggle;
+		}
+
+		if key.pressed(KeyCode::Left) {
+			if camera.column > 0 {
+				camera.column -= 1;
+			}
+		}
+
+		if key.pressed(KeyCode::Right) {
+			camera.column += 1;
+		}
+
+		if key.pressed(KeyCode::Up) {
+			if camera.row > 0 {
+				camera.row -= 1;
+			}
+		}
+
+		if key.pressed(KeyCode::Down) {
+			camera.row += 1;
 		}
 	}
 }
