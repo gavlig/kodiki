@@ -11,7 +11,7 @@
 3.2. (done!)try to hook up rustc_ast and parser
 3.3. (done!)use rustc parser to do syntax highlighting
 3.4. (done!)draw words separately for highlighting
-3.5. (nope!)optionally draw letters separately?
+3.5. (done!)draw letters separately
 3.6. (fixed!)bug: indentation is broken after words became separate
 3.7. (done!)draw 3-4 more colors
 3.8. (nope!)nonterminal tokens?
@@ -33,6 +33,8 @@
 11.7. (done!)smooth out camera leaning target pitch calculation to avoid jitter
 11.8. better init position with loaded file
 11.9. lock to column in reader mode
+11.10. leaning needs more smoothing for small movements
+11.11. scrolling needs smoothing
 
 12. hide mouse by timeout (after inactivity in movement department)
 13. (done!)toggle hide mouse cursor on esc
@@ -58,6 +60,7 @@
 22.4. (done!)show file name on top of it
 22.5. zoom out in ortho camera mode
 22.6. highlight current line in reader mode
+22.7. add background to empty lines
 
 (?maybe helix integration instead)
 23. RUST-ANALYZER
@@ -75,6 +78,8 @@
 
 28. bug: some tabs and characters are still misaligned
 29. automatically load all fonts from assets
+30. bug: camera center changes pickable state together with mouse
+31. perf: switch to words as objects when camera is not in reader mode
 
 oof
 1. detect patterns in code editing and ask if repeat. (i was deleting Default:: a lot)
@@ -90,3 +95,4 @@ oof
 11. record all activity for nice timelapses
 12. minimap for scrolling
 13. use system fonts as well
+14. show warnings about unused and other housekeeping stuff on request (special mode/overlay)
