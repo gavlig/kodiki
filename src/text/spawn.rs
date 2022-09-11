@@ -151,6 +151,7 @@ pub fn file(
 	let mut y		= 0.0;
 	let mut column	= 0 as u32;
 	let mut row		= 3 as u32;
+	let mut empty_line = false;
 
 	rustc_span::create_session_if_not_set_then(Edition::Edition2021, |_| {
 		let _parser_session = ParseSess::with_silent_emitter(Some(String::from("FATAL MESSAGE AGGHHH")));
@@ -164,12 +165,20 @@ pub fn file(
 			};
 			
 			let mut cursor_lexer = rustc_lexer::tokenize(line_raw);
+
 			let mut token_offset = 0;
+			let was_empty_line = empty_line;
 
 			loop {
 				let token_meta = cursor_lexer.next();
 				if token_meta.is_none() {
+					if column == 0 {
+						empty_line = true;
+					}
+
 					break;
+				} else {
+					empty_line = false;
 				}
 				let token = token_meta.unwrap();
 				// println!("lexer {:?}", token);
@@ -254,18 +263,31 @@ pub fn file(
 				token_offset += token.len as usize; // amount of tokens != amount of symbols so we need to keep track of both 
 			}
 
-			// let quad_width		= column as f32 * glyph_width;
-			// let quad_height		= calc_vertical_offset(1., &reference_glyph).abs() + vertical_overlap;
-			// let quad_pos		= Vec3::new(row_num_offset, y + vertical_overlap, -0.25 / 72.);
-			// children.push(
-			// 	quad(
-			// 		quad_pos,
-			// 		Vec2::new(quad_width, quad_height),
-			// 		meshes,
-			// 		materials,
-			// 		commands
-			// 	)
-			// );
+			if was_empty_line {
+				println!("{}/{} drawing empty line for previous row", row, column);
+
+				// background quad for previous line
+				let quad_width		= glyph_width * column as f32;
+				let quad_height		= calc_vertical_offset(1., &reference_glyph).abs();
+				let y 				= calc_vertical_offset((row - 1) as f32, &reference_glyph);
+				let quad_pos		= Vec3::new(row_num_offset, y, -0.25 / 72.);
+				let quad_entity_id	= 
+				quad(
+					quad_pos,
+					Vec2::new(quad_width, quad_height),
+					meshes,
+					materials,
+					commands
+				);
+
+				commands.entity(quad_entity_id)
+				.insert(Char3D {
+					row : row,
+					column : column,
+					character : '?',
+				})
+				;
+			}
 
 			// Cheat/Debug
 			// if row >= 9 {
