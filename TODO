@@ -31,10 +31,13 @@
 11.5. goto line
 11.6. speed up movement optionally (scroll and shift)
 11.7. (done!)smooth out camera leaning target pitch calculation to avoid jitter
-11.8. better init position with loaded file
-11.9. lock to column in reader mode
+11.8. (done!)better init position with loaded file
+11.9. (done!)lock to column in reader mode
 11.10. leaning needs more smoothing for small movements
 11.11. scrolling needs smoothing
+11.12. (done!)keep meta data about file in a separate component and use it for camera navigation
+11.13. (done!)scroll controlled with arrow keys
+11.14. combine scroll controls with keys and with mouse
 
 12. hide mouse by timeout (after inactivity in movement department)
 13. (done!)toggle hide mouse cursor on esc
@@ -60,7 +63,10 @@
 22.4. (done!)show file name on top of it
 22.5. zoom out in ortho camera mode
 22.6. highlight current line in reader mode
-22.7. add background to empty lines
+22.7. (done!)add background to empty lines
+22.8. make length of background of current line at least as long as length of next line
+22.9. toggle background quad visibility
+22.10. transparent background quad
 
 (?maybe helix integration instead)
 23. RUST-ANALYZER
@@ -80,6 +86,7 @@
 29. automatically load all fonts from assets
 30. bug: camera center changes pickable state together with mouse
 31. perf: switch to words as objects when camera is not in reader mode
+32. bug: center picking gets broken after pressing esc
 
 oof
 1. detect patterns in code editing and ask if repeat. (i was deleting Default:: a lot)
@@ -96,3 +103,4 @@ oof
 12. minimap for scrolling
 13. use system fonts as well
 14. show warnings about unused and other housekeeping stuff on request (special mode/overlay)
+15. quick commit: small change in two line should be committable in one-two clicks
