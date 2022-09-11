@@ -37,7 +37,7 @@
 11.11. scrolling needs smoothing
 11.12. (done!)keep meta data about file in a separate component and use it for camera navigation
 11.13. (done!)scroll controlled with arrow keys
-11.14. combine scroll controls with keys and with mouse
+11.14. (done!)combine scroll controls with keys and with mouse
 
 12. hide mouse by timeout (after inactivity in movement department)
 13. (done!)toggle hide mouse cursor on esc

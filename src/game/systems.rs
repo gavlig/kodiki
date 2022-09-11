@@ -266,12 +266,17 @@ pub fn input_system(
 	}
 }
 
-pub fn center_pick_system(
-	query: Query<(&Transform, &Row, &Column), With<CenterPick>>
+pub fn stats_system(
+	q_camera: Query<&FlyCamera>,
+	// q_center_pick: Query<(&Transform, &Row, &Column), With<CenterPick>>
 ) {
-	for (tform, row, column) in query.iter() {
-		screen_print!("Center Pick: row: {} col: {} x: {}", row.0, column.0, tform.translation);
+	for fly_camera in q_camera.iter() {
+		screen_print!("row: {}({:.3}) col: {}({:.3})", fly_camera.row, fly_camera.row_scroll_accum, fly_camera.column, fly_camera.column_scroll_accum);
 	}
+
+	// for (tform, row, column) in q_center_pick.iter() {
+	// 	screen_print!("Center Pick: row: {} col: {} x: {}", row.0, column.0, tform.translation.x);
+	// }
 }
 
 pub fn load_assets(
