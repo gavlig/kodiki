@@ -1,7 +1,7 @@
 use bevy			:: { prelude :: * };
 use bevy			:: { app::AppExit };
 use bevy			:: core_pipeline :: clear_color :: ClearColorConfig;
-use bevy_fly_camera	:: { FlyCamera, CenterPick };
+use bevy_fly_camera	:: { * };
 use bevy_mod_picking:: { * };
 use iyes_loopless	:: { prelude :: * };
 use bevy_shadertoy_wgsl :: { * };
@@ -24,16 +24,14 @@ pub fn setup_world_system(
 ) {
 	// spawn::infinite_grid(&mut commands);
 
-	// spawn::world_axis	(&mut meshes, &mut materials, &mut commands);
+	spawn::world_axis	(&mut meshes, &mut materials, &mut commands);
 
 	spawn::fixed_sphere	(Transform::identity(), 0.02, Color::SEA_GREEN, &mut meshes, &mut materials, &mut commands);
 
 	let font_handle = &font_handles.share_tech;
 
 	// without font we can't go further
-	// let mut font	= fonts.get_mut(&font_handles.droid_sans_mono).unwrap();
-	// let mut font	= fonts.get_mut(&font_handles.open_dyslexic).unwrap();
-	let mut font	= fonts.get_mut(font_handle).unwrap();
+	let font		= fonts.get_mut(font_handle).unwrap();
 	
 	let mut pos		= Vec3::new(0.0, 0.0, 0.0);
 	let file_entity =
@@ -248,10 +246,10 @@ pub fn input_system(
 }
 
 pub fn center_pick_system(
-	query: Query<&text::Char3D, With<CenterPick>>
+	query: Query<(&Transform, &Row, &Column), With<CenterPick>>
 ) {
-	for char3d in query.iter() {
-		screen_print!("Center Pick: row: {} col: {} character: {}", char3d.row, char3d.column, char3d.character);
+	for (tform, row, column) in query.iter() {
+		screen_print!("Center Pick: row: {} col: {} x: {}", row.0, column.0, tform.translation);
 	}
 }
 

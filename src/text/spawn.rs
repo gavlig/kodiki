@@ -1,6 +1,7 @@
 use bevy				:: prelude :: { * };
 use bevy_text_mesh		:: prelude :: { * };
 use bevy_mod_picking	:: { * };
+use bevy_fly_camera		:: { * };
 
 // use bevy_infinite_grid	:: { InfiniteGridBundle };
 
@@ -126,7 +127,9 @@ pub fn file(
 	let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
 
 	let reference_glyph : Glyph = font.glyph_from_char('a').unwrap(); // and omega
+	let row_offset = calc_vertical_offset(1.0, &reference_glyph);
 	let glyph_width	= reference_glyph.inner.advance * font_size_scalar;
+	let glyph_height = row_offset.abs();
 	let row_num_offset = 6. * glyph_width;
 	let vertical_overlap = 0.05;
 
@@ -138,7 +141,7 @@ pub fn file(
 	children.push(
 		spawn_mesh(
 			&header_string,
-			local_position + Vec3::new(row_num_offset, calc_vertical_offset(1.0, &reference_glyph), 0.0),
+			local_position + Vec3::new(row_num_offset, row_offset, 0.0),
 			&font_handle,
 			SizeUnit::NonStandard(font_size),
 			font_depth,
@@ -153,6 +156,8 @@ pub fn file(
 	let mut column	= 0 as u32;
 	let mut row		= 3 as u32;
 	let mut empty_line = false;
+	let mut column_max = 0 as u32;
+	let mut row_max = 0 as u32;
 
 	rustc_span::create_session_if_not_set_then(Edition::Edition2021, |_| {
 		let _parser_session = ParseSess::with_silent_emitter(Some(String::from("FATAL MESSAGE AGGHHH")));
@@ -236,7 +241,7 @@ pub fn file(
 					
 					// background quad
 					let quad_width		= glyph_width * token_len as f32;
-					let quad_height		= calc_vertical_offset(1., &reference_glyph).abs();
+					let quad_height		= glyph_height;
 					let quad_pos		= Vec3::new(x, y, -0.25 / 72.);
 					let quad_entity_id	= 
 					quad(
@@ -248,11 +253,8 @@ pub fn file(
 					);
 
 					commands.entity(quad_entity_id)
-					.insert(Char3D {
-						row : row,
-						column : column,
-						character : c,
-					})
+					.insert(Row { 0: row })
+					.insert(Column { 0: column })
 					;
 
 					children.push(quad_entity_id);
@@ -264,7 +266,7 @@ pub fn file(
 			if was_empty_line {
 				// background quad for previous line
 				let quad_width		= glyph_width * column as f32;
-				let quad_height		= calc_vertical_offset(1., &reference_glyph).abs();
+				let quad_height		= glyph_height;
 				let y 				= calc_vertical_offset((row - 1) as f32, &reference_glyph);
 				let quad_pos		= Vec3::new(row_num_offset, y, -0.25 / 72.);
 				let quad_entity_id	= 
@@ -277,11 +279,8 @@ pub fn file(
 				);
 
 				commands.entity(quad_entity_id)
-				.insert(Char3D {
-					row : row,
-					column : column,
-					character : '?',
-				})
+				.insert(Row { 0: row })
+				.insert(Column { 0: column })
 				;
 			}
 
@@ -290,10 +289,14 @@ pub fn file(
 			// 	break;
 			// }
 
+			column_max	= column_max.max(column);
+
 			column		 = 0;
 			row			+= 1;
 		}
 	});
+
+	row_max				= row;
 
 	//
 	//
@@ -310,7 +313,14 @@ pub fn file(
 	})
 	.id();
 
-	commands.entity(root_entity).push_children(children.as_slice());
+	commands.entity(root_entity)
+	.insert(ReaderData {
+		rows: row_max,
+		columns: column_max,
+		glyph_width: glyph_width,
+		glyph_height: glyph_height
+	})
+	.push_children(children.as_slice());
 
 	root_entity
 }

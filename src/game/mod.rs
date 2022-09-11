@@ -116,6 +116,7 @@ impl Plugin for AppPlugin {
 				.run_in_state(AppMode::Main)
 				.with_system(input_system)
 				.with_system(cursor_visibility_system)
+				.with_system(center_pick_system)
 				.into()
 			)
 
