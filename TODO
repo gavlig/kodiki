@@ -38,6 +38,8 @@
 11.12. (done!)keep meta data about file in a separate component and use it for camera navigation
 11.13. (done!)scroll controlled with arrow keys
 11.14. (done!)combine scroll controls with keys and with mouse
+11.15. (done!)quantized scrolling
+11.16. (done!)slowly move camera to quantized position for better feel
 
 12. hide mouse by timeout (after inactivity in movement department)
 13. (done!)toggle hide mouse cursor on esc
