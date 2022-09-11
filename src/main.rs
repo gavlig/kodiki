@@ -1,11 +1,14 @@
 #![feature(rustc_private)]
 #![allow(non_snake_case, dead_code)]
 
-use bevy			:: { prelude :: *, window :: PresentMode };
+use bevy			::  prelude :: *;
+use bevy :: window 	:: { PresentMode, WindowMode };
 use bevy_fly_camera	:: { FlyCameraPlugin };
 use bevy_text_mesh	:: prelude :: { * };
-// use bevy_infinite_grid :: { InfiniteGridPlugin };
 use bevy_shadertoy_wgsl	:: { * };
+use bevy_debug_text_overlay	:: { OverlayPlugin };
+
+// use bevy_infinite_grid :: { InfiniteGridPlugin };
 
 mod game;
 use game			:: { AppPlugin };
@@ -28,8 +31,10 @@ fn main() {
 		.add_plugin(AppPlugin)
 		.add_plugin(FlyCameraPlugin)
 		.add_plugin(TextMeshPlugin)
-		// .add_plugin(InfiniteGridPlugin)
 		.add_plugin(ShadertoyPlugin)
+		.add_plugin(OverlayPlugin { font_size: 32.0, fallback_color: Color::rgb(0.8, 0.8, 0.8), ..default() })
+
+		// .add_plugin(InfiniteGridPlugin)
 
 		.run();
 }

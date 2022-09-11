@@ -1,13 +1,13 @@
 use bevy			:: { prelude :: * };
 use bevy			:: { app::AppExit };
 use bevy			:: core_pipeline :: clear_color :: ClearColorConfig;
-use bevy_fly_camera	:: { FlyCamera };
+use bevy_fly_camera	:: { FlyCamera, CenterPick };
 use bevy_mod_picking:: { * };
 use iyes_loopless	:: { prelude :: * };
 use bevy_shadertoy_wgsl :: { * };
+use bevy_debug_text_overlay :: { screen_print };
 
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use serde_json::json;
+use bevy::render::mesh::shape as render_shape;
 
 use super           :: { * };
 
@@ -211,18 +211,23 @@ pub fn input_system(
 		// parse_source_file();
 	}
 
+	// turn off shadertoy on background
 	if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Key0) {
 		let mut camera = q_camera.get_mut(camera_ids.camera2d.unwrap()).unwrap();
 		let toggle = !camera.is_active;
 
+		// active 2d camera == visible shadertoy
 		camera.is_active = toggle;
 
 		let mut camera = q_camera.get_mut(camera_ids.camera3d.unwrap()).unwrap();
+		// active 2d camera always has priority 0 so if it's disabled we need to give 3d camera priority 0
 		camera.priority = if toggle { 1 } else { 0 };
 
 		let mut camera3d = q_camera3d.get_mut(camera_ids.camera3d.unwrap()).unwrap();
+		// without shadertoy we need to cleanup background
 		camera3d.clear_color = if toggle { ClearColorConfig::None } else { ClearColorConfig::Default };
 
+		// turn off compute shaders to increase fps as well
 		shadertoy_canvas.active = toggle;
 	}
 
@@ -242,38 +247,12 @@ pub fn input_system(
 	}
 }
 
-fn check_selection_recursive(
-	children	: &Children,
-	q_children	: &Query<&Children>,
-	q_selection : &Query<&Selection>,
-	depth		: u32,
-	max_depth 	: u32
- ) -> bool {
-	let mut selection_found = false;
-	for child in children.iter() {
-		let selection = match q_selection.get(*child) {
-			Ok(s) => s,
-			Err(_) => continue,
-		};
-
-		if selection.selected() {
-			selection_found = true;
-		} else {
-			if depth >= max_depth {
-				continue;
-			}
-			let subchildren = q_children.get(*child);
-			if subchildren.is_ok() {
-				selection_found = check_selection_recursive(subchildren.unwrap(), q_children, q_selection, depth + 1, max_depth);
-			}
-		}
-
-		if selection_found {
-			break;
-		}
+pub fn center_pick_system(
+	query: Query<&text::Char3D, With<CenterPick>>
+) {
+	for char3d in query.iter() {
+		screen_print!("Center Pick: row: {} col: {} character: {}", char3d.row, char3d.column, char3d.character);
 	}
-
-	selection_found
 }
 
 pub fn load_assets(

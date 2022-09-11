@@ -1,8 +1,10 @@
 use bevy				:: prelude :: { * };
 use bevy				:: core_pipeline :: clear_color :: ClearColorConfig;
 use bevy_fly_camera		:: { FlyCamera };
-// use bevy_infinite_grid	:: { InfiniteGridBundle };
+use bevy_mod_picking	:: { * };
 use bevy::render::mesh::shape as render_shape;
+
+// use bevy_infinite_grid	:: { InfiniteGridBundle };
 
 use super				:: { * };
 
@@ -41,7 +43,7 @@ pub fn camera(
 				..default()
 			}
 		)
-		// .insert_bundle	(PickingCameraBundle::default())
+		.insert_bundle	(PickingCameraBundle::default())
 		.id				();
 
 	camera_ids.camera2d = Some(camera2d);

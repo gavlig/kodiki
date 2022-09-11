@@ -30,3 +30,4 @@ iyes_loopless		= { version = "0.7.0" }
 bevy_text_mesh		= { git = "https://github.com/gavlig/bevy_text_mesh.git" } # { path = "../bevy_text_mesh/" }
 ttf2mesh			= { git = "https://github.com/gavlig/ttf2mesh-rs.git" }
 bevy_shadertoy_wgsl	= { git = "https://github.com/gavlig/bevy_shadertoy_wgsl.git" } # { path = "../bevy_shadertoy_wgsl" }
+bevy-debug-text-overlay = "3.0"
