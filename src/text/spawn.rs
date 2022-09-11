@@ -134,7 +134,7 @@ pub fn file(
 
 	let mut children : Vec<Entity> = Vec::new();
 
-	let header_string = format!("--[ {} ]--", file_path);
+	let header_string = format!("-- [ {} ] --", file_path);
 	children.push(
 		spawn_mesh(
 			&header_string,
@@ -146,6 +146,7 @@ pub fn file(
 			commands
 		)
 	);
+	
 
 	let mut lines	= file_content.lines();
 	let mut y		= 0.0;
@@ -157,8 +158,24 @@ pub fn file(
 		let _parser_session = ParseSess::with_silent_emitter(Some(String::from("FATAL MESSAGE AGGHHH")));
 
 		loop {
-			y = calc_vertical_offset(row as f32);
+			y = calc_vertical_offset(row as f32, &reference_glyph);
 
+			// mesh for line/row numbers
+			let row_num_string = format!("{:>5} ", row);
+			let pos		= local_position + (Vec3::Y * y);
+			children.push(
+				spawn_mesh(
+					&row_num_string,
+					pos,
+					&font_handle,
+					SizeUnit::NonStandard(font_size),
+					font_depth,
+					Color::hex("495162").unwrap(),
+					commands
+				)
+			);
+
+			// get next line of characters
 			let line_raw = match lines.next() {
 				Some(l)	=> l,
 				None	=> break,
@@ -181,7 +198,7 @@ pub fn file(
 					empty_line = false;
 				}
 				let token = token_meta.unwrap();
-				// println!("lexer {:?}", token);
+				// println!("{}/{} lexer {:?}", row, column, token);
 
 				let token_start : usize = token_offset;
 				let token_end : usize = token_offset + token.len as usize;
@@ -189,25 +206,6 @@ pub fn file(
 
 				let color = color_from_token_kind(&token, token_str, token_start, token_end);
 				// println!("[{} {} {}] [{}]", column, token_offset, token.len, token_str);
-
-				// line/row numbers
-				if column == 0 {
-					let row_num_string = format!("{:>5} ", row);
-					let pos		= local_position + (Vec3::Y * y);
-					children.push(
-						spawn_mesh(
-							&row_num_string,
-							pos,
-							&font_handle,
-							SizeUnit::NonStandard(font_size),
-							font_depth,
-							Color::hex("495162").unwrap(),
-							commands
-						)
-					);
-				}
-
-				let mut len : u32 = token.len;
 
 				// make a mesh for each character in this token
 				for c in token_str.chars() {
