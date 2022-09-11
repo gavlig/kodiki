@@ -262,8 +262,6 @@ pub fn file(
 			}
 
 			if was_empty_line {
-				println!("{}/{} drawing empty line for previous row", row, column);
-
 				// background quad for previous line
 				let quad_width		= glyph_width * column as f32;
 				let quad_height		= calc_vertical_offset(1., &reference_glyph).abs();
