@@ -33,13 +33,15 @@
 11.7. (done!)smooth out camera leaning target pitch calculation to avoid jitter
 11.8. (done!)better init position with loaded file
 11.9. (done!)lock to column in reader mode
-11.10. leaning needs more smoothing for small movements
-11.11. scrolling needs smoothing
+11.10. (done!)leaning needs more smoothing for small movements
+11.11. (done!)scrolling needs smoothing
 11.12. (done!)keep meta data about file in a separate component and use it for camera navigation
 11.13. (done!)scroll controlled with arrow keys
 11.14. (done!)combine scroll controls with keys and with mouse
 11.15. (done!)quantized scrolling
 11.16. (done!)slowly move camera to quantized position for better feel
+11.17. scroll with wheel too
+11.18. fast switch between keyboard and mouse
 
 12. hide mouse by timeout (after inactivity in movement department)
 13. (done!)toggle hide mouse cursor on esc

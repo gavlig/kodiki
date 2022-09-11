@@ -271,7 +271,13 @@ pub fn stats_system(
 	// q_center_pick: Query<(&Transform, &Row, &Column), With<CenterPick>>
 ) {
 	for fly_camera in q_camera.iter() {
-		screen_print!("row: {}({:.3}) col: {}({:.3})", fly_camera.row, fly_camera.row_scroll_accum, fly_camera.column, fly_camera.column_scroll_accum);
+		screen_print!("row: {}({:.3}) col: {}({:.3}) pitch: {:.3}",
+			fly_camera.row,
+			fly_camera.row_scroll_accum,
+			fly_camera.column,
+			fly_camera.column_scroll_accum,
+			fly_camera.pitch
+		);
 	}
 
 	// for (tform, row, column) in q_center_pick.iter() {
