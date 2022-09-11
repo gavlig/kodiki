@@ -20,8 +20,8 @@ use rustc_lexer			:: TokenKind;
 
 use mesh as spawn_mesh;
 
-fn calc_vertical_offset(row : f32) -> f32 {
-	row * -0.13
+fn calc_vertical_offset(row : f32, reference_glyph : &Glyph) -> f32 {
+	row * -0.13 // (reference_glyph.inner.ybounds[0] - reference_glyph.inner.ybounds[1]) / 72.
 }
 
 fn quad(
@@ -138,7 +138,7 @@ pub fn file(
 	children.push(
 		spawn_mesh(
 			&header_string,
-			local_position + Vec3::new(row_num_offset, calc_vertical_offset(1.0), 0.0),
+			local_position + Vec3::new(row_num_offset, calc_vertical_offset(1.0, &reference_glyph), 0.0),
 			&font_handle,
 			SizeUnit::NonStandard(font_size),
 			font_depth,
