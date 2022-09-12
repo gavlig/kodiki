@@ -34,9 +34,9 @@ pub fn setup_world_system(
 	let font		= fonts.get_mut(font_handle).unwrap();
 	
 	let mut pos		= Vec3::new(0.0, 0.0, 0.0);
-	let file_entity =
+	let (file_entity, text_descriptor) =
 	text::spawn::file(
-		"playground/herringbone_spawn.rs", // rustc_ast.rs",
+		"playground/herringbone_spawn.rs", // "playground/rustc_ast.rs",
 		font_handle,
 		&mut font.ttf_font,
 		pos,
@@ -46,6 +46,8 @@ pub fn setup_world_system(
 	);
 
 	spawn::camera	(file_entity, &mut camera_ids, &mut commands);
+
+	text::spawn::caret(file_entity, &text_descriptor, &mut meshes, &mut materials, &mut commands);
 
 	// pos.x				+= 10.0;
 	// spawn::file_text	(
@@ -272,13 +274,13 @@ pub fn input_system(
 pub fn stats_system(
 	q_camera: Query<&FlyCamera>,
 	// q_center_pick: Query<(&Transform, &Row, &Column), With<CenterPick>>
-	q_reader_data: Query<&ReaderData>,
+	q_text_descriptor: Query<&TextDescriptor>,
 ) {
 	for fly_camera in q_camera.iter() {
 		let (qw, qh) =
 		if let Some(target) = fly_camera.target {
-			let reader_data = q_reader_data.get(target).unwrap();
-			(reader_data.glyph_width, reader_data.glyph_height)
+			let descriptor = q_text_descriptor.get(target).unwrap();
+			(descriptor.glyph_width, descriptor.glyph_height)
 		} else {
 			(0.0, 0.0)
 		};

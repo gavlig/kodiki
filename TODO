@@ -40,10 +40,16 @@
 11.14. (done!)combine scroll controls with keys and with mouse
 11.15. (done!)quantized scrolling
 11.16. (done!)slowly move camera to quantized position for better feel
-11.17. scroll with wheel too
+11.17. (blocked by 11.24) scroll with wheel too
 11.18. fast switch between keyboard and mouse
 11.19. (done!)time based smoothing instead of fps based
-11.20. time based scrolling with keys
+11.20. (done!)time based scrolling with keys
+11.21. (done!)zoom smoothing
+11.22. smart scrolling: find dominant direction and don't let the other one change its value
+11.23. weaker scroll reset for slow mouse movements
+11.24. do not directly read mouse and kb events or use more flags?
+11.25. refactor camera to have smaller systems affecting translation/rotation/zoom
+11.26. refactor camera to have easings in all modes
 
 12. hide mouse by timeout (after inactivity in movement department)
 13. (done!)toggle hide mouse cursor on esc
@@ -52,14 +58,13 @@
 16. hide mouse by gesture?
 
 17. TEXT EDITOR
-(!)17.1. Movable cursor attached to file with row+col as position
+17.1. (done!)Movable cursor attached to file with row+col as position
 17.2. (?maybe helix integration instead)Erase symbols with backspace
 17.3. (?maybe helix integration instead)Type symbols
-18. pass material instead of font color to bevy_text_mesh
 
+18. pass material instead of font color to bevy_text_mesh
 19. (done!)spawn a background object/plane for code
 20. (done!)lines/words/letters need a background object for picking if we're going for that
-
 21. (done!)load fonts on startup or something
 
 22. TEXT VIEW
@@ -70,11 +75,11 @@
 22.5. zoom out in ortho camera mode
 22.6. highlight current line in reader mode
 22.7. (done!)add background to empty lines
-22.8. make length of background of current line at least as long as length of next line
-22.9. toggle background quad visibility
-22.10. transparent background quad
-22.11. dim shadertoy on background
-22.12. reevaluate background quad
+22.8. reevaluate background quad
+22.9. (blocked by 22.8)make length of background of current line at least as long as length of next line
+22.10. (blocked by 22.8)toggle background quad visibility
+22.11. (blocked by 22.8)transparent background quad
+22.12. dim shadertoy on background
 
 (?maybe helix integration instead)
 23. RUST-ANALYZER

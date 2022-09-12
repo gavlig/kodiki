@@ -2,6 +2,7 @@ use bevy				:: prelude :: { * };
 use bevy_text_mesh		:: prelude :: { * };
 use bevy_mod_picking	:: { * };
 use bevy_fly_camera		:: { * };
+use bevy_contrib_colors	:: { Tailwind };
 
 // use bevy_infinite_grid	:: { InfiniteGridBundle };
 
@@ -20,6 +21,7 @@ use rustc_span			:: edition :: Edition;
 use rustc_lexer			:: TokenKind;
 
 use mesh as spawn_mesh;
+use bevy::render::mesh::shape as render_shape;
 
 fn calc_vertical_offset(row : f32, reference_glyph : &Glyph) -> f32 {
 	row * -0.13 // (reference_glyph.inner.ybounds[0] - reference_glyph.inner.ybounds[1]) / 72.
@@ -117,7 +119,7 @@ pub fn file(
 	meshes			: &mut ResMut<Assets<Mesh>>,
 	materials		: &mut ResMut<Assets<StandardMaterial>>,
 	commands		: &mut Commands
-) -> Entity
+) -> (Entity, TextDescriptor)
 {
 	let file_content = load_text_file(file_path).unwrap();
 
@@ -333,14 +335,44 @@ pub fn file(
 	})
 	.id();
 
-	commands.entity(root_entity)
-	.insert(ReaderData {
+	let text_descriptor = TextDescriptor {
 		rows: row_max,
 		columns: column_max,
 		glyph_width: glyph_width,
 		glyph_height: glyph_height
-	})
+	};
+
+	commands.entity(root_entity)
+	.insert(text_descriptor.clone())
 	.push_children(children.as_slice());
 
-	root_entity
+	(root_entity, text_descriptor)
+}
+
+pub fn caret(
+	parent_entity	: Entity,	
+	text_descriptor	: &TextDescriptor,
+	meshes			: &mut ResMut<Assets<Mesh>>,
+	materials		: &mut ResMut<Assets<StandardMaterial>>,
+	commands		: &mut Commands
+) {
+	let min_dim		= text_descriptor.glyph_width / 2.0;
+	let max_dim		= text_descriptor.glyph_height;
+
+	let transform	= Transform::identity();
+
+	let caret_entity =
+	commands.spawn_bundle(PbrBundle {
+		mesh		: meshes.add	(Mesh::from(render_shape::Box::new(min_dim, max_dim, min_dim))),
+		material	: materials.add	(Tailwind::GRAY100.into()),
+		transform	: transform,
+		..default()
+	})
+	.insert(Caret::default())
+	.id()
+	;
+
+	commands.entity(parent_entity)
+	.add_child(caret_entity)
+	;
 }

@@ -13,6 +13,8 @@ use systems				:: *;
 mod utils;
 use utils				:: *;
 
+use crate				:: text;
+
 #[derive(Component, Default, Clone)]
 pub struct LogHolder {
 	pub data : String
@@ -117,6 +119,7 @@ impl Plugin for AppPlugin {
 				.with_system(input_system)
 				.with_system(cursor_visibility_system)
 				.with_system(stats_system)
+				.with_system(text::caret_system)
 				.into()
 			)
 
