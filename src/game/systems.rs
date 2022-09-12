@@ -201,6 +201,8 @@ pub fn input_system(
 		q_selection	: Query<&Selection>,
 		q_children	: Query<&Children>,
 ) {
+	let delta_seconds = time.delta_seconds();
+
 	if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Escape) {
 		exit.send(AppExit);
 	}
@@ -245,23 +247,19 @@ pub fn input_system(
 		}
 
 		if key.pressed(KeyCode::Left) {
-			if camera.column > 0 {
-				camera.column -= 1;
-			}
+			camera.column_dec(delta_seconds);
 		}
 
 		if key.pressed(KeyCode::Right) {
-			camera.column += 1;
+			camera.column_inc(delta_seconds);
 		}
 
 		if key.pressed(KeyCode::Up) {
-			if camera.row > 0 {
-				camera.row -= 1;
-			}
+			camera.row_dec(delta_seconds);
 		}
 
 		if key.pressed(KeyCode::Down) {
-			camera.row += 1;
+			camera.row_inc(delta_seconds);
 		}
 	}
 }
