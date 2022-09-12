@@ -42,6 +42,8 @@
 11.16. (done!)slowly move camera to quantized position for better feel
 11.17. scroll with wheel too
 11.18. fast switch between keyboard and mouse
+11.19. (done!)time based smoothing instead of fps based
+11.20. time based scrolling with keys
 
 12. hide mouse by timeout (after inactivity in movement department)
 13. (done!)toggle hide mouse cursor on esc
@@ -71,6 +73,8 @@
 22.8. make length of background of current line at least as long as length of next line
 22.9. toggle background quad visibility
 22.10. transparent background quad
+22.11. dim shadertoy on background
+22.12. reevaluate background quad
 
 (?maybe helix integration instead)
 23. RUST-ANALYZER

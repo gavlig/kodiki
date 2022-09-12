@@ -212,27 +212,47 @@ pub fn file(
 				let color = color_from_token_kind(&token, token_str, token_start, token_end);
 				// println!("[{} {} {}] [{}]", column, token_offset, token.len, token_str);
 
+				{
+					let column_offset = (column as f32) * glyph_width;
+					let x = row_num_offset + column_offset;
+
+					let pos = local_position + Vec3::new(x, y, 0.0);
+					let mesh_string = String::from(token_str);
+
+					let mesh_entity_id =
+					spawn_mesh(
+						&mesh_string,
+						pos,
+						&font_handle,
+						SizeUnit::NonStandard(font_size),
+						font_depth,
+						color,
+						commands
+					);
+					children.push(mesh_entity_id);
+				}
+
 				// make a mesh for each character in this token
 				for c in token_str.chars() {
 					let column_offset = (column as f32) * glyph_width;
 					let x = row_num_offset + column_offset;
 
-					let pos = local_position + Vec3::new(x, y, 0.0);
-					let mesh_string = String::from(c);
+					// let pos = local_position + Vec3::new(x, y, 0.0);
+					// let mesh_string = String::from(c);
 
 					let mut token_len = 1;
 					if token.kind != TokenKind::Whitespace {
-						let mesh_entity_id =
-						spawn_mesh(
-							&mesh_string,
-							pos,
-							&font_handle,
-							SizeUnit::NonStandard(font_size),
-							font_depth,
-							color,
-							commands
-						);
-						children.push(mesh_entity_id);
+						// let mesh_entity_id =
+						// spawn_mesh(
+						// 	&mesh_string,
+						// 	pos,
+						// 	&font_handle,
+						// 	SizeUnit::NonStandard(font_size),
+						// 	font_depth,
+						// 	color,
+						// 	commands
+						// );
+						// children.push(mesh_entity_id);
 					} else if c == '\t' {
 						token_len = tab_size - (column % tab_size);
 					}
@@ -240,24 +260,24 @@ pub fn file(
 					column += token_len;
 					
 					// background quad
-					let quad_width		= glyph_width * token_len as f32;
-					let quad_height		= glyph_height;
-					let quad_pos		= Vec3::new(x, y, -0.25 / 72.);
-					let quad_entity_id	= 
-					quad(
-						quad_pos,
-						Vec2::new(quad_width, quad_height),
-						meshes,
-						materials,
-						commands
-					);
+					// let quad_width		= glyph_width * token_len as f32;
+					// let quad_height		= glyph_height;
+					// let quad_pos		= Vec3::new(x, y, -0.25 / 72.);
+					// let quad_entity_id	= 
+					// quad(
+					// 	quad_pos,
+					// 	Vec2::new(quad_width, quad_height),
+					// 	meshes,
+					// 	materials,
+					// 	commands
+					// );
 
-					commands.entity(quad_entity_id)
-					.insert(Row { 0: row })
-					.insert(Column { 0: column })
-					;
+					// commands.entity(quad_entity_id)
+					// .insert(Row { 0: row })
+					// .insert(Column { 0: column })
+					// ;
 
-					children.push(quad_entity_id);
+					// children.push(quad_entity_id);
 				}
 
 				token_offset += token.len as usize; // amount of tokens != amount of symbols so we need to keep track of both 
@@ -265,23 +285,23 @@ pub fn file(
 
 			if was_empty_line {
 				// background quad for previous line
-				let quad_width		= glyph_width * column as f32;
-				let quad_height		= glyph_height;
-				let y 				= calc_vertical_offset((row - 1) as f32, &reference_glyph);
-				let quad_pos		= Vec3::new(row_num_offset, y, -0.25 / 72.);
-				let quad_entity_id	= 
-				quad(
-					quad_pos,
-					Vec2::new(quad_width, quad_height),
-					meshes,
-					materials,
-					commands
-				);
+				// let quad_width		= glyph_width * column as f32;
+				// let quad_height		= glyph_height;
+				// let y 				= calc_vertical_offset((row - 1) as f32, &reference_glyph);
+				// let quad_pos		= Vec3::new(row_num_offset, y, -0.25 / 72.);
+				// let quad_entity_id	= 
+				// quad(
+				// 	quad_pos,
+				// 	Vec2::new(quad_width, quad_height),
+				// 	meshes,
+				// 	materials,
+				// 	commands
+				// );
 
-				commands.entity(quad_entity_id)
-				.insert(Row { 0: row })
-				.insert(Column { 0: column })
-				;
+				// commands.entity(quad_entity_id)
+				// .insert(Row { 0: row })
+				// .insert(Column { 0: column })
+				// ;
 			}
 
 			// Cheat/Debug
