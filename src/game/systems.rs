@@ -239,27 +239,32 @@ pub fn input_system(
 			camera.enabled_reader = toggle;
 		}
 
-		if key.just_pressed(KeyCode::Escape) {
-			let toggle 	= !camera.enabled_rotation;
-			camera.enabled_rotation = toggle;
-			camera.enabled_translation = toggle;
-			camera.enabled_zoom = toggle;
-		}
+		camera.enabled_reader = key.pressed(KeyCode::LAlt);
 
-		if key.pressed(KeyCode::Left) {
-			camera.column_dec(delta_seconds);
-		}
+		if camera.enabled_reader {
+			camera.enabled_rotation = true;
+			camera.enabled_translation = true;
+			camera.enabled_zoom = true;
 
-		if key.pressed(KeyCode::Right) {
-			camera.column_inc(delta_seconds);
-		}
+			if key.pressed(KeyCode::Left) {
+				camera.column_dec(delta_seconds);
+			}
 
-		if key.pressed(KeyCode::Up) {
-			camera.row_dec(delta_seconds);
-		}
+			if key.pressed(KeyCode::Right) {
+				camera.column_inc(delta_seconds);
+			}
 
-		if key.pressed(KeyCode::Down) {
-			camera.row_inc(delta_seconds);
+			if key.pressed(KeyCode::Up) {
+				camera.row_dec(delta_seconds);
+			}
+
+			if key.pressed(KeyCode::Down) {
+				camera.row_inc(delta_seconds);
+			}
+		} else {
+			camera.enabled_rotation = false;
+			camera.enabled_translation = false;
+			camera.enabled_zoom = false;
 		}
 	}
 }
