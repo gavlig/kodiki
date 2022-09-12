@@ -269,14 +269,25 @@ pub fn input_system(
 pub fn stats_system(
 	q_camera: Query<&FlyCamera>,
 	// q_center_pick: Query<(&Transform, &Row, &Column), With<CenterPick>>
+	q_reader_data: Query<&ReaderData>,
 ) {
 	for fly_camera in q_camera.iter() {
-		screen_print!("row: {}({:.3}) col: {}({:.3}) pitch: {:.3}",
+		let (qw, qh) =
+		if let Some(target) = fly_camera.target {
+			let reader_data = q_reader_data.get(target).unwrap();
+			(reader_data.glyph_width, reader_data.glyph_height)
+		} else {
+			(0.0, 0.0)
+		};
+
+		screen_print!("row: {}({:.3}) col: {}({:.3}) pitch: {:.3} glyph_w: {:.3} glyph_h: {:.3}",
 			fly_camera.row,
 			fly_camera.row_scroll_accum,
 			fly_camera.column,
 			fly_camera.column_scroll_accum,
-			fly_camera.pitch
+			fly_camera.pitch,
+			qw,
+			qh
 		);
 	}
 
