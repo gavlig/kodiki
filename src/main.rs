@@ -13,6 +13,7 @@ use bevy_debug_text_overlay	:: { OverlayPlugin, screen_print };
 mod game;
 use game			:: { AppPlugin };
 mod text;
+mod helix_application;
 
 fn main() {
 	App::new()

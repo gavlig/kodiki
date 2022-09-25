@@ -32,3 +32,21 @@ ttf2mesh			= { git = "https://github.com/gavlig/ttf2mesh-rs.git" }
 bevy_shadertoy_wgsl	= { git = "https://github.com/gavlig/bevy_shadertoy_wgsl.git" } # { path = "../bevy_shadertoy_wgsl" }
 bevy-debug-text-overlay = { version = "3.0" }
 bevy_contrib_colors = { git = "https://github.com/gavlig/bevy_contrib_colors.git" }
+
+# helix-editor		= { path = "../helix-editor" } # { git = "https://github.com/helix-editor/helix.git" }
+helix-core			= { path = "../helix-editor/helix-core"}
+helix-lsp			= { path = "../helix-editor/helix-lsp" }
+helix-dap			= { path = "../helix-editor/helix-dap" }
+helix-loader		= { path = "../helix-editor/helix-loader" }
+helix-view			= { path = "../helix-editor/helix-view" }
+helix-term			= { path = "../helix-editor/helix-term" }
+
+anyhow				= "1"
+signal-hook			= "0.3"
+[target.'cfg(not(windows))'.dependencies]  # https://github.com/vorner/signal-hook/issues/100
+signal-hook-tokio	= { version = "0.3", features = ["futures-v0_3"] }
+
+tokio				= { version = "1", features = ["rt", "rt-multi-thread", "io-util", "io-std", "time", "process", "macros", "fs", "parking_lot"] }
+tokio-stream		= { version = "0.1" }
+arc-swap			= { version = "1.5.1" }
+futures-util		= { version = "0.3", features = ["std", "async-await"], default-features = false }

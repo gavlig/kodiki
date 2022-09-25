@@ -41,7 +41,7 @@
 11.15. (done!)quantized scrolling
 11.16. (done!)slowly move camera to quantized position for better feel
 11.17. (blocked by 11.24) scroll with wheel too
-11.18. fast switch between keyboard and mouse
+11.18. (done! with LAlt)fast switch between keyboard and mouse
 11.19. (done!)time based smoothing instead of fps based
 11.20. (done!)time based scrolling with keys
 11.21. (done!)zoom smoothing
@@ -50,6 +50,7 @@
 11.24. do not directly read mouse and kb events or use more flags?
 11.25. refactor camera to have smaller systems affecting translation/rotation/zoom
 11.26. refactor camera to have easings in all modes
+11.27. go to caret
 
 12. hide mouse by timeout (after inactivity in movement department)
 13. (done!)toggle hide mouse cursor on esc
@@ -61,6 +62,8 @@
 17.1. (done!)Movable cursor attached to file with row+col as position
 17.2. (?maybe helix integration instead)Erase symbols with backspace
 17.3. (?maybe helix integration instead)Type symbols
+17.4. pressed arrow buttons shouldn't start moving caret instantly
+17.5. limit caret movement
 
 18. pass material instead of font color to bevy_text_mesh
 19. (done!)spawn a background object/plane for code
@@ -81,25 +84,35 @@
 22.11. (blocked by 22.8)transparent background quad
 22.12. dim shadertoy on background
 
-(?maybe helix integration instead)
-23. RUST-ANALYZER
-23.1. autocomplete
-23.2. outline 
-
 24. open files without hardcode
 25. bevy console
 26. (done!)shadertoy support
 
 27. HELIX INTEGRATION
-27.1. research source code
-27.2. ???
-27.3. profit
+27.1. (done!)research source code
+27.2. run the most basic event loop from helix in bevy
+27.3. add helix as git submodule
+27.4. implement Compositor
+27.5. profit
 
-28. bug: some tabs and characters are still misaligned
-29. automatically load all fonts from assets
-30. bug: camera center changes pickable state together with mouse
-31. perf: switch to words as objects when camera is not in reader mode
-32. bug: center picking gets broken after pressing esc
+28. HELIX POLISH
+28.1. separate Config from helix-term
+28.2. separate Jobs from helix-term
+28.3. separate Args from helix-term
+
+29. HELIX TODO
+29.1. tutor
+
+30. Bugs
+30.1. some tabs and characters are still misaligned
+30.2. camera center changes pickable state together with mouse
+30.3. center picking gets broken after pressing esc
+
+31. Perf
+31.1. switch to words as objects/lines when camera is not in reader mode
+
+32. Features
+32.1. automatically load all fonts from assets
 
 oof
 1. detect patterns in code editing and ask if repeat. (i was deleting Default:: a lot)
@@ -117,3 +130,6 @@ oof
 13. use system fonts as well
 14. show warnings about unused and other housekeeping stuff on request (special mode/overlay)
 15. quick commit: small change in two line should be committable in one-two clicks
+16. bookmarks on functions/lines with fast travel
+17. draggable shadertoy in a small 3d window in space
+18. autodocumentation at least like in vscode is a must
