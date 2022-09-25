@@ -94,7 +94,7 @@
 27.3. add helix as git submodule
 27.4. (done!)implement basic Compositor
 27.5. render file from helix
-27.5. profit
+27.6. instantiate bevy helix wrapper
 
 28. HELIX POLISH
 28.1. separate Config from helix-term
