@@ -40,6 +40,7 @@ helix-dap			= { path = "../helix-editor/helix-dap" }
 helix-loader		= { path = "../helix-editor/helix-loader" }
 helix-view			= { path = "../helix-editor/helix-view" }
 helix-term			= { path = "../helix-editor/helix-term" }
+helix-tui			= { path = "../helix-editor/helix-tui" }
 
 anyhow				= "1"
 signal-hook			= "0.3"
