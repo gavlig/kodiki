@@ -13,7 +13,8 @@ use bevy_debug_text_overlay	:: { OverlayPlugin, screen_print };
 mod game;
 use game			:: { AppPlugin };
 mod text;
-mod helix_application;
+mod bevy_helix;
+use bevy_helix      :: { BevyHelixPlugin };
 
 fn main() {
 	App::new()
@@ -30,6 +31,8 @@ fn main() {
 		.add_plugins(DefaultPlugins)
 
 		.add_plugin(AppPlugin)
+        .add_plugin(BevyHelixPlugin)
+
 		.add_plugin(FlyCameraPlugin)
 		.add_plugin(TextMeshPlugin)
 		.add_plugin(ShadertoyPlugin)

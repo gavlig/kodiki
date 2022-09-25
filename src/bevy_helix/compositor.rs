@@ -113,20 +113,12 @@ impl Compositor for CompositorBevy {
 		consumed
 	}
 
-	fn render(&mut self, cx: &mut Context) {
-		// self.terminal
-		//     .autoresize()
-		//     .expect("Unable to determine terminal size");
+	fn render(&mut self, cx: &mut Context, surface: &mut Surface) {
+		let area = *surface.area();
 
-		// // TODO: need to recalculate view tree if necessary
-
-		// let surface = self.terminal.current_buffer_mut();
-
-		// let area = *surface.area();
-
-		// for layer in &mut self.layers {
-		//     layer.render(area, surface, cx);
-		// }
+		for layer in &mut self.layers {
+		    layer.render(area, surface, cx);
+		}
 
 		// let (pos, kind) = self.cursor(area, cx.editor);
 		// let pos = pos.map(|pos| (pos.col as u16, pos.row as u16));

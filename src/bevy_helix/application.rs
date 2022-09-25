@@ -1,6 +1,6 @@
 use bevy            :: { prelude :: * };
 
-use arc_swap        :: {access::Map, ArcSwap};
+use arc_swap        :: { access::Map, ArcSwap };
 use futures_util    :: { Stream };
 use helix_core      :: {
 	config          :: { default_syntax_loader, user_syntax_loader },
@@ -10,6 +10,7 @@ use helix_core      :: {
 use helix_lsp       :: { lsp, util :: lsp_pos_to_pos, LspProgressMap };
 use helix_view      :: { align_view, editor :: ConfigEvent, theme, tree :: Layout, Align, Editor };
 use helix_term      :: { config::Config, job :: Jobs, args::Args, keymap::Keymaps, compositor::Compositor };
+use helix_tui 		:: { buffer :: Buffer as Surface };
 use serde_json      :: { json };
 
 use std             :: {
@@ -36,10 +37,10 @@ pub struct Application {
 	compositor	: CompositorBevy,
 	pub editor  : Editor,
 
-	config      : Arc<ArcSwap<Config>>,
+	config      : Config,
 
-	theme_loader: Arc<theme::Loader>,
-	syn_loader  : Arc<syntax::Loader>,
+	theme_loader: theme::Loader,
+	syn_loader  : syntax::Loader,
 
 	signals     : Signals,
 	jobs        : Jobs,
@@ -69,22 +70,6 @@ fn setup_integration_logging() {
 //         .apply();
 }
 
-fn restore_term() -> Result<(), Error> {
-//     let mut stdout = stdout();
-//     // reset cursor shape
-//     write!(stdout, "\x1B[0 q")?;
-//     // Ignore errors on disabling, this might trigger on windows if we call
-//     // disable without calling enable previously
-//     let _ = execute!(stdout, DisableMouseCapture);
-//     execute!(
-//         stdout,
-//         DisableBracketedPaste,
-//         terminal::LeaveAlternateScreen
-//     )?;
-//     terminal::disable_raw_mode()?;
-	Ok(())
-}
-
 impl Application {
 	pub fn new(args: Args, config: Config) -> Result<Self, Error> {
 		// #[cfg(feature = "integration")]
@@ -97,7 +82,7 @@ impl Application {
 			&helix_loader::runtime_dir(),
 		));
 
-		let true_color = config.editor.true_color; // helix_term::true_color();
+		let true_color = true; // config.editor.true_color; // helix_term::true_color();
 		let theme = config
 			.theme
 			.as_ref()
@@ -230,15 +215,15 @@ impl Application {
 		Ok(app)
 	}
 
-	fn render(&mut self) {
-//         let compositor = &mut self.compositor;
+	pub fn render(&mut self, surface: &mut Surface) {
+        let compositor = &mut self.compositor;
 
-//         let mut cx = crate::compositor::Context {
-//             editor: &mut self.editor,
-//             jobs: &mut self.jobs,
-//             scroll: None,
-//         };
+        let mut cx = helix_term::compositor::Context {
+            editor: &mut self.editor,
+            jobs: &mut self.jobs,
+            scroll: None,
+        };
 
-//         compositor.render(&mut cx);
+        compositor.render(&mut cx, Some(surface));
 	}
 }
