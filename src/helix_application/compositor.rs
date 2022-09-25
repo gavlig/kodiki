@@ -65,16 +65,6 @@ impl Compositor for CompositorBevy {
 		self.layers.push(layer);
 	}
 
-	/// Replace a component that has the given `id` with the new layer and if
-	/// no component is found, push the layer normally.
-	fn replace_or_push<T: Component>(&mut self, id: &'static str, layer: T) {
-		if let Some(component) = self.find_id(id) {
-			*component = layer;
-		} else {
-			self.push(Box::new(layer))
-		}
-	}
-
 	fn pop(&mut self) -> Option<Box<dyn Component>> {
 		self.layers.pop()
 	}

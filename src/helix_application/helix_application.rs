@@ -9,7 +9,7 @@ use helix_core      :: {
 };
 use helix_lsp       :: { lsp, util :: lsp_pos_to_pos, LspProgressMap };
 use helix_view      :: { align_view, editor :: ConfigEvent, theme, tree :: Layout, Align, Editor };
-use helix_term      :: { config::Config, job :: Jobs, args::Args, keymap::Keymaps };
+use helix_term      :: { config::Config, job :: Jobs, args::Args, keymap::Keymaps, compositor::Compositor };
 use serde_json      :: { json };
 
 use std             :: {
@@ -28,12 +28,12 @@ use {
 #[cfg(windows)]
 type Signals = futures_util::stream::Empty<()>;
 
-use super :: compositor :: Compositor;
+use super :: compositor :: CompositorBevy;
 
 const LSP_DEADLINE: Duration = Duration::from_millis(16);
 
 pub struct Application {
-	compositor	: Compositor,
+	compositor	: CompositorBevy,
 	pub editor  : Editor,
 
 	config      : Arc<ArcSwap<Config>>,
@@ -123,7 +123,7 @@ impl Application {
 		});
 		let syn_loader = std::sync::Arc::new(syntax::Loader::new(syn_loader_conf));
 
-		let mut compositor = Compositor::new().context("build compositor")?;
+		let mut compositor = CompositorBevy::new().context("build compositor")?;
 		let config = Arc::new(ArcSwap::from_pointee(config));
 		let mut editor = Editor::new(
 			helix_view::graphics::Rect::default(),
