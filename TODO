@@ -90,9 +90,10 @@
 
 27. HELIX INTEGRATION
 27.1. (done!)research source code
-27.2. run the most basic event loop from helix in bevy
+27.2. pass keyboard event to helix
 27.3. add helix as git submodule
-27.4. implement Compositor
+27.4. (done!)implement basic Compositor
+27.5. render file from helix
 27.5. profit
 
 28. HELIX POLISH
