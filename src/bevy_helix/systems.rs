@@ -5,8 +5,9 @@ use super :: application :: Application;
 use helix_term  :: config :: Config;
 use helix_term  :: args :: Args;
 use helix_tui   :: buffer :: Buffer as Surface;
+use helix_view  :: graphics :: *;
 
-use anyhow :: { Context, Error, Result };
+use anyhow      :: { Context, Error, Result };
 
 use std :: path :: PathBuf;
 
@@ -41,11 +42,17 @@ fn setup_logging(logpath: PathBuf, verbosity: u64) -> Result<()> {
 pub fn startup(
     world: &mut World
 ) {
+    let surface = Surface::empty(Rect {
+        x : 0,
+        y : 0,
+        width : 200,
+        height : 80,
+    });
+
+    world.insert_resource(surface);
+
     let app = startup_impl();
-
-    world.insert_non_send_resource(app);
-
-    println!("helix startup finished!");
+    world.insert_non_send_resource(app.unwrap());
 }
 
 #[tokio::main]
@@ -88,6 +95,7 @@ pub fn render(
     if app.is_none() {
         return;
     }
+    let mut app = app.unwrap();
     
-    app.unwrap().render(surface.as_mut());
+    app.render(surface.as_mut());
 }
