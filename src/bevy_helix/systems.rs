@@ -2,14 +2,58 @@ use bevy :: prelude :: *;
 
 use super :: application :: Application;
 
-use helix_term :: config :: Config;
-use helix_tui :: buffer :: Buffer as Surface;
+use helix_term  :: config :: Config;
+use helix_term  :: args :: Args;
+use helix_tui   :: buffer :: Buffer as Surface;
 
-pub fn statup(
-    commands : Commands
+use anyhow :: { Context, Error, Result };
+
+use std :: path :: PathBuf;
+
+fn setup_logging(logpath: PathBuf, verbosity: u64) -> Result<()> {
+    let mut base_config = fern::Dispatch::new();
+
+    base_config = match verbosity {
+        0 => base_config.level(log::LevelFilter::Warn),
+        1 => base_config.level(log::LevelFilter::Info),
+        2 => base_config.level(log::LevelFilter::Debug),
+        _3_or_more => base_config.level(log::LevelFilter::Trace),
+    };
+
+    // Separate file config so we can include year, month and day in file logs
+    let file_config = fern::Dispatch::new()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "{} {} [{}] {}",
+                chrono::Local::now().format("%Y-%m-%dT%H:%M:%S%.3f"),
+                record.target(),
+                record.level(),
+                message
+            ))
+        })
+        .chain(fern::log_file(logpath)?);
+
+    base_config.chain(file_config).apply()?;
+
+    Ok(())
+}
+
+pub fn startup(
+    world: &mut World
 ) {
-    let logpath = args.log_file.as_ref().cloned().unwrap_or(logpath);
-    setup_logging(logpath, args.verbosity).context("failed to initialize logging")?;
+    let app = startup_impl();
+
+    world.insert_non_send_resource(app);
+
+    println!("helix startup finished!");
+}
+
+#[tokio::main]
+async fn startup_impl() -> Result<Application, Error> {
+    let args = Args::parse_args().context("could not parse arguments").unwrap();
+
+    // let logpath = args.log_file.as_ref().cloned().unwrap_or(helix_loader::log_file());
+    // setup_logging(logpath, args.verbosity).context("failed to initialize logging").unwrap();
 
     let config_dir = helix_loader::config_dir();
     if !config_dir.exists() {
@@ -29,22 +73,21 @@ pub fn statup(
                 Config::default()
             }),
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => Config::default(),
-        Err(err) => return Err(Error::new(err)),
+        Err(err) => { eprintln!("Error while loading config from {}: {}", helix_loader::config_file().display(), err); return Err(anyhow::anyhow!("!!!")); }
     };
 
-    let mut app = Application::new(args, config).context("unable to create new application")?;
+    let app = Application::new(args, config).context("unable to create new application");
 
-    let app = Application::new(args, config);
-    commands.insert_resource(app);
+    app
 }
 
 pub fn render(
-    surface : Res<Surface>,
-    app : Option<Res<Application>>,
+    mut surface : ResMut<Surface>,
+    app : Option<NonSendMut<Application>>,
 ) {
     if app.is_none() {
         return;
     }
     
-    app.render(surface);
+    app.unwrap().render(surface.as_mut());
 }
