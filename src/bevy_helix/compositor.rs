@@ -113,7 +113,8 @@ impl Compositor for CompositorBevy {
 		consumed
 	}
 
-	fn render(&mut self, cx: &mut Context, surface: &mut Surface) {
+	fn render(&mut self, cx: &mut Context, surface: Option<&mut Surface>) {
+		let surface = surface.unwrap();
 		let area = *surface.area();
 
 		for layer in &mut self.layers {

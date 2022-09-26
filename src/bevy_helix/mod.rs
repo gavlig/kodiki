@@ -16,6 +16,7 @@ impl Plugin for BevyHelixPlugin {
         app
             .insert_resource(Surface::default())
 
+			.add_startup_system(systems::startup.exclusive_system())
 			.add_system(systems::render)
 			// .add_system_to_stage(
 			// 	CoreStage::PostUpdate,

@@ -94,7 +94,9 @@
 27.3. add helix as git submodule
 27.4. (done!)implement basic Compositor
 27.5. render file from helix
-27.6. instantiate bevy helix wrapper
+27.6. (done!)instantiate bevy helix wrapper
+27.6.1. (done!)store app or parts of it in bevy
+27.6.2. (done!)pass the app startup
 
 28. HELIX POLISH
 28.1. separate Config from helix-term
@@ -102,7 +104,7 @@
 28.3. separate Args from helix-term
 
 29. HELIX TODO
-29.1. tutor
+29.1. (done!)tutor
 
 30. Bugs
 30.1. some tabs and characters are still misaligned

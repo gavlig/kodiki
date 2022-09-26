@@ -35,15 +35,15 @@ const LSP_DEADLINE: Duration = Duration::from_millis(16);
 
 pub struct Application {
 	compositor	: CompositorBevy,
-	pub editor  : Editor,
+	pub editor	: Editor,
 
-	config      : Config,
+	config		: Arc<ArcSwap<Config>>,
 
-	theme_loader: theme::Loader,
-	syn_loader  : syntax::Loader,
+	theme_loader: Arc<theme::Loader>,
+	syn_loader  : Arc<syntax::Loader>,
 
-	signals     : Signals,
-	jobs        : Jobs,
+	signals		: Signals,
+	jobs		: Jobs,
 	lsp_progress: LspProgressMap,
 	last_render : Instant,
 }
@@ -126,10 +126,10 @@ impl Application {
 		compositor.push(editor_view);
 
 		if args.load_tutor {
-			// let path = helix_loader::runtime_dir().join("tutor.txt");
-			// editor.open(&path, Action::VerticalSplit)?;
-			// // Unset path to prevent accidentally saving to the original tutor file.
-			// doc_mut!(editor).set_path(None)?;
+			let path = helix_loader::runtime_dir().join("tutor.txt");
+			editor.open(&path, Action::VerticalSplit)?;
+			// Unset path to prevent accidentally saving to the original tutor file.
+			helix_view::doc_mut!(editor).set_path(None)?;
 		} else if !args.files.is_empty() {
 			let first = &args.files[0].0; // we know it's not empty
 			if first.is_dir() {
@@ -184,9 +184,13 @@ impl Application {
 			//   https://github.com/crossterm-rs/crossterm/issues/500
 			anyhow::bail!("Piping into helix-term is currently not supported on macOS");
 		} else {
-			editor
-				.new_file_from_stdin(Action::VerticalSplit)
-				.unwrap_or_else(|_| editor.new_file(Action::VerticalSplit));
+			// TODO: support stdin?
+			//
+			// editor
+			// 	.new_file_from_stdin(Action::VerticalSplit)
+			// 	.unwrap_or_else(|_| editor.new_file(Action::VerticalSplit));
+
+			editor.new_file(Action::VerticalSplit);
 		}
 
 		editor.set_theme(theme);
@@ -216,14 +220,14 @@ impl Application {
 	}
 
 	pub fn render(&mut self, surface: &mut Surface) {
-        let compositor = &mut self.compositor;
+		let compositor = &mut self.compositor;
 
-        let mut cx = helix_term::compositor::Context {
-            editor: &mut self.editor,
-            jobs: &mut self.jobs,
-            scroll: None,
-        };
+		let mut cx = helix_term::compositor::Context {
+		     editor: &mut self.editor,
+		     jobs: &mut self.jobs,
+		     scroll: None,
+		};
 
-        compositor.render(&mut cx, Some(surface));
+		compositor.render(&mut cx, Some(surface));
 	}
 }
