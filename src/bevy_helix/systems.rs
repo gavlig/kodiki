@@ -104,5 +104,5 @@ pub fn render(
     
     app.render(surface.as_mut());
 
-    render_tui_surface(surface.as_ref());
+    // render_tui_surface(surface.as_ref());
 }

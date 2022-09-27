@@ -10,18 +10,11 @@ use ttf2mesh 			:: { Glyph };
 
 use super				:: { * };
 
-extern crate rustc_ast;
-extern crate rustc_session;
-extern crate rustc_span;
-extern crate rustc_parse;
-extern crate rustc_lexer;
-
-use rustc_session		:: parse :: { ParseSess };
-use rustc_span			:: edition :: Edition;
-use rustc_lexer			:: TokenKind;
-
 use mesh as spawn_mesh;
 use bevy::render::mesh::shape as render_shape;
+
+use helix_tui 			:: { buffer :: Buffer as Surface };
+use helix_view::graphics::Color as HelixColor;
 
 fn calc_vertical_offset(row : f32, reference_glyph : &Glyph) -> f32 {
 	row * -0.13 // (reference_glyph.inner.ybounds[0] - reference_glyph.inner.ybounds[1]) / 72.
@@ -111,7 +104,8 @@ pub fn mesh(
 	.id()
 }
 
-pub fn file(
+pub fn helix_surface(
+	surface			: &Surface,
 	file_path		: &str,
 	font_handle 	: &Handle<TextMeshFont>,
 	font			: &mut ttf2mesh::TTFFile,
@@ -121,7 +115,7 @@ pub fn file(
 	commands		: &mut Commands
 ) -> (Entity, TextDescriptor)
 {
-	let file_content = load_text_file(file_path).unwrap();
+	// let file_content = load_text_file(file_path).unwrap();
 
 	let tab_size	= 4; //.editorconfig
 	let font_size	= 9.;
@@ -151,172 +145,76 @@ pub fn file(
 			commands
 		)
 	);
-	
 
-	let mut lines	= file_content.lines();
 	let mut y		= 0.0;
 	let mut column	= 0 as u32;
 	let mut row		= 3 as u32;
 	let mut empty_line = false;
 	let mut column_max = 0 as u32;
 	let mut row_max = 0 as u32;
+	
+	let width = surface.area.width;
+	let height = surface.area.height;
+	let content = surface.content;
 
-	rustc_span::create_session_if_not_set_then(Edition::Edition2021, |_| {
-		let _parser_session = ParseSess::with_silent_emitter(Some(String::from("FATAL MESSAGE AGGHHH")));
+	for y_cell in 0..height {
+		y = calc_vertical_offset(row as f32, &reference_glyph);
+		
+		for x_cell in 0..width {
+			let cell = content[y_cell * width + x_cell];
 
-		loop {
-			y = calc_vertical_offset(row as f32, &reference_glyph);
+			let column_offset = (column as f32) * glyph_width;
+			let x = row_num_offset + column_offset;
 
-			// mesh for line/row numbers
-			let row_num_string = format!("{:>5} ", row);
-			let pos		= local_position + (Vec3::Y * y);
-			children.push(
+			let pos = local_position + Vec3::new(x, y, 0.0);
+
+			let color = match cell.fg {
+				HelixColor::Reset => Color::White,
+				HelixColor::Black => CColor::Black,
+				HelixColor::Red => CColor::DarkRed,
+				HelixColor::Green => CColor::DarkGreen,
+				HelixColor::Yellow => CColor::DarkYellow,
+				HelixColor::Blue => CColor::DarkBlue,
+				HelixColor::Magenta => CColor::DarkMagenta,
+				HelixColor::Cyan => CColor::DarkCyan,
+				HelixColor::Gray => CColor::DarkGrey,
+				HelixColor::LightRed => CColor::Red,
+				HelixColor::LightGreen => CColor::Green,
+				HelixColor::LightBlue => CColor::Blue,
+				HelixColor::LightYellow => CColor::Yellow,
+				HelixColor::LightMagenta => CColor::Magenta,
+				HelixColor::LightCyan => CColor::Cyan,
+				HelixColor::LightGray => CColor::Grey,
+				HelixColor::White => CColor::White,
+				HelixColor::Indexed(i) => CColor::AnsiValue(i),
+				HelixColor::Rgb(r, g, b) => CColor::Rgb { r, g, b },
+			}
+
+			let mut token_len = 1;
+			// if token.kind != TokenKind::Whitespace {
+				let mesh_entity_id =
 				spawn_mesh(
-					&row_num_string,
+					&cell.symbol,
 					pos,
 					&font_handle,
 					SizeUnit::NonStandard(font_size),
 					font_depth,
-					Color::hex("495162").unwrap(),
+					color,
 					commands
-				)
-			);
-
-			// get next line of characters
-			let line_raw = match lines.next() {
-				Some(l)	=> l,
-				None	=> break,
-			};
-			
-			let mut cursor_lexer = rustc_lexer::tokenize(line_raw);
-
-			let mut token_offset = 0;
-			let was_empty_line = empty_line;
-
-			loop {
-				let token_meta = cursor_lexer.next();
-				if token_meta.is_none() {
-					if column == 0 {
-						empty_line = true;
-					}
-
-					break;
-				} else {
-					empty_line = false;
-				}
-				let token = token_meta.unwrap();
-				// println!("{}/{} lexer {:?}", row, column, token);
-
-				let token_start : usize = token_offset;
-				let token_end : usize = token_offset + token.len as usize;
-				let token_str = &line_raw[token_start..token_end];
-
-				let color = color_from_token_kind(&token, token_str, token_start, token_end);
-				// println!("[{} {} {}] [{}]", column, token_offset, token.len, token_str);
-
-				{
-					let column_offset = (column as f32) * glyph_width;
-					let x = row_num_offset + column_offset;
-
-					let pos = local_position + Vec3::new(x, y, 0.0);
-					let mesh_string = String::from(token_str);
-
-					let mesh_entity_id =
-					spawn_mesh(
-						&mesh_string,
-						pos,
-						&font_handle,
-						SizeUnit::NonStandard(font_size),
-						font_depth,
-						color,
-						commands
-					);
-					children.push(mesh_entity_id);
-				}
-
-				// make a mesh for each character in this token
-				for c in token_str.chars() {
-					let column_offset = (column as f32) * glyph_width;
-					let x = row_num_offset + column_offset;
-
-					// let pos = local_position + Vec3::new(x, y, 0.0);
-					// let mesh_string = String::from(c);
-
-					let mut token_len = 1;
-					if token.kind != TokenKind::Whitespace {
-						// let mesh_entity_id =
-						// spawn_mesh(
-						// 	&mesh_string,
-						// 	pos,
-						// 	&font_handle,
-						// 	SizeUnit::NonStandard(font_size),
-						// 	font_depth,
-						// 	color,
-						// 	commands
-						// );
-						// children.push(mesh_entity_id);
-					} else if c == '\t' {
-						token_len = tab_size - (column % tab_size);
-					}
-
-					column += token_len;
-					
-					// background quad
-					// let quad_width		= glyph_width * token_len as f32;
-					// let quad_height		= glyph_height;
-					// let quad_pos		= Vec3::new(x, y, -0.25 / 72.);
-					// let quad_entity_id	= 
-					// quad(
-					// 	quad_pos,
-					// 	Vec2::new(quad_width, quad_height),
-					// 	meshes,
-					// 	materials,
-					// 	commands
-					// );
-
-					// commands.entity(quad_entity_id)
-					// .insert(Row { 0: row })
-					// .insert(Column { 0: column })
-					// ;
-
-					// children.push(quad_entity_id);
-				}
-
-				token_offset += token.len as usize; // amount of tokens != amount of symbols so we need to keep track of both 
-			}
-
-			if was_empty_line {
-				// background quad for previous line
-				// let quad_width		= glyph_width * column as f32;
-				// let quad_height		= glyph_height;
-				// let y 				= calc_vertical_offset((row - 1) as f32, &reference_glyph);
-				// let quad_pos		= Vec3::new(row_num_offset, y, -0.25 / 72.);
-				// let quad_entity_id	= 
-				// quad(
-				// 	quad_pos,
-				// 	Vec2::new(quad_width, quad_height),
-				// 	meshes,
-				// 	materials,
-				// 	commands
-				// );
-
-				// commands.entity(quad_entity_id)
-				// .insert(Row { 0: row })
-				// .insert(Column { 0: column })
-				// ;
-			}
-
-			// Cheat/Debug
-			// if row >= 9 {
-			// 	break;
+				);
+				children.push(mesh_entity_id);
+			// } else if c == '\t' {
+				// token_len = tab_size - (column % tab_size);
 			// }
 
-			column_max	= column_max.max(column);
-
-			column		 = 0;
-			row			+= 1;
+			column += token_len;
 		}
-	});
+
+		column_max	= column_max.max(column);
+
+		column		 = 0;
+		row			+= 1;
+	}
 
 	row_max				= row;
 

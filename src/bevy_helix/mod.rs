@@ -12,6 +12,7 @@ pub struct CellBevy {
 	pub dirty : bool,
 }
 
+// representation of helix_tui::buffer::Buffer in Bevy
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct SurfaceBevy {
 	pub content : Vec<CellBevy>,
