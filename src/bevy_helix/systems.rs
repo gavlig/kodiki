@@ -1,4 +1,6 @@
 use bevy :: prelude :: *;
+use bevy :: input :: *;
+use bevy :: input :: keyboard :: *;
 use bevy_text_mesh :: prelude :: * ;
 
 use super :: BevyHelix;
@@ -13,6 +15,7 @@ use helix_term  :: config :: Config;
 use helix_term  :: args :: Args;
 use helix_tui   :: buffer :: Buffer as SurfaceHelix;
 use helix_view  :: graphics :: *;
+use helix_view  :: keyboard :: KeyCode as KeyCodeHelix;
 
 use anyhow      :: { Context, Error, Result };
 
@@ -129,5 +132,125 @@ pub fn render(
             despawn.as_mut(), 
             &mut commands
         );
+    }
+}
+
+pub fn input(
+    mut ev_keyboard : EventReader<KeyboardInput>,
+    key			    : Res<Input<KeyCode>>,
+    app             : Option<NonSendMut<Application>>,
+) {
+    if app.is_none() {
+        return;
+    }
+    let mut app = app.unwrap();
+
+    for e in ev_keyboard.iter() {
+        if e.state != ButtonState::Pressed {
+            continue;
+        }
+
+        if e.key_code.is_none() {
+            continue;
+        }
+
+        let helix_keycode =
+        match e.key_code.unwrap() {
+            KeyCode::Back => KeyCodeHelix::Backspace,
+            KeyCode::Return => KeyCodeHelix::Enter,
+            KeyCode::Left => KeyCodeHelix::Left,
+            KeyCode::Right => KeyCodeHelix::Right,
+            KeyCode::Up => KeyCodeHelix::Up,
+            KeyCode::Down => KeyCodeHelix::Down,
+            KeyCode::Home => KeyCodeHelix::Home,
+            KeyCode::End => KeyCodeHelix::End,
+            KeyCode::PageUp => KeyCodeHelix::PageUp,
+            KeyCode::PageDown => KeyCodeHelix::PageDown,
+            KeyCode::Tab => KeyCodeHelix::Tab,
+            KeyCode::Delete => KeyCodeHelix::Delete,
+            KeyCode::Insert => KeyCodeHelix::Insert,
+            KeyCode::Escape => KeyCodeHelix::Esc,
+
+            KeyCode::Space => KeyCodeHelix::Char(' '),
+
+            KeyCode::Key0 => KeyCodeHelix::Char('0'),
+            KeyCode::Key1 => KeyCodeHelix::Char('1'),
+            KeyCode::Key2 => KeyCodeHelix::Char('2'),
+            KeyCode::Key3 => KeyCodeHelix::Char('3'),
+            KeyCode::Key4 => KeyCodeHelix::Char('4'),
+            KeyCode::Key5 => KeyCodeHelix::Char('5'),
+            KeyCode::Key6 => KeyCodeHelix::Char('6'),
+            KeyCode::Key7 => KeyCodeHelix::Char('7'),
+            KeyCode::Key8 => KeyCodeHelix::Char('8'),
+            KeyCode::Key9 => KeyCodeHelix::Char('9'),
+
+            KeyCode::Q => KeyCodeHelix::Char('q'),
+            KeyCode::W => KeyCodeHelix::Char('w'),
+            KeyCode::E => KeyCodeHelix::Char('e'),
+            KeyCode::R => KeyCodeHelix::Char('r'),
+            KeyCode::T => KeyCodeHelix::Char('t'),
+            KeyCode::Y => KeyCodeHelix::Char('y'),
+
+            KeyCode::U => KeyCodeHelix::Char('u'),
+            KeyCode::I => KeyCodeHelix::Char('i'),
+            KeyCode::O => KeyCodeHelix::Char('o'),
+            KeyCode::P => KeyCodeHelix::Char('p'),
+            KeyCode::LBracket => KeyCodeHelix::Char('['),
+            KeyCode::RBracket => KeyCodeHelix::Char(']'),
+            KeyCode::Backslash => KeyCodeHelix::Char('\\'),
+
+            KeyCode::A => KeyCodeHelix::Char('a'),
+            KeyCode::S => KeyCodeHelix::Char('s'),
+            KeyCode::D => KeyCodeHelix::Char('d'),
+            KeyCode::F => KeyCodeHelix::Char('f'),
+            KeyCode::G => KeyCodeHelix::Char('g'),
+
+            KeyCode::H => KeyCodeHelix::Char('h'),
+            KeyCode::J => KeyCodeHelix::Char('j'),
+            KeyCode::K => KeyCodeHelix::Char('k'),
+            KeyCode::L => KeyCodeHelix::Char('l'),
+            KeyCode::Semicolon => KeyCodeHelix::Char(';'),
+            KeyCode::Colon => KeyCodeHelix::Char(':'),
+            KeyCode::Apostrophe => KeyCodeHelix::Char('\''),
+
+            KeyCode::Z => KeyCodeHelix::Char('z'),
+            KeyCode::X => KeyCodeHelix::Char('x'),
+            KeyCode::C => KeyCodeHelix::Char('c'),
+            KeyCode::V => KeyCodeHelix::Char('v'),
+            KeyCode::B => KeyCodeHelix::Char('b'),
+
+            KeyCode::N => KeyCodeHelix::Char('n'),
+            KeyCode::M => KeyCodeHelix::Char('m'),
+            KeyCode::Comma => KeyCodeHelix::Char(','),
+            KeyCode::Convert => KeyCodeHelix::Char('.'),
+            KeyCode::Slash => KeyCodeHelix::Char('/'),
+            _ => { println!("skipping keycode {:?}", e.key_code); continue; }
+        };
+
+        let mut modifiers = helix_view::keyboard::KeyModifiers::NONE;
+
+        if key.pressed(KeyCode::LAlt) || key.pressed(KeyCode::RAlt) {
+            modifiers.insert(helix_view::keyboard::KeyModifiers::ALT);
+        }
+
+        if key.pressed(KeyCode::LControl) || key.pressed(KeyCode::RControl) {
+            modifiers.insert(helix_view::keyboard::KeyModifiers::CONTROL);
+        }
+
+        if key.pressed(KeyCode::LShift) || key.pressed(KeyCode::RShift) {
+            modifiers.insert(helix_view::keyboard::KeyModifiers::SHIFT);
+        }
+
+        let key_event = helix_view::input::KeyEvent {
+            code : helix_keycode,
+            modifiers : modifiers,
+        };
+
+        // KeyEventKind
+
+        let event = helix_view::input::Event::Key(key_event);
+        app.handle_event(&event);
+        // let compositor = Box::new(&app.compositor) as Box<dyn helix_term::compositor::Compositor>;
+        println!("Keyboard event! bevy {:?} helix {:?}", e, event);
     }
 }

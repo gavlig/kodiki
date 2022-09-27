@@ -230,6 +230,18 @@ impl Application {
 		     scroll: None,
 		};
 
-		compositor.render(&mut cx, Some(surface));
+		compositor.render(Some(surface), &mut cx);
+	}
+
+	pub fn handle_event(&mut self, event : &helix_view::input::Event) {
+		let mut cx = helix_term::compositor::Context {
+            editor: &mut self.editor,
+            jobs: &mut self.jobs,
+            scroll: None,
+        };
+
+		let compositor_bevy = &mut self.compositor;
+        let compositor_helix = compositor_bevy as &mut dyn helix_term::compositor::Compositor;
+        compositor_helix.handle_event(event, &mut cx);
 	}
 }

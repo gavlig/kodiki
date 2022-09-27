@@ -17,9 +17,7 @@ use std::any::Any;
 
 pub struct CompositorBevy {
 	layers: Vec<Box<dyn Component>>,
-	// terminal: Terminal,
-
-	pub(crate) last_picker: Option<Box<dyn Component>>,
+	last_picker: Option<Box<dyn Component>>,
 }
 
 impl CompositorBevy {
@@ -113,7 +111,7 @@ impl Compositor for CompositorBevy {
 		consumed
 	}
 
-	fn render(&mut self, cx: &mut Context, surface: Option<&mut Surface>) {
+	fn render(&mut self, surface: Option<&mut Surface>, cx: &mut Context) {
 		let surface = surface.unwrap();
 		let area = *surface.area();
 

@@ -1,4 +1,7 @@
 use bevy :: prelude :: *;
+use iyes_loopless :: { prelude :: * };
+
+use crate :: game :: AppMode;
 
 use helix_view :: graphics :: *;
 
@@ -60,12 +63,13 @@ impl Plugin for BevyHelixPlugin {
 	fn build(&self, app: &mut App) {
         app
 			.add_startup_system(systems::startup.exclusive_system())
-			.add_system(systems::render)
-			// .add_system_to_stage(
-			// 	CoreStage::PostUpdate,
-			// 	on_tangent_moved
-			// 		.label("bevy_spline::on_tangent_moved")
-			// )
+            .add_system_set(
+				ConditionSet::new()
+				.run_in_state(AppMode::Main)
+				.with_system(systems::render)
+				.with_system(systems::input)
+				.into()
+			)
  			;
 	}
 }
