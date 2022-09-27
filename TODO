@@ -98,6 +98,11 @@
 27.6. (done!)instantiate bevy helix wrapper
 27.6.1. (done!)store app or parts of it in bevy
 27.6.2. (done!)pass the app startup
+27.7. make it possible to modify shader from inside bevy_helix
+27.7.1. backspace/cleanup doesnt work in command mode (:)
+27.7.2. cursor is not visible
+27.7.3. centered init camera position
+27.7.4. colors are not showing up
 
 28. HELIX POLISH
 28.1. separate Config from helix-term
@@ -113,7 +118,11 @@
 30.3. center picking gets broken after pressing esc
 
 31. Perf
-31.1. switch to words as objects/lines when camera is not in reader mode
+31.1. hook up profiler
+31.2. look at what people do (bevy_efficient_forest_rendering)
+31.3. make an "atlas" of letters and replace mesh handles instead of respawning
+31.4. make an "atlas" of words along the way and replace commonly occuring set of letter-objects with single-object word or every word?
+31.4.1. generate word object after space is pressed every time 
 
 32. Features
 32.1. automatically load all fonts from assets

@@ -55,8 +55,8 @@ pub fn startup(
     let rect = Rect {
         x : 0,
         y : 0,
-        width : 200,
-        height : 80,
+        width : 160,
+        height : 40,
     };
 
     let surface = SurfaceHelix::empty(rect);
@@ -172,6 +172,7 @@ pub fn input(
             KeyCode::Escape => KeyCodeHelix::Esc,
 
             KeyCode::Space => KeyCodeHelix::Char(' '),
+            KeyCode::Underline => KeyCodeHelix::Char('_'),
 
             KeyCode::Key0 => KeyCodeHelix::Char('0'),
             KeyCode::Key1 => KeyCodeHelix::Char('1'),

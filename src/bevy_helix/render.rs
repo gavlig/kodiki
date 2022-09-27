@@ -101,7 +101,7 @@ pub fn surface(
 			let color = color_from_helix(cell_helix.fg);
 
 			if cell_helix.symbol != cell_bevy.symbol {
-				println!("redraw [{} {}] from {} to {}", x_cell, y_cell, cell_bevy.symbol, cell_helix.symbol);
+				println!("redraw [{} {}] from {} to {} color: {:?}/{:?} modifier {:?} rect {:?}", x_cell, y_cell, cell_bevy.symbol, cell_helix.symbol, cell_helix.fg, cell_helix.bg, surface_helix.area, cell_helix.modifier);
 
 				if cell_bevy.entity.is_some() {
 					println!("redraw [{} {}] despawn previous entity {:?}", x_cell, y_cell, cell_bevy.entity.unwrap());
