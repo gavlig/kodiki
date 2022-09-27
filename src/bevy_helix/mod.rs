@@ -3,14 +3,31 @@ use bevy :: prelude :: *;
 use helix_view :: graphics :: *;
 
 pub mod spawn;
+mod render;
 pub mod application;
 pub use application :: *;
 mod compositor;
 mod systems;
 
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Component)]
+pub struct BevyHelix;
+
+// representation of helix_tui::buffer::Cell in Bevy
+#[derive(Debug, Clone, PartialEq)]
 pub struct CellBevy {
+    pub entity : Option<Entity>,
+    pub symbol : String,
 	pub dirty : bool,
+}
+
+impl Default for CellBevy {
+    fn default() -> Self {
+        Self {
+            entity : None,
+            symbol : " ".into(),
+            dirty : false,
+        }
+    }
 }
 
 // representation of helix_tui::buffer::Buffer in Bevy

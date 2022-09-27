@@ -9,8 +9,9 @@ use bevy_contrib_colors	:: { Tailwind };
 use ttf2mesh 			:: { Glyph };
 
 use super				:: { * };
+use crate				:: game :: DespawnResource;
 
-use mesh as spawn_mesh;
+use	crate::bevy_helix::spawn::mesh as spawn_mesh;
 use bevy::render::mesh::shape as render_shape;
 
 use helix_tui 			:: { buffer :: Buffer as SurfaceHelix };
@@ -18,90 +19,6 @@ use helix_view::graphics::Color as HelixColor;
 
 fn calc_vertical_offset(row : f32, reference_glyph : &Glyph) -> f32 {
 	row * -0.13 // (reference_glyph.inner.ybounds[0] - reference_glyph.inner.ybounds[1]) / 72.
-}
-
-fn quad(
-	quad_pos_in		: Vec3,
-	quad_size		: Vec2,
-	meshes			: &mut ResMut<Assets<Mesh>>,
-	materials		: &mut ResMut<Assets<StandardMaterial>>,
-	commands		: &mut Commands
-) -> Entity {
-	let quad_width		= quad_size.x;
-	let quad_height		= quad_size.y;
-
-    let quad_handle		= meshes.add(
-		Mesh::from(
-			shape::Quad::new(
-				Vec2::new(
-					quad_width,
-					quad_height
-    			)
-			)
-		)
-	);
-	let quad_pos		= quad_pos_in + Vec3::new(quad_width / 2.0, 0., 0.);//-quad_height / 2.0, 0.0);
-
-    let blue_material_handle = materials.add(StandardMaterial {
-        base_color		: Color::hex("282c34").unwrap(),
-        // alpha_mode	: AlphaMode::Opaque,
-        unlit			: true,
-        // double_sided	: true,
-        ..default()
-    });
-
-	commands.spawn_bundle(PbrBundle {
-		mesh			: quad_handle,
-		material		: blue_material_handle,
-		transform		: Transform {
-			translation	: quad_pos,
-			// rotation	: Quat::from_rotation_y(std::f32::consts::PI), // winding ccw something something
-			..default()
-		},
-		..default()
-	})
-	.insert(PickableMesh::default())
-	.id()
-}
-
-const DEFAULT_FONT_SIZE  : f32 = 36.;
-const DEFAULT_FONT_WIDTH : f32 = DEFAULT_FONT_SIZE * 10.;
-const DEFAULT_FONT_HEIGHT: f32 = DEFAULT_FONT_SIZE * 5.;
-const DEFAULT_FONT_DEPTH : f32 = DEFAULT_FONT_SIZE * 0.10;
-
-pub fn mesh(
-	text_in				: &String,
-	pos					: Vec3,
-	font_handle			: &Handle<TextMeshFont>,
-	font_size			: SizeUnit,
-	font_depth			: f32,
-	color				: Color,
-	commands			: &mut Commands,
-) -> Entity {
-    commands.spawn_bundle(TextMeshBundle {
-        text_mesh: TextMesh {
-            text		: text_in.clone(),
-            style		: TextMeshStyle {
-				color	: color,
-                font     : font_handle.clone(),
-                font_size : font_size,
-                ..default()
-            },
-            size: TextMeshSize {
-				depth	: Some(SizeUnit::NonStandard(DEFAULT_FONT_SIZE * font_depth)),
-				wrapping : false,
-                ..default()
-            },
-            ..default()
-        },
-        transform: Transform {
-            translation: pos,
-            ..default()
-        },
-        ..default()
-    })
-	// .insert_bundle(PickableBundle::default())
-	.id()
 }
 
 fn color_from_helix(helix_color: HelixColor) -> Color {
@@ -130,15 +47,14 @@ fn color_from_helix(helix_color: HelixColor) -> Color {
 }
 
 pub fn surface(
+	root_entity		: Entity,
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
 	font_handle 	: &Handle<TextMeshFont>,
 	font			: &mut ttf2mesh::TTFFile,
-	world_position	: Vec3,
-	meshes			: &mut ResMut<Assets<Mesh>>,
-	materials		: &mut ResMut<Assets<StandardMaterial>>,
+	despawn			: &mut DespawnResource,
 	commands		: &mut Commands
-) -> (Entity, TextDescriptor)
+)
 {
 	surface_bevy.content.resize_with(surface_helix.content.len(), || { CellBevy::default() });
 
@@ -161,9 +77,6 @@ pub fn surface(
 	let mut y		= 0.0;
 	let mut column	= 0 as u32;
 	let mut row		= 3 as u32;
-	// let mut empty_line = false;
-	let mut column_max = 0 as u32;
-	let mut row_max = 0 as u32;
 	
 	let width = surface_helix.area.width;
 	let height = surface_helix.area.height;
@@ -187,7 +100,7 @@ pub fn surface(
 
 			let color = color_from_helix(cell_helix.fg);
 
-			if cell_helix.symbol != " " {
+			if cell_helix.symbol != " " && cell_helix.symbol != cell_bevy.symbol {
 				let mesh_entity_id =
 				spawn_mesh(
 					&cell_helix.symbol,
@@ -199,6 +112,11 @@ pub fn surface(
 					commands
 				);
 				children.push(mesh_entity_id);
+
+				if cell_bevy.entity.is_some() {
+					despawn.entities.push(cell_bevy.entity.unwrap());
+				}
+
 				cell_bevy.entity = Some(mesh_entity_id);
 			} else {
 				cell_bevy.entity = None;
@@ -210,40 +128,11 @@ pub fn surface(
 			column += 1;
 		}
 
-		column_max	= column_max.max(column);
-
 		column		= 0;
 		row			+= 1;
 	}
 
-	row_max			= row;
-
-	//
-	//
-	//
-
-	let root_entity =
-	commands.spawn_bundle(TransformBundle {
-		local			: Transform::from_translation(world_position),
-		..default()
-	})
-	.insert_bundle(VisibilityBundle {
-		visibility		: Visibility { is_visible: true },
-		..default()
-	})
-	.id();
-
-	let text_descriptor = TextDescriptor {
-		rows: row_max,
-		columns: column_max,
-		glyph_width: glyph_width,
-		glyph_height: glyph_height
-	};
-
-	commands.entity(root_entity)
-	.insert(text_descriptor.clone())
-	.insert(BevyHelix)
-	.push_children(children.as_slice());
-
-	(root_entity, text_descriptor)
+	if children.len() > 0 {
+		commands.entity(root_entity).push_children(children.as_slice());
+	}
 }

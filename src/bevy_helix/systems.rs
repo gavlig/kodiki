@@ -1,11 +1,17 @@
 use bevy :: prelude :: *;
+use bevy_text_mesh :: prelude :: * ;
 
-use super :: application :: Application;
+use super :: BevyHelix;
 use super :: SurfaceBevy;
+use super :: application :: Application;
+use super :: render;
+
+use crate :: game :: DespawnResource;
+use crate :: game :: FontAssetHandles;
 
 use helix_term  :: config :: Config;
 use helix_term  :: args :: Args;
-use helix_tui   :: buffer :: Buffer as Surface;
+use helix_tui   :: buffer :: Buffer as SurfaceHelix;
 use helix_view  :: graphics :: *;
 
 use anyhow      :: { Context, Error, Result };
@@ -50,7 +56,7 @@ pub fn startup(
         height : 80,
     };
 
-    let surface = Surface::empty(rect);
+    let surface = SurfaceHelix::empty(rect);
     world.insert_resource(surface);
 
     let surface_bevy = SurfaceBevy::empty(rect);
@@ -94,15 +100,34 @@ async fn startup_impl() -> Result<Application, Error> {
 }
 
 pub fn render(
-    mut surface : ResMut<Surface>,
-    app : Option<NonSendMut<Application>>,
+    mut surface_helix   : ResMut<SurfaceHelix>,
+    mut surface_bevy    : ResMut<SurfaceBevy>,
+    mut fonts           : ResMut<Assets<TextMeshFont>>,
+        font_handles    : Res<FontAssetHandles>,
+        q_bevy_helix    : Query<Entity, With<BevyHelix>>,
+        app             : Option<NonSendMut<Application>>,
+    mut despawn         : ResMut<DespawnResource>,
+    mut commands        : Commands,
 ) {
     if app.is_none() {
         return;
     }
     let mut app = app.unwrap();
     
-    app.render(surface.as_mut());
+    app.render(surface_helix.as_mut());
 
-    // render_tui_surface(surface.as_ref());
+    let font_handle = &font_handles.share_tech;
+	let font		= fonts.get_mut(font_handle).unwrap();
+
+    for bevy_helix_entity in q_bevy_helix.iter() {
+        render::surface(
+            bevy_helix_entity,
+            surface_helix.as_mut(),
+            surface_bevy.as_mut(),
+            font_handle,
+            &mut font.ttf_font,
+            despawn.as_mut(), 
+            &mut commands
+        );
+    }
 }
