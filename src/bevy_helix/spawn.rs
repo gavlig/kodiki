@@ -13,7 +13,7 @@ use super				:: { * };
 use mesh as spawn_mesh;
 use bevy::render::mesh::shape as render_shape;
 
-use helix_tui 			:: { buffer :: Buffer as Surface };
+use helix_tui 			:: { buffer :: Buffer as SurfaceTui };
 use helix_view::graphics::Color as HelixColor;
 
 fn calc_vertical_offset(row : f32, reference_glyph : &Glyph) -> f32 {
@@ -104,9 +104,34 @@ pub fn mesh(
 	.id()
 }
 
-pub fn helix_surface(
-	surface			: &Surface,
-	file_path		: &str,
+fn color_from_helix(helix_color: HelixColor) -> Color {
+	match helix_color {
+		HelixColor::Reset => Color::WHITE,
+		HelixColor::Black => Color::BLACK,
+		HelixColor::Red => Tailwind::RED600,
+		HelixColor::Green => Tailwind::GREEN600,
+		HelixColor::Yellow => Tailwind::YELLOW600,
+		HelixColor::Blue => Tailwind::BLUE600,
+		HelixColor::Magenta => Tailwind::PURPLE600,
+		HelixColor::Cyan => Color::rgb(0.0, 0.5, 0.5),
+		HelixColor::Gray => Tailwind::GRAY600,
+		HelixColor::LightRed => Tailwind::RED300,
+		HelixColor::LightGreen => Tailwind::GREEN300,
+		HelixColor::LightBlue => Tailwind::BLUE300,
+		HelixColor::LightYellow => Tailwind::YELLOW300,
+		HelixColor::LightMagenta => Tailwind::PURPLE300,
+		HelixColor::LightCyan => Color::rgb(0.0, 0.7, 0.7),
+		HelixColor::LightGray => Tailwind::GRAY300,
+		HelixColor::White => Color::WHITE,
+		// An ANSI color. See [256 colors - cheat sheet](https://jonasjacek.github.io/colors/) for more info.
+		HelixColor::Indexed(_i) => { panic!("Indexed color is not supported!"); },// Color::AnsiValue(i), 
+		HelixColor::Rgb(r, g, b) => Color::rgb_u8(r, g, b),
+	}
+}
+
+pub fn surface(
+	surface_tui		: &SurfaceTui,
+	surface_bevy	: &mut SurfaceBevy,
 	font_handle 	: &Handle<TextMeshFont>,
 	font			: &mut ttf2mesh::TTFFile,
 	world_position	: Vec3,
@@ -115,7 +140,7 @@ pub fn helix_surface(
 	commands		: &mut Commands
 ) -> (Entity, TextDescriptor)
 {
-	// let file_content = load_text_file(file_path).unwrap();
+	surface_bevy.content.resize_with(surface_tui.content.len(), || { CellBevy::default() });
 
 	let tab_size	= 4; //.editorconfig
 	let font_size	= 9.;
@@ -133,65 +158,33 @@ pub fn helix_surface(
 
 	let mut children : Vec<Entity> = Vec::new();
 
-	let header_string = format!("-- [ {} ] --", file_path);
-	children.push(
-		spawn_mesh(
-			&header_string,
-			local_position + Vec3::new(row_num_offset, row_offset, 0.0),
-			&font_handle,
-			SizeUnit::NonStandard(font_size),
-			font_depth,
-			Color::hex("bbbbbb").unwrap(),
-			commands
-		)
-	);
-
 	let mut y		= 0.0;
 	let mut column	= 0 as u32;
 	let mut row		= 3 as u32;
-	let mut empty_line = false;
+	// let mut empty_line = false;
 	let mut column_max = 0 as u32;
 	let mut row_max = 0 as u32;
 	
-	let width = surface.area.width;
-	let height = surface.area.height;
-	let content = surface.content;
+	let width = surface_tui.area.width;
+	let height = surface_tui.area.height;
+	let content = &surface_tui.content;
 
 	for y_cell in 0..height {
 		y = calc_vertical_offset(row as f32, &reference_glyph);
 		
 		for x_cell in 0..width {
-			let cell = content[y_cell * width + x_cell];
+			let cell = &content[(y_cell * width + x_cell) as usize];
+
+			// println!("[{} {}] cell {}", x_cell, y_cell, cell.symbol);
 
 			let column_offset = (column as f32) * glyph_width;
 			let x = row_num_offset + column_offset;
 
 			let pos = local_position + Vec3::new(x, y, 0.0);
 
-			let color = match cell.fg {
-				HelixColor::Reset => Color::White,
-				HelixColor::Black => CColor::Black,
-				HelixColor::Red => CColor::DarkRed,
-				HelixColor::Green => CColor::DarkGreen,
-				HelixColor::Yellow => CColor::DarkYellow,
-				HelixColor::Blue => CColor::DarkBlue,
-				HelixColor::Magenta => CColor::DarkMagenta,
-				HelixColor::Cyan => CColor::DarkCyan,
-				HelixColor::Gray => CColor::DarkGrey,
-				HelixColor::LightRed => CColor::Red,
-				HelixColor::LightGreen => CColor::Green,
-				HelixColor::LightBlue => CColor::Blue,
-				HelixColor::LightYellow => CColor::Yellow,
-				HelixColor::LightMagenta => CColor::Magenta,
-				HelixColor::LightCyan => CColor::Cyan,
-				HelixColor::LightGray => CColor::Grey,
-				HelixColor::White => CColor::White,
-				HelixColor::Indexed(i) => CColor::AnsiValue(i),
-				HelixColor::Rgb(r, g, b) => CColor::Rgb { r, g, b },
-			}
+			let color = color_from_helix(cell.fg);
 
-			let mut token_len = 1;
-			// if token.kind != TokenKind::Whitespace {
+			if cell.symbol != " " {
 				let mesh_entity_id =
 				spawn_mesh(
 					&cell.symbol,
@@ -203,11 +196,9 @@ pub fn helix_surface(
 					commands
 				);
 				children.push(mesh_entity_id);
-			// } else if c == '\t' {
-				// token_len = tab_size - (column % tab_size);
-			// }
+			}
 
-			column += token_len;
+			column += 1;
 		}
 
 		column_max	= column_max.max(column);
@@ -245,32 +236,4 @@ pub fn helix_surface(
 	.push_children(children.as_slice());
 
 	(root_entity, text_descriptor)
-}
-
-pub fn caret(
-	parent_entity	: Entity,	
-	text_descriptor	: &TextDescriptor,
-	meshes			: &mut ResMut<Assets<Mesh>>,
-	materials		: &mut ResMut<Assets<StandardMaterial>>,
-	commands		: &mut Commands
-) {
-	let min_dim		= text_descriptor.glyph_width / 2.0;
-	let max_dim		= text_descriptor.glyph_height;
-
-	let transform	= Transform::identity();
-
-	let caret_entity =
-	commands.spawn_bundle(PbrBundle {
-		mesh		: meshes.add	(Mesh::from(render_shape::Box::new(min_dim, max_dim, min_dim))),
-		material	: materials.add	(Tailwind::GRAY100.into()),
-		transform	: transform,
-		..default()
-	})
-	.insert(Caret::default())
-	.id()
-	;
-
-	commands.entity(parent_entity)
-	.add_child(caret_entity)
-	;
 }

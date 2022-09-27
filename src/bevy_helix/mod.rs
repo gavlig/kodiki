@@ -2,6 +2,7 @@ use bevy :: prelude :: *;
 
 use helix_view :: graphics :: *;
 
+pub mod spawn;
 pub mod application;
 pub use application :: *;
 mod compositor;

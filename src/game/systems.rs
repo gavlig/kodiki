@@ -7,19 +7,24 @@ use iyes_loopless	:: { prelude :: * };
 use bevy_shadertoy_wgsl :: { * };
 use bevy_debug_text_overlay :: { screen_print };
 
-use bevy::render::mesh::shape as render_shape;
-
 use super           :: { * };
+use crate			:: { text };
+use crate			:: { bevy_helix };
 
-use crate			:: text;
+use bevy::render::mesh::shape as render_shape;
+use bevy_helix::SurfaceBevy as SurfaceBevy;
+use helix_tui::buffer::Buffer as SurfaceTui;
 
 pub fn setup_world_system(
+	mut surface_tui	: ResMut<SurfaceTui>,
+	mut surface_bevy: ResMut<SurfaceBevy>,
 	mut	meshes		: ResMut<Assets<Mesh>>,
 	mut	materials	: ResMut<Assets<StandardMaterial>>,
 		font_handles: Res<FontAssetHandles>,
 	mut fonts		: ResMut<Assets<TextMeshFont>>,
 	mut camera_ids	: ResMut<CameraIDs>,
 		ass			: Res<AssetServer>,
+
 	mut commands	: Commands,
 ) {
 	// spawn::infinite_grid(&mut commands);
@@ -34,9 +39,11 @@ pub fn setup_world_system(
 	let font		= fonts.get_mut(font_handle).unwrap();
 	
 	let mut pos		= Vec3::new(0.0, 0.0, 0.0);
+
 	let (file_entity, text_descriptor) =
-	text::spawn::file(
-		"playground/herringbone_spawn.rs", // "playground/rustc_ast.rs",
+	bevy_helix::spawn::surface(
+		&surface_tui,
+		&mut surface_bevy,
 		font_handle,
 		&mut font.ttf_font,
 		pos,
@@ -45,9 +52,20 @@ pub fn setup_world_system(
 		&mut commands
 	);
 
+	// let (file_entity, text_descriptor) =
+	// text::spawn::file(
+	// 	"playground/herringbone_spawn.rs", // "playground/rustc_ast.rs",
+	// 	font_handle,
+	// 	&mut font.ttf_font,
+	// 	pos,
+	// 	&mut meshes,
+	// 	&mut materials,
+	// 	&mut commands
+	// );
+
 	spawn::camera	(file_entity, &mut camera_ids, &mut commands);
 
-	text::spawn::caret(file_entity, &text_descriptor, &mut meshes, &mut materials, &mut commands);
+	// text::spawn::caret(file_entity, &text_descriptor, &mut meshes, &mut materials, &mut commands);
 
 	// pos.x				+= 10.0;
 	// spawn::file_text	(

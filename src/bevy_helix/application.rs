@@ -191,8 +191,8 @@ impl Application {
 			// 	.new_file_from_stdin(Action::VerticalSplit)
 			// 	.unwrap_or_else(|_| editor.new_file(Action::VerticalSplit));
 
-			// editor.new_file(Action::VerticalSplit);
-			editor.open(std::path::Path::new("playground/herringbone_spawn.rs"), Action::Load).unwrap();
+			editor.new_file(Action::VerticalSplit);
+			// editor.open(std::path::Path::new("playground/herringbone_spawn.rs"), Action::Load).unwrap();
 		}
 
 		editor.set_theme(theme);
