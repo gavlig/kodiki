@@ -100,30 +100,36 @@ pub fn surface(
 
 			let color = color_from_helix(cell_helix.fg);
 
-			if cell_helix.symbol != " " && cell_helix.symbol != cell_bevy.symbol {
-				let mesh_entity_id =
-				spawn_mesh(
-					&cell_helix.symbol,
-					pos,
-					&font_handle,
-					SizeUnit::NonStandard(font_size),
-					font_depth,
-					color,
-					commands
-				);
-				children.push(mesh_entity_id);
+			if cell_helix.symbol != cell_bevy.symbol {
+				println!("redraw [{} {}] from {} to {}", x_cell, y_cell, cell_bevy.symbol, cell_helix.symbol);
 
 				if cell_bevy.entity.is_some() {
+					println!("redraw [{} {}] despawn previous entity {:?}", x_cell, y_cell, cell_bevy.entity.unwrap());
 					despawn.entities.push(cell_bevy.entity.unwrap());
 				}
 
-				cell_bevy.entity = Some(mesh_entity_id);
-			} else {
-				cell_bevy.entity = None;
-			}
+				if cell_helix.symbol != " " {
+					let mesh_entity_id =
+					spawn_mesh(
+						&cell_helix.symbol,
+						pos,
+						&font_handle,
+						SizeUnit::NonStandard(font_size),
+						font_depth,
+						color,
+						commands
+					);
+					children.push(mesh_entity_id);
 
-			cell_bevy.symbol = cell_helix.symbol.clone();
-			cell_bevy.dirty = false;
+					cell_bevy.entity = Some(mesh_entity_id);
+
+					println!("redraw [{} {}] new entity id {:?}", x_cell, y_cell, mesh_entity_id);
+				} else {
+					cell_bevy.entity = None;
+				}
+
+				cell_bevy.symbol = cell_helix.symbol.clone();
+			}
 
 			column += 1;
 		}
