@@ -1,6 +1,7 @@
 use bevy :: prelude :: *;
 
 use super :: application :: Application;
+use super :: SurfaceBevy;
 
 use helix_term  :: config :: Config;
 use helix_term  :: args :: Args;
@@ -42,14 +43,18 @@ fn setup_logging(logpath: PathBuf, verbosity: u64) -> Result<()> {
 pub fn startup(
     world: &mut World
 ) {
-    let surface = Surface::empty(Rect {
+    let rect = Rect {
         x : 0,
         y : 0,
         width : 200,
         height : 80,
-    });
+    };
 
+    let surface = Surface::empty(rect);
     world.insert_resource(surface);
+
+    let surface_bevy = SurfaceBevy::empty(rect);
+    world.insert_resource(surface_bevy);
 
     let app = startup_impl();
     world.insert_non_send_resource(app.unwrap());
@@ -98,4 +103,6 @@ pub fn render(
     let mut app = app.unwrap();
     
     app.render(surface.as_mut());
+
+    render_tui_surface(surface.as_ref());
 }
