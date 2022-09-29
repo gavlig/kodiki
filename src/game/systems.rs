@@ -303,11 +303,12 @@ pub fn stats_system(
 			(0.0, 0.0)
 		};
 
-		screen_print!("row: {}({:.3}) col: {}({:.3}) pitch: {:.3} glyph_w: {:.3} glyph_h: {:.3}",
+		screen_print!("row: {}({:.3}) col: {}({:.3}) zoom: {:.3} pitch: {:.3} glyph_w: {:.3} glyph_h: {:.3}",
 			fly_camera.row,
 			fly_camera.row_scroll_accum,
 			fly_camera.column,
 			fly_camera.column_scroll_accum,
+			fly_camera.zoom,
 			fly_camera.pitch,
 			qw,
 			qh

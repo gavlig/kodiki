@@ -116,7 +116,10 @@ pub fn render(
         return;
     }
     let mut app = app.unwrap();
-    
+
+    // erase previous frame
+    surface_helix.reset();
+
     app.render(surface_helix.as_mut());
 
     let font_handle = &font_handles.share_tech;
