@@ -33,14 +33,17 @@ bevy_shadertoy_wgsl	= { git = "https://github.com/gavlig/bevy_shadertoy_wgsl.git
 bevy-debug-text-overlay = { version = "3.0" }
 bevy_contrib_colors = { git = "https://github.com/gavlig/bevy_contrib_colors.git" }
 
-# helix-editor		= { path = "../helix-editor" } # { git = "https://github.com/helix-editor/helix.git" }
-helix-core			= { path = "../helix-editor/helix-core"}
-helix-lsp			= { path = "../helix-editor/helix-lsp" }
-helix-dap			= { path = "../helix-editor/helix-dap" }
-helix-loader		= { path = "../helix-editor/helix-loader" }
-helix-view			= { path = "../helix-editor/helix-view" }
-helix-term			= { path = "../helix-editor/helix-term" }
-helix-tui			= { path = "../helix-editor/helix-tui" }
+#
+# HELIX START
+#
+
+helix-core			= { path = "third_party/helix-editor/helix-core" }
+helix-lsp			= { path = "third_party/helix-editor/helix-lsp" }
+helix-dap			= { path = "third_party/helix-editor/helix-dap" }
+helix-loader		= { path = "third_party/helix-editor/helix-loader" }
+helix-view			= { path = "third_party/helix-editor/helix-view" }
+helix-term			= { path = "third_party/helix-editor/helix-term" }
+helix-tui			= { path = "third_party/helix-editor/helix-tui" }
 
 anyhow				= "1"
 signal-hook			= "0.3"
@@ -59,3 +62,7 @@ log					= { version = "0.4" }
 
 # config
 toml				= { version = "0.5" }
+
+#
+# HELIX END
+#
