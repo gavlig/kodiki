@@ -101,9 +101,12 @@
 27.7. make it possible to modify shader from inside bevy_helix
 27.7.1. (fixed!)qbackspace/cleanup doesnt work in command mode (:)
 27.7.2. cursor is not visible
-27.7.3. centered init camera position
-27.7.4. colors are not showing up
+27.7.4. (done!)colors are not showing up (HELIX_RUNTIME)
+27.7.4.1. ERROR helix_view::editor: Failed to initialize the LSP for `source.rust` { cannot find binary path }
+27.7.4.2. make runtime autodetected. highlighting should work just from cargo run -r
 27.7.5. fast scrolling leads to crash. maybe time for 31.3?
+27.8. centered init camera position
+27.9. pass command line arguments to helix via bevy
 
 28. HELIX POLISH
 28.1. separate Config from helix-term
