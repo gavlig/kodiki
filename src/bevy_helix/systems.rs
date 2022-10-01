@@ -157,19 +157,21 @@ pub fn render(
 			surface_bevy.as_mut(),
 			font_handle,
 			&mut font.ttf_font,
-			despawn.as_mut(), 
+			&mut meshes,
+			&mut materials,
+			despawn.as_mut(),
 			&mut commands
 		);
 
 		render::cursor(
 			bevy_helix_entity,
 			surface_helix.as_ref(),
+			surface_bevy.as_ref(),
 			&mut font.ttf_font,
 			cursor.as_mut(),
 			&mut q_cursor_transform,
 			&time,
 			&mut meshes,
-			&mut materials,
 			&mut commands
 		);
 	}

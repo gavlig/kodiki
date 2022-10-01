@@ -126,24 +126,11 @@ pub fn surface(
 			let cell_helix = &content_helix[content_index];
 			let cell_bevy = &mut content_bevy[content_index];
 
-			let column_offset = (column as f32) * glyph_width;
-			let x = column_offset;
-
-			let pos = local_position + Vec3::new(x, y, 0.0);
-
-			let wrong_symbol = cell_helix.symbol != cell_bevy.symbol;
+			// figure out colors first
 			let reversed = cell_helix.modifier == helix_view::graphics::Modifier::REVERSED;
 			let wrong_color = !reversed && cell_bevy.fg != cell_helix.fg;
 			let reversed_and_wrong_color = reversed && cell_bevy.fg != cell_helix.bg;
-
-			if wrong_symbol
-			|| wrong_color
-			|| reversed_and_wrong_color
-			{
-				if cell_bevy.entity.is_some() && wrong_symbol {
-					despawn.entities.push(cell_bevy.entity.unwrap());
-				}
-
+			if wrong_color || reversed_and_wrong_color {
 				(cell_bevy.fg, cell_bevy.bg) =
 				if !reversed {
 					(cell_helix.fg, cell_helix.bg)
@@ -154,10 +141,8 @@ pub fn surface(
 				let color_fg = color_from_helix(cell_bevy.fg);
 				let color_bg = color_from_helix(cell_bevy.bg);
 
-				if wrong_color || reversed_and_wrong_color {
-					cell_bevy.fg_handle = None;
-					cell_bevy.bg_handle = None;
-				}
+				cell_bevy.fg_handle = None;
+				cell_bevy.bg_handle = None;
 
 				for m in materials.iter() {
 					if m.1.base_color == color_fg && cell_bevy.fg_handle.is_none() {
@@ -172,7 +157,7 @@ pub fn surface(
 					}
 				}
 
-				if wrong_color && None == cell_bevy.fg_handle { // || reversed_and_wrong_color {
+				if None == cell_bevy.fg_handle {
 					cell_bevy.fg_handle = Some(materials.add(
 						StandardMaterial {
 							base_color : color_fg,
@@ -182,7 +167,7 @@ pub fn surface(
 					));
 				}
 
-				if wrong_color && None == cell_bevy.bg_handle { // || reversed_and_wrong_color {
+				if None == cell_bevy.bg_handle {
 					cell_bevy.bg_handle = Some(materials.add(
 						StandardMaterial {
 							base_color : color_bg,
@@ -192,7 +177,30 @@ pub fn surface(
 					));
 				}
 
-				if cell_helix.symbol != " " && wrong_symbol {
+				// replace material to reflect changed color
+				if let Some(cell_bevy_entity) = cell_bevy.entity {
+					commands.entity		(cell_bevy_entity)
+					.remove::<Handle<StandardMaterial>>()
+					.insert(cell_bevy.fg_handle.as_ref().unwrap().clone())
+					;
+				}
+			}
+
+			// now spawn new mesh if needed
+			let column_offset = (column as f32) * glyph_width;
+			let x = column_offset;
+			let pos = local_position + Vec3::new(x, y, 0.0);
+
+			let color_fg = color_from_helix(cell_bevy.fg);
+			let color_bg = color_from_helix(cell_bevy.bg);
+
+			let wrong_symbol = cell_helix.symbol != cell_bevy.symbol;
+			if wrong_symbol {
+				if cell_bevy.entity.is_some() {
+					despawn.entities.push(cell_bevy.entity.unwrap());
+				}
+
+				if cell_helix.symbol != " " {
 					let mesh_entity_id =
 					spawn_mesh(
 						&cell_helix.symbol,
@@ -211,13 +219,6 @@ pub fn surface(
 				}
 
 				cell_bevy.symbol = cell_helix.symbol.clone();
-
-				if let Some(cell_bevy_entity) = cell_bevy.entity && (wrong_color || reversed_and_wrong_color) {
-					commands.entity		(cell_bevy_entity)
-					.remove::<Handle<StandardMaterial>>()
-					.insert(cell_bevy.fg_handle.as_ref().unwrap().clone())
-					;
-				}
 			}
 
 			column += 1;
@@ -290,7 +291,7 @@ pub fn cursor(
 	let color_bg 			= color_from_helix(cell_bevy.bg);
 
 	// spawn background quad for cursor
-	if cursor.entity == None {
+	if cursor.entity == None && cell_bevy.bg_handle.is_some() {
 
 		let quad_width		= glyph_width;
 		let quad_height		= (ybounds[1] - ybounds[0]) * font_size_scalar * 1.7; // ybounds contain offset for letter 'y'
