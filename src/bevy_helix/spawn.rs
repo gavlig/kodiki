@@ -100,7 +100,6 @@ pub fn mesh(
         },
         ..default()
     })
-	// .insert_bundle(PickableBundle::default())
 	.id()
 }
 
@@ -142,7 +141,6 @@ pub fn surface(
 {
 	surface_bevy.content.resize_with(surface_helix.content.len(), || { CellBevy::default() });
 
-	let tab_size	= 4; //.editorconfig
 	let font_size	= 9.;
 	let font_depth	= 0.1;
 	let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
@@ -151,8 +149,6 @@ pub fn surface(
 	let row_offset = calc_vertical_offset(1.0, &reference_glyph);
 	let glyph_width	= reference_glyph.inner.advance * font_size_scalar;
 	let glyph_height = row_offset.abs();
-	let row_num_offset = 6. * glyph_width;
-	let vertical_overlap = 0.05;
 
 	let local_position = Vec3::ZERO;
 
@@ -160,7 +156,7 @@ pub fn surface(
 
 	let mut y		= 0.0;
 	let mut column	= 0 as u32;
-	let mut row		= 3 as u32;
+	let mut row		= 0 as u32;
 	// let mut empty_line = false;
 	let mut column_max = 0 as u32;
 	let mut row_max = 0 as u32;
@@ -181,9 +177,12 @@ pub fn surface(
 			// println!("[{} {}] cell {}", x_cell, y_cell, cell.symbol);
 
 			let column_offset = (column as f32) * glyph_width;
-			let x = row_num_offset + column_offset;
+			let x = column_offset;
 
 			let pos = local_position + Vec3::new(x, y, 0.0);
+
+			// use crate :: game :: spawn :: WorldAxisDesc;
+			// use crate :: game :: spawn :: world_axis as spawn_world_axis;
 
 			// spawn_world_axis(
 			// 	Transform::from_translation(pos),
@@ -198,26 +197,22 @@ pub fn surface(
 			// );
 
 			let color = color_from_helix(cell_helix.fg);
+			let symbol = String::from(" ");
 
-			if cell_helix.symbol != " " {
-				let mesh_entity_id =
-				spawn_mesh(
-					&cell_helix.symbol,
-					pos,
-					&font_handle,
-					SizeUnit::NonStandard(font_size),
-					font_depth,
-					color,
-					commands
-				);
-				children.push(mesh_entity_id);
-				cell_bevy.entity = Some(mesh_entity_id);
-			} else {
-				cell_bevy.entity = None;
-			}
+			let mesh_entity_id =
+			spawn_mesh(
+				&symbol,
+				pos,
+				&font_handle,
+				SizeUnit::NonStandard(font_size),
+				font_depth,
+				color,
+				commands
+			);
+			children.push(mesh_entity_id);
+			cell_bevy.entity = Some(mesh_entity_id);
 
-			cell_bevy.symbol = cell_helix.symbol.clone();
-			cell_bevy.dirty = false;
+			cell_bevy.symbol = symbol;
 
 			column += 1;
 		}

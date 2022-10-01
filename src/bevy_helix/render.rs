@@ -103,7 +103,6 @@ pub fn surface(
 {
 	surface_bevy.content.resize_with(surface_helix.content.len(), || { CellBevy::default() });
 
-	let tab_size	= 4; //.editorconfig
 	let font_size	= 9.;
 	let font_depth	= 0.1;
 	let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
@@ -112,8 +111,6 @@ pub fn surface(
 	let row_offset = calc_vertical_offset(1.0, &reference_glyph);
 	let glyph_width	= reference_glyph.inner.advance * font_size_scalar;
 	let glyph_height = row_offset.abs();
-	let row_num_offset = 6. * glyph_width;
-	let vertical_overlap = 0.05;
 
 	let local_position = Vec3::ZERO;
 
@@ -139,7 +136,7 @@ pub fn surface(
 			// println!("[{} {}] cell {}", x_cell, y_cell, cell.symbol);
 
 			let column_offset = (column as f32) * glyph_width;
-			let x = row_num_offset + column_offset;
+			let x = column_offset;
 
 			let pos = local_position + Vec3::new(x, y, 0.0);
 

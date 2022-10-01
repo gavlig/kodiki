@@ -137,16 +137,19 @@ pub fn render(
 		{
 			cursor.easing_accum = 0.0;
 		}
+
 		cursor.x = cursor_pos.0;
 		cursor.y = cursor_pos.1;
 		cursor.kind = cursor_kind;
 	}
 
+	// first let helix render into surface_helix
 	app.render(surface_helix.as_mut());
 
 	let font_handle = &font_handles.share_tech;
 	let font		= fonts.get_mut(font_handle).unwrap();
 
+	// now we render surface_helix, using surface_bevy to store intermediate state for rendering
 	for bevy_helix_entity in q_bevy_helix.iter() {
 		render::surface(
 			bevy_helix_entity,

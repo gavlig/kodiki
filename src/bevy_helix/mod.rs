@@ -31,7 +31,6 @@ pub struct CellBevy {
     pub entity  : Option<Entity>,
     pub symbol  : String,
     pub fg      : helix_view::graphics::Color,
-	pub dirty   : bool,
 }
 
 impl Default for CellBevy {
@@ -40,7 +39,6 @@ impl Default for CellBevy {
             entity  : None,
             symbol  : " ".into(),
             fg      : helix_view::graphics::Color::Reset,
-            dirty   : false,
         }
     }
 }
