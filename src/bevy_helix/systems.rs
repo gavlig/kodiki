@@ -73,6 +73,8 @@ pub fn startup(
 async fn startup_impl() -> Result<Application, Error> {
     let args = Args::parse_args().context("could not parse arguments").unwrap();
 
+    println!("args files {:?}", args.files);
+
     // let logpath = args.log_file.as_ref().cloned().unwrap_or(helix_loader::log_file());
     // setup_logging(logpath, args.verbosity).context("failed to initialize logging").unwrap();
 
@@ -250,11 +252,7 @@ pub fn input(
             modifiers : modifiers,
         };
 
-        // KeyEventKind
-
         let event = helix_view::input::Event::Key(key_event);
         app.handle_event(&event);
-        // let compositor = Box::new(&app.compositor) as Box<dyn helix_term::compositor::Compositor>;
-        println!("Keyboard event! bevy {:?} helix {:?}", e, event);
     }
 }
