@@ -15,20 +15,32 @@ mod systems;
 #[derive(Component)]
 pub struct BevyHelix;
 
+#[derive(Default)]
+pub struct CursorBevy {
+    pub entity  : Option<Entity>,
+    pub x       : u16,
+    pub y       : u16,
+    pub kind    : CursorKind,
+
+    pub easing_accum : f32,
+}
+
 // representation of helix_tui::buffer::Cell in Bevy
 #[derive(Debug, Clone, PartialEq)]
 pub struct CellBevy {
-    pub entity : Option<Entity>,
-    pub symbol : String,
-	pub dirty : bool,
+    pub entity  : Option<Entity>,
+    pub symbol  : String,
+    pub fg      : helix_view::graphics::Color,
+	pub dirty   : bool,
 }
 
 impl Default for CellBevy {
     fn default() -> Self {
         Self {
-            entity : None,
-            symbol : " ".into(),
-            dirty : false,
+            entity  : None,
+            symbol  : " ".into(),
+            fg      : helix_view::graphics::Color::Reset,
+            dirty   : false,
         }
     }
 }

@@ -1,4 +1,5 @@
 use bevy				:: prelude :: { * };
+use bevy_debug_text_overlay::screen_print;
 use bevy_text_mesh		:: prelude :: { * };
 use bevy_mod_picking	:: { * };
 use bevy_fly_camera		:: { * };
@@ -19,6 +20,50 @@ use helix_view::graphics::Color as HelixColor;
 
 fn calc_vertical_offset(row : f32, reference_glyph : &Glyph) -> f32 {
 	row * -0.13 // (reference_glyph.inner.ybounds[0] - reference_glyph.inner.ybounds[1]) / 72.
+}
+
+fn quad(
+	quad_pos_in		: Vec3,
+	quad_size		: Vec2,
+	color			: Color,
+	meshes			: &mut ResMut<Assets<Mesh>>,
+	materials		: &mut ResMut<Assets<StandardMaterial>>,
+	commands		: &mut Commands
+) -> Entity {
+	let quad_width		= quad_size.x;
+	let quad_height		= quad_size.y;
+
+    let quad_handle		= meshes.add(
+		Mesh::from(
+			shape::Quad::new(
+				Vec2::new(
+					quad_width,
+					quad_height
+    			)
+			)
+		)
+	);
+	let quad_pos		= quad_pos_in + Vec3::new(quad_width / 2.0, 0., 0.);//-quad_height / 2.0, 0.0);
+
+    let blue_material_handle = materials.add(StandardMaterial {
+        base_color		: color,
+        // alpha_mode	: AlphaMode::Opaque,
+        unlit			: true,
+        // double_sided	: true,
+        ..default()
+    });
+
+	commands.spawn_bundle(PbrBundle {
+		mesh			: quad_handle,
+		material		: blue_material_handle,
+		transform		: Transform {
+			translation	: quad_pos,
+			// rotation	: Quat::from_rotation_y(std::f32::consts::PI), // winding ccw something something
+			..default()
+		},
+		..default()
+	})
+	.id()
 }
 
 fn color_from_helix(helix_color: HelixColor) -> Color {
@@ -76,7 +121,7 @@ pub fn surface(
 
 	let mut y		= 0.0;
 	let mut column	= 0 as u32;
-	let mut row		= 3 as u32;
+	let mut row		= 0 as u32;
 	
 	let width = surface_helix.area.width;
 	let height = surface_helix.area.height;
@@ -100,7 +145,9 @@ pub fn surface(
 
 			let color = color_from_helix(cell_helix.fg);
 
-			if cell_helix.symbol != cell_bevy.symbol {
+			if cell_helix.symbol != cell_bevy.symbol
+			|| cell_helix.fg != cell_bevy.fg
+			{
 
 				if cell_bevy.entity.is_some() {
 					despawn.entities.push(cell_bevy.entity.unwrap());
@@ -125,6 +172,7 @@ pub fn surface(
 				}
 
 				cell_bevy.symbol = cell_helix.symbol.clone();
+				cell_bevy.fg = cell_helix.fg;
 			}
 
 			column += 1;
@@ -132,6 +180,85 @@ pub fn surface(
 
 		column		= 0;
 		row			+= 1;
+	}
+
+	if children.len() > 0 {
+		commands.entity(root_entity).push_children(children.as_slice());
+	}
+}
+
+pub fn cursor(
+	root_entity		: Entity,
+	surface_helix	: &SurfaceHelix,
+	font			: &mut ttf2mesh::TTFFile,
+	cursor			: &mut CursorBevy,
+	q_cursor_transform : &mut Query<&mut Transform>,
+	time			: &Res<Time>,
+	meshes			: &mut ResMut<Assets<Mesh>>,
+	materials		: &mut ResMut<Assets<StandardMaterial>>,
+	commands		: &mut Commands
+)
+{
+	let font_size	= 9.;
+	let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
+
+	let reference_glyph : Glyph = font.glyph_from_char('a').unwrap(); // and omega
+	let row_offset = calc_vertical_offset(1.0, &reference_glyph);
+	let glyph_width	= reference_glyph.inner.advance * font_size_scalar;
+	let glyph_height = row_offset.abs();
+	let row_num_offset = 6. * glyph_width;
+
+	let local_position = Vec3::ZERO;
+
+	let mut children : Vec<Entity> = Vec::new();
+
+	let width = surface_helix.area.width;
+	let content_helix = &surface_helix.content;
+
+	// move background quad
+	if let Some(cursor_entity) = cursor.entity {
+		let column_offset = (cursor.x as f32) * glyph_width;
+		let target_x = row_num_offset + column_offset;
+		let target_y = calc_vertical_offset(cursor.y as f32, &reference_glyph);
+
+		let target_pos = local_position + Vec3::new(target_x, target_y, 0.0);
+
+		let delta_seconds = time.delta_seconds();
+		let delta_accum = delta_seconds / /*cursor_easing_seconds*/0.1;
+
+		cursor.easing_accum = (cursor.easing_accum + delta_accum).min(1.0);
+		let mut cursor_transform = q_cursor_transform.get_mut(cursor_entity).unwrap();
+		cursor_transform.translation = cursor_transform.translation.lerp(target_pos, cursor.easing_accum);
+	}
+
+	// spawn background quad for cursor
+	if cursor.entity == None
+	&& cursor.kind != helix_view::graphics::CursorKind::Hidden
+	{
+		let content_index 	= (cursor.y * width + cursor.x) as usize;
+		let cell_helix		= &content_helix[content_index];
+
+		let quad_width		= glyph_width;
+		let quad_height		= glyph_height;
+		let quad_pos		= Vec3::new(0., 0., -0.25 / 72.);
+		let quad_entity_id	= 
+		quad(
+			quad_pos,
+			Vec2::new		(quad_width, quad_height),
+			color_from_helix(cell_helix.bg),
+			meshes,
+			materials,
+			commands
+		);
+
+		commands.entity		(quad_entity_id)
+		// .insert(Row		{ 0: row })
+		// .insert(Column	{ 0: column })
+		;
+
+		children.push(quad_entity_id);
+
+		cursor.entity = Some(quad_entity_id);
 	}
 
 	if children.len() > 0 {

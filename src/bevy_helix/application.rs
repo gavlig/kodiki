@@ -244,4 +244,9 @@ impl Application {
         let compositor_helix = compositor_bevy as &mut dyn helix_term::compositor::Compositor;
         compositor_helix.handle_event(event, &mut cx);
 	}
+
+	pub fn cursor(&mut self, area : helix_view::graphics::Rect) -> (Option<(u16, u16)>, helix_view::graphics::CursorKind) {
+		let (pos, kind) = self.compositor.cursor(area, &self.editor);
+		(pos.map(|pos| (pos.col as u16, pos.row as u16)), kind)
+	}
 }

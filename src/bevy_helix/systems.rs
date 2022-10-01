@@ -5,6 +5,7 @@ use bevy_text_mesh :: prelude :: * ;
 
 use super :: BevyHelix;
 use super :: SurfaceBevy;
+use super :: CursorBevy;
 use super :: application :: Application;
 use super :: render;
 
@@ -65,6 +66,9 @@ pub fn startup(
     let surface_bevy = SurfaceBevy::empty(rect);
     world.insert_resource(surface_bevy);
 
+	let cursor_bevy = CursorBevy::default();
+	world.insert_resource(cursor_bevy);
+
     let app = startup_impl();
     world.insert_non_send_resource(app.unwrap());
 }
@@ -110,7 +114,12 @@ pub fn render(
     mut fonts           : ResMut<Assets<TextMeshFont>>,
         font_handles    : Res<FontAssetHandles>,
         q_bevy_helix    : Query<Entity, With<BevyHelix>>,
-        app             : Option<NonSendMut<Application>>,
+	mut	cursor          : ResMut<CursorBevy>,
+	mut	q_cursor_transform : Query<&mut Transform>,
+		app             : Option<NonSendMut<Application>>,
+		time			: Res<Time>,
+	mut meshes			: ResMut<Assets<Mesh>>,
+	mut materials		: ResMut<Assets<StandardMaterial>>,
     mut despawn         : ResMut<DespawnResource>,
     mut commands        : Commands,
 ) {
@@ -122,22 +131,49 @@ pub fn render(
     // erase previous frame
     surface_helix.reset();
 
+	let (cursor_pos, cursor_kind) = app.cursor(surface_helix.area);
+	if let Some(cursor_pos) = cursor_pos {
+		// cursor position changed so we reset easing timer
+		if cursor.x != cursor_pos.0
+		|| cursor.y != cursor_pos.1
+		{
+			cursor.easing_accum = 0.0;
+		}
+		cursor.x = cursor_pos.0;
+		cursor.y = cursor_pos.1;
+		cursor.kind = cursor_kind;
+	}
+
     app.render(surface_helix.as_mut());
 
     let font_handle = &font_handles.share_tech;
 	let font		= fonts.get_mut(font_handle).unwrap();
 
-    for bevy_helix_entity in q_bevy_helix.iter() {
-        render::surface(
-            bevy_helix_entity,
-            surface_helix.as_mut(),
-            surface_bevy.as_mut(),
-            font_handle,
-            &mut font.ttf_font,
+	for bevy_helix_entity in q_bevy_helix.iter() {
+		render::surface(
+			bevy_helix_entity,
+			surface_helix.as_mut(),
+			surface_bevy.as_mut(),
+			font_handle,
+			&mut font.ttf_font,
+			despawn.as_mut(), 
             despawn.as_mut(), 
-            &mut commands
-        );
-    }
+			despawn.as_mut(), 
+			&mut commands
+		);
+
+		render::cursor(
+			bevy_helix_entity,
+			surface_helix.as_ref(),
+			&mut font.ttf_font,
+			cursor.as_mut(),
+			&mut q_cursor_transform,
+			&time,
+			&mut meshes,
+			&mut materials,
+			&mut commands
+		);
+	}
 }
 
 pub fn input(

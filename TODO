@@ -100,7 +100,9 @@
 27.6.2. (done!)pass the app startup
 27.7. make it possible to modify shader from inside bevy_helix
 27.7.1. (fixed!)qbackspace/cleanup doesnt work in command mode (:)
-27.7.2. cursor is not visible
+27.7.2. (fixed!)cursor is not visible
+27.7.2.1. better cursor size
+27.7.2.2. see if we need to cover letter somehow?
 27.7.4. (done!)colors are not showing up (HELIX_RUNTIME)
 27.7.4.1. (fixed!)ERROR helix_view::editor: Failed to initialize the LSP for `source.rust` { cannot find binary path }
 27.7.4.1. ^(rust-analyzer cmd can be specified from languages.toml see "https://docs.helix-editor.com/master/languages.html")
@@ -161,3 +163,12 @@ oof
 17. draggable shadertoy in a small 3d window in space
 18. autodocumentation at least like in vscode is a must
 19. ? operator is almost invisible when you what to find who(what line) returns error
+20. ! spaces and tabs are for compilers, not for humans to read. make meta data file over normal source code file with data about it's visual representation: models, corrdinates etc, basically serialized "level"
+
+vfx
+1. typewriter as Eric suggested
+2. letters flying/arriving from distance when typing
+3. cursor as some model
+4. animation on cursor-model when typing
+5. model/animation for autocomplete popup
+6. (done!)smooth cursor movement
