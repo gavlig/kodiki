@@ -185,6 +185,18 @@ pub fn surface(
 
 			let pos = local_position + Vec3::new(x, y, 0.0);
 
+			// spawn_world_axis(
+			// 	Transform::from_translation(pos),
+			// 	WorldAxisDesc {
+			// 		min_dim : 0.005,
+			// 		max_dim : 0.04,
+			// 		offset	: 0.001,
+			// 	},
+			// 	meshes,
+			// 	materials,
+			// 	commands
+			// );
+
 			let color = color_from_helix(cell_helix.fg);
 
 			if cell_helix.symbol != " " {

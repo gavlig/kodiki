@@ -202,11 +202,16 @@ pub fn cursor(
 	let font_size	= 9.;
 	let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
 
+	let ybounds = {
+		let reference_glyph_y : Glyph = font.glyph_from_char('y').unwrap();
+	};
+
 	let reference_glyph : Glyph = font.glyph_from_char('a').unwrap(); // and omega
+	
 	let row_offset = calc_vertical_offset(1.0, &reference_glyph);
+	let lbearing = reference_glyph.inner.lbearing * font_size_scalar;
 	let glyph_width	= reference_glyph.inner.advance * font_size_scalar;
 	let glyph_height = row_offset.abs();
-	let row_num_offset = 6. * glyph_width;
 
 	let local_position = Vec3::ZERO;
 
@@ -216,12 +221,12 @@ pub fn cursor(
 	let content_helix = &surface_helix.content;
 
 	// move background quad
-	if let Some(cursor_entity) = cursor.entity {
+	if let Some(cursor_entity) = cursor.entity && cursor.easing_accum < 1.0 {
 		let column_offset = (cursor.x as f32) * glyph_width;
-		let target_x = row_num_offset + column_offset;
-		let target_y = calc_vertical_offset(cursor.y as f32, &reference_glyph);
+		let target_x = column_offset + (glyph_width / 2.0) + lbearing;
+		let target_y = calc_vertical_offset(cursor.y as f32, &reference_glyph) + (glyph_height / 2.0) + (ybounds[0] * font_size_scalar);
 
-		let target_pos = local_position + Vec3::new(target_x, target_y, 0.0);
+		let target_pos = local_position + Vec3::new(target_x, target_y, -0.25 / 72.);
 
 		let delta_seconds = time.delta_seconds();
 		let delta_accum = delta_seconds / /*cursor_easing_seconds*/0.1;
@@ -232,14 +237,12 @@ pub fn cursor(
 	}
 
 	// spawn background quad for cursor
-	if cursor.entity == None
-	&& cursor.kind != helix_view::graphics::CursorKind::Hidden
-	{
+	if cursor.entity == None {
 		let content_index 	= (cursor.y * width + cursor.x) as usize;
 		let cell_helix		= &content_helix[content_index];
 
 		let quad_width		= glyph_width;
-		let quad_height		= glyph_height;
+		let quad_height		= (ybounds[1] - ybounds[0]) * font_size_scalar * 1.7; // ybounds contain offset for letter 'y'
 		let quad_pos		= Vec3::new(0., 0., -0.25 / 72.);
 		let quad_entity_id	= 
 		quad(
