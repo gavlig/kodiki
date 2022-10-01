@@ -25,9 +25,8 @@ fn calc_vertical_offset(row : f32, reference_glyph : &Glyph) -> f32 {
 fn quad(
 	quad_pos_in		: Vec3,
 	quad_size		: Vec2,
-	color			: Color,
 	meshes			: &mut ResMut<Assets<Mesh>>,
-	materials		: &mut ResMut<Assets<StandardMaterial>>,
+	material_handle	: &Handle<StandardMaterial>,
 	commands		: &mut Commands
 ) -> Entity {
 	let quad_width		= quad_size.x;
@@ -45,17 +44,9 @@ fn quad(
 	);
 	let quad_pos		= quad_pos_in + Vec3::new(quad_width / 2.0, 0., 0.);//-quad_height / 2.0, 0.0);
 
-    let blue_material_handle = materials.add(StandardMaterial {
-        base_color		: color,
-        // alpha_mode	: AlphaMode::Opaque,
-        unlit			: true,
-        // double_sided	: true,
-        ..default()
-    });
-
 	commands.spawn_bundle(PbrBundle {
 		mesh			: quad_handle,
-		material		: blue_material_handle,
+		material		: material_handle.clone(),
 		transform		: Transform {
 			translation	: quad_pos,
 			// rotation	: Quat::from_rotation_y(std::f32::consts::PI), // winding ccw something something
@@ -97,6 +88,8 @@ pub fn surface(
 	surface_bevy	: &mut SurfaceBevy,
 	font_handle 	: &Handle<TextMeshFont>,
 	font			: &mut ttf2mesh::TTFFile,
+	_meshes			: &mut ResMut<Assets<Mesh>>,
+	materials		: &mut ResMut<Assets<StandardMaterial>>,
 	despawn			: &mut DespawnResource,
 	commands		: &mut Commands
 )
@@ -140,17 +133,68 @@ pub fn surface(
 
 			let pos = local_position + Vec3::new(x, y, 0.0);
 
-			let color = color_from_helix(cell_helix.fg);
+			let wrong_symbol = cell_helix.symbol != cell_bevy.symbol;
+			let reversed = cell_helix.modifier == helix_view::graphics::Modifier::REVERSED;
+			let wrong_color = !reversed && cell_bevy.fg != cell_helix.fg;
+			let reversed_and_wrong_color = reversed && cell_bevy.fg != cell_helix.bg;
 
-			if cell_helix.symbol != cell_bevy.symbol
-			|| cell_helix.fg != cell_bevy.fg
+			if wrong_symbol
+			|| wrong_color
+			|| reversed_and_wrong_color
 			{
-
-				if cell_bevy.entity.is_some() {
+				if cell_bevy.entity.is_some() && wrong_symbol {
 					despawn.entities.push(cell_bevy.entity.unwrap());
 				}
 
-				if cell_helix.symbol != " " {
+				(cell_bevy.fg, cell_bevy.bg) =
+				if !reversed {
+					(cell_helix.fg, cell_helix.bg)
+				} else {
+					(cell_helix.bg, cell_helix.fg)
+				};
+
+				let color_fg = color_from_helix(cell_bevy.fg);
+				let color_bg = color_from_helix(cell_bevy.bg);
+
+				if wrong_color || reversed_and_wrong_color {
+					cell_bevy.fg_handle = None;
+					cell_bevy.bg_handle = None;
+				}
+
+				for m in materials.iter() {
+					if m.1.base_color == color_fg && cell_bevy.fg_handle.is_none() {
+						cell_bevy.fg_handle = Some(materials.get_handle(m.0));
+					}
+					if m.1.base_color == color_bg && cell_bevy.bg_handle.is_none() {
+						cell_bevy.bg_handle = Some(materials.get_handle(m.0));
+					}
+
+					if cell_bevy.fg_handle.is_some() && cell_bevy.bg_handle.is_some() {
+						break;
+					}
+				}
+
+				if wrong_color && None == cell_bevy.fg_handle { // || reversed_and_wrong_color {
+					cell_bevy.fg_handle = Some(materials.add(
+						StandardMaterial {
+							base_color : color_fg,
+							unlit : true,
+							..default()
+						}
+					));
+				}
+
+				if wrong_color && None == cell_bevy.bg_handle { // || reversed_and_wrong_color {
+					cell_bevy.bg_handle = Some(materials.add(
+						StandardMaterial {
+							base_color : color_bg,
+							unlit : true,
+							..default()
+						}
+					));
+				}
+
+				if cell_helix.symbol != " " && wrong_symbol {
 					let mesh_entity_id =
 					spawn_mesh(
 						&cell_helix.symbol,
@@ -158,18 +202,24 @@ pub fn surface(
 						&font_handle,
 						SizeUnit::NonStandard(font_size),
 						font_depth,
-						color,
+						color_fg,
 						commands
 					);
 					children.push(mesh_entity_id);
 
 					cell_bevy.entity = Some(mesh_entity_id);
-				} else {
+				} else if wrong_symbol {
 					cell_bevy.entity = None;
 				}
 
 				cell_bevy.symbol = cell_helix.symbol.clone();
-				cell_bevy.fg = cell_helix.fg;
+
+				if let Some(cell_bevy_entity) = cell_bevy.entity && (wrong_color || reversed_and_wrong_color) {
+					commands.entity		(cell_bevy_entity)
+					.remove::<Handle<StandardMaterial>>()
+					.insert(cell_bevy.fg_handle.as_ref().unwrap().clone())
+					;
+				}
 			}
 
 			column += 1;
@@ -187,12 +237,12 @@ pub fn surface(
 pub fn cursor(
 	root_entity		: Entity,
 	surface_helix	: &SurfaceHelix,
+	surface_bevy	: &SurfaceBevy,
 	font			: &mut ttf2mesh::TTFFile,
 	cursor			: &mut CursorBevy,
 	q_cursor_transform : &mut Query<&mut Transform>,
 	time			: &Res<Time>,
 	meshes			: &mut ResMut<Assets<Mesh>>,
-	materials		: &mut ResMut<Assets<StandardMaterial>>,
 	commands		: &mut Commands
 )
 {
@@ -201,6 +251,7 @@ pub fn cursor(
 
 	let ybounds = {
 		let reference_glyph_y : Glyph = font.glyph_from_char('y').unwrap();
+		reference_glyph_y.inner.ybounds
 	};
 
 	let reference_glyph : Glyph = font.glyph_from_char('a').unwrap(); // and omega
@@ -233,6 +284,12 @@ pub fn cursor(
 		cursor_transform.translation = cursor_transform.translation.lerp(target_pos, cursor.easing_accum);
 	}
 
+	let content_index 		= (cursor.y * width + cursor.x) as usize;
+	let cell_helix			= &content_helix[content_index];
+	let cell_bevy			= &content_bevy[content_index];
+
+	let color_bg 			= color_from_helix(cell_bevy.bg);
+
 	// spawn background quad for cursor
 	if cursor.entity == None {
 		let content_index 	= (cursor.y * width + cursor.x) as usize;
@@ -241,13 +298,13 @@ pub fn cursor(
 		let quad_width		= glyph_width;
 		let quad_height		= (ybounds[1] - ybounds[0]) * font_size_scalar * 1.7; // ybounds contain offset for letter 'y'
 		let quad_pos		= Vec3::new(0., 0., -0.25 / 72.);
+
 		let quad_entity_id	= 
 		quad(
 			quad_pos,
 			Vec2::new		(quad_width, quad_height),
-			color_from_helix(cell_helix.bg),
 			meshes,
-			materials,
+			cell_bevy.bg_handle.as_ref().unwrap(),
 			commands
 		);
 
@@ -259,6 +316,13 @@ pub fn cursor(
 		children.push(quad_entity_id);
 
 		cursor.entity = Some(quad_entity_id);
+		cursor.color = color_bg;
+	} else if cursor.color != color_bg && cell_bevy.bg_handle.is_some() {
+		commands.entity		(cursor.entity.unwrap())
+		.remove::<Handle<StandardMaterial>>()
+		.insert(cell_bevy.bg_handle.as_ref().unwrap().clone())
+		;
+		cursor.color = color_bg;
 	}
 
 	if children.len() > 0 {

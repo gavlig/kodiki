@@ -7,6 +7,7 @@ use iyes_loopless	:: { prelude :: * };
 use bevy_shadertoy_wgsl :: { * };
 use bevy_debug_text_overlay :: { screen_print };
 
+use super::spawn::WorldAxisDesc;
 use super           :: { * };
 use crate			:: { text };
 use crate			:: { bevy_helix };
@@ -29,7 +30,7 @@ pub fn setup_world_system(
 ) {
 	// spawn::infinite_grid(&mut commands);
 
-	spawn::world_axis	(&mut meshes, &mut materials, &mut commands);
+	spawn::world_axis	(Transform::identity(), WorldAxisDesc::default(), &mut meshes, &mut materials, &mut commands);
 
 	spawn::fixed_sphere	(Transform::identity(), 0.02, Color::SEA_GREEN, &mut meshes, &mut materials, &mut commands);
 

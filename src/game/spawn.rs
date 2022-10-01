@@ -73,36 +73,62 @@ pub fn ground(
 	println!			("ground Entity ID {:?}", ground);
 }
 
+pub struct WorldAxisDesc {
+	pub min_dim : f32,
+	pub max_dim : f32,
+	pub offset	: f32,
+}
+
+impl Default for WorldAxisDesc {
+	fn default() -> Self {
+		Self {
+			min_dim : 0.02,
+			max_dim : 0.2,
+			offset	: 0.1,
+		}
+	}
+}
+
 pub fn world_axis(
+	transform_in	: Transform,
+	world_axis_desc	: WorldAxisDesc,
 	meshes			: &mut ResMut<Assets<Mesh>>,
 	materials		: &mut ResMut<Assets<StandardMaterial>>,
 	commands		: &mut Commands,
 ) {
-	let min_dim		= 0.02;
-	let max_dim		= 0.2;
+	let min_dim		= world_axis_desc.min_dim;
+	let max_dim		= world_axis_desc.max_dim;
+	let offset		= world_axis_desc.offset;
 	let min_color	= 0.1;
 	let max_color	= 0.8;
-	let offset		= 0.1;
+	let offset_x	= Vec3::new(offset, 0.0, 0.0);
+	let offset_y	= Vec3::new(0.0, offset, 0.0);
+	let offset_z	= Vec3::new(0.0, 0.0, offset);
+
+	let mut transform = transform_in.clone();
 
 	// X
+	transform.translation = transform_in.translation + offset_x;
 	commands.spawn_bundle(PbrBundle {
 		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(max_dim, min_dim, min_dim))),
 		material	: materials.add			(Color::rgb(max_color, min_color, min_color).into()),
-		transform	: Transform::from_xyz	(offset, 0.0, 0.0),
+		transform	: transform,
 		..Default::default()
 	});
 	// Y
+	transform.translation = transform_in.translation + offset_y;
 	commands.spawn_bundle(PbrBundle {
 		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(min_dim, max_dim, min_dim))),
 		material	: materials.add			(Color::rgb(min_color, max_color, min_color).into()),
-		transform	: Transform::from_xyz	(0.0, offset, 0.0),
+		transform	: transform,
 		..Default::default()
 	});
 	// Z
+	transform.translation = transform_in.translation + offset_z;
 	commands.spawn_bundle(PbrBundle {
 		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(min_dim, min_dim, max_dim))),
 		material	: materials.add			(Color::rgb(min_color, min_color, max_color).into()),
-		transform	: Transform::from_xyz	(0.0, 0.0, offset),
+		transform	: transform,
 		..Default::default()
 	});
 }

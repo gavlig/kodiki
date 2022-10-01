@@ -196,7 +196,8 @@ pub fn surface(
 			// 	commands
 			// );
 
-			let color = color_from_helix(cell_helix.fg);
+			let color_fg = color_from_helix(cell_helix.fg);
+			let color_bg = color_from_helix(cell_helix.bg);
 			let symbol = String::from(" ");
 
 			let mesh_entity_id =
@@ -206,13 +207,42 @@ pub fn surface(
 				&font_handle,
 				SizeUnit::NonStandard(font_size),
 				font_depth,
-				color,
+				color_fg,
 				commands
 			);
 			children.push(mesh_entity_id);
 			cell_bevy.entity = Some(mesh_entity_id);
 
 			cell_bevy.symbol = symbol;
+
+			for m in materials.iter() {
+				if m.1.base_color == color_fg {
+					cell_bevy.fg_handle = Some(materials.get_handle(m.0));
+				}
+				if m.1.base_color == color_bg {
+					cell_bevy.bg_handle = Some(materials.get_handle(m.0));
+				}
+			}
+
+			if cell_bevy.fg_handle.is_none() {
+				cell_bevy.fg_handle = Some(materials.add(
+					StandardMaterial {
+						base_color : color_fg,
+						unlit : true,
+						..default()
+					}
+				));
+			}
+
+			if cell_bevy.bg_handle.is_none() {
+				cell_bevy.bg_handle = Some(materials.add(
+					StandardMaterial {
+						base_color : color_bg,
+						unlit : true,
+						..default()
+					}
+				));
+			}
 
 			column += 1;
 		}

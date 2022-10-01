@@ -3,8 +3,6 @@ use iyes_loopless :: { prelude :: * };
 
 use crate :: game :: AppMode;
 
-use helix_view :: graphics :: *;
-
 pub mod spawn;
 mod render;
 pub mod application;
@@ -18,9 +16,10 @@ pub struct BevyHelix;
 #[derive(Default)]
 pub struct CursorBevy {
     pub entity  : Option<Entity>,
+    pub color   : Color,
     pub x       : u16,
     pub y       : u16,
-    pub kind    : CursorKind,
+    pub kind    : helix_view::graphics::CursorKind,
 
     pub easing_accum : f32,
 }
@@ -31,6 +30,10 @@ pub struct CellBevy {
     pub entity  : Option<Entity>,
     pub symbol  : String,
     pub fg      : helix_view::graphics::Color,
+    pub bg      : helix_view::graphics::Color,
+
+    pub fg_handle : Option<Handle<StandardMaterial>>,
+    pub bg_handle : Option<Handle<StandardMaterial>>,
 }
 
 impl Default for CellBevy {
@@ -39,6 +42,10 @@ impl Default for CellBevy {
             entity  : None,
             symbol  : " ".into(),
             fg      : helix_view::graphics::Color::Reset,
+            bg      : helix_view::graphics::Color::Reset,
+
+            fg_handle : None,
+            bg_handle : None,
         }
     }
 }
@@ -51,19 +58,19 @@ pub struct SurfaceBevy {
 
 impl SurfaceBevy {
     /// Returns a SurfaceBevy with all cells set to the default one
-    pub fn empty(area: Rect) -> SurfaceBevy {
+    pub fn empty(area: helix_view::graphics::Rect) -> SurfaceBevy {
         let cell: CellBevy = CellBevy::default();
         SurfaceBevy::filled(area, &cell)
     }
 
     /// Returns a SurfaceBevy with all cells initialized with the attributes of the given Cell
-    pub fn filled(area: Rect, cell: &CellBevy) -> SurfaceBevy {
+    pub fn filled(area: helix_view::graphics::Rect, cell: &CellBevy) -> SurfaceBevy {
         let size = area.area() as usize;
         let mut content = Vec::with_capacity(size);
         for _ in 0..size {
             content.push(cell.clone());
         }
-        SurfaceBevy { content }
+        SurfaceBevy { content, ..default() }
     }
 }
 
