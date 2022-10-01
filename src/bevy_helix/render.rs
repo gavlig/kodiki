@@ -126,8 +126,6 @@ pub fn surface(
 			let cell_helix = &content_helix[content_index];
 			let cell_bevy = &mut content_bevy[content_index];
 
-			// println!("[{} {}] cell {}", x_cell, y_cell, cell.symbol);
-
 			let column_offset = (column as f32) * glyph_width;
 			let x = column_offset;
 
@@ -256,28 +254,29 @@ pub fn cursor(
 
 	let reference_glyph : Glyph = font.glyph_from_char('a').unwrap(); // and omega
 	
-	let row_offset = calc_vertical_offset(1.0, &reference_glyph);
-	let lbearing = reference_glyph.inner.lbearing * font_size_scalar;
-	let glyph_width	= reference_glyph.inner.advance * font_size_scalar;
-	let glyph_height = row_offset.abs();
+	let row_offset			= calc_vertical_offset(1.0, &reference_glyph);
+	let lbearing			= reference_glyph.inner.lbearing * font_size_scalar;
+	let glyph_width			= reference_glyph.inner.advance * font_size_scalar;
+	let glyph_height		= row_offset.abs();
 
-	let local_position = Vec3::ZERO;
+	let local_position		= Vec3::ZERO;
 
 	let mut children : Vec<Entity> = Vec::new();
 
-	let width = surface_helix.area.width;
-	let content_helix = &surface_helix.content;
+	let width				= surface_helix.area.width;
+	let content_helix 		= &surface_helix.content;
+	let content_bevy 		= &surface_bevy.content;
 
 	// move background quad
 	if let Some(cursor_entity) = cursor.entity && cursor.easing_accum < 1.0 {
-		let column_offset = (cursor.x as f32) * glyph_width;
-		let target_x = column_offset + (glyph_width / 2.0) + lbearing;
-		let target_y = calc_vertical_offset(cursor.y as f32, &reference_glyph) + (glyph_height / 2.0) + (ybounds[0] * font_size_scalar);
+		let column_offset 	= (cursor.x as f32) * glyph_width;
+		let target_x 		= column_offset + (glyph_width / 2.0) + lbearing;
+		let target_y 		= calc_vertical_offset(cursor.y as f32, &reference_glyph) + (glyph_height / 2.0) + (ybounds[0] * font_size_scalar);
 
-		let target_pos = local_position + Vec3::new(target_x, target_y, -0.25 / 72.);
+		let target_pos		= local_position + Vec3::new(target_x, target_y, -0.25 / 72.);
 
-		let delta_seconds = time.delta_seconds();
-		let delta_accum = delta_seconds / /*cursor_easing_seconds*/0.1;
+		let delta_seconds	= time.delta_seconds();
+		let delta_accum		= delta_seconds / /*cursor_easing_seconds*/0.05;
 
 		cursor.easing_accum = (cursor.easing_accum + delta_accum).min(1.0);
 		let mut cursor_transform = q_cursor_transform.get_mut(cursor_entity).unwrap();
@@ -292,8 +291,6 @@ pub fn cursor(
 
 	// spawn background quad for cursor
 	if cursor.entity == None {
-		let content_index 	= (cursor.y * width + cursor.x) as usize;
-		let cell_helix		= &content_helix[content_index];
 
 		let quad_width		= glyph_width;
 		let quad_height		= (ybounds[1] - ybounds[0]) * font_size_scalar * 1.7; // ybounds contain offset for letter 'y'
@@ -309,8 +306,6 @@ pub fn cursor(
 		);
 
 		commands.entity		(quad_entity_id)
-		// .insert(Row		{ 0: row })
-		// .insert(Column	{ 0: column })
 		;
 
 		children.push(quad_entity_id);
