@@ -177,9 +177,6 @@ pub fn surface(
 
 			let wrong_symbol = cell_helix.symbol != cell_bevy.symbol;
 			if wrong_symbol {
-				println!("cell [{} {}] h [{}] b [{}]", x_cell, y_cell, cell_helix.symbol, cell_bevy.symbol);
-				println!("wrong symbol");
-
 				on_symbol_changed(
 					pos,
 					cell_helix,
@@ -193,9 +190,6 @@ pub fn surface(
 					meshes,
 					commands
 				);
-
-				println!("after      h [{}] b [{}]", cell_helix.symbol, cell_bevy.symbol);
-				println!("----");
 			}
 
 			column += 1;
@@ -227,8 +221,6 @@ fn on_symbol_changed(
     let cache_found = cache.is_some();
     let space_symbol = cell_helix.symbol == " ";
     if !cache_found && !space_symbol {
-		println!("no cache, not space");
-
 		if cell_bevy.entity.is_none() {
 			cell_bevy.entity = Some(
 				commands.spawn_bundle(
@@ -271,7 +263,6 @@ fn on_symbol_changed(
 		}
 	} else if let Some(cache) = cache {
 		if let Some(entity) = cell_bevy.entity {
-			println!("cache, replacing mesh");
 			// replace previous mesh with new one
 			commands.entity(entity)
 				.remove::<Handle<Mesh>>()
