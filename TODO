@@ -102,18 +102,20 @@
 27.7.1. (fixed!)qbackspace/cleanup doesnt work in command mode (:)
 27.7.2. (fixed!)cursor is not visible
 27.7.2.1. (done!)better cursor size
-27.7.2.2. see if we need to cover letter somehow?
+27.7.2.2. (fixed!)see if we need to cover letter somehow?
+27.7.2.2. ^(made inverse cursor colors like in helix, looks awesome!)
 27.7.4. (done!)colors are not showing up (HELIX_RUNTIME)
 27.7.4.1. (fixed!)ERROR helix_view::editor: Failed to initialize the LSP for `source.rust` { cannot find binary path }
 27.7.4.1. ^(rust-analyzer cmd can be specified from languages.toml see "https://docs.helix-editor.com/master/languages.html")
-27.7.5. fast scrolling leads to crash. maybe time for 31.3?
+27.7.5. (fixed!)fast scrolling leads to crash. maybe time for 31.3?
 27.7.6. reload shadertoy on button or helix command?
 27.8. centered init camera position
 27.9. (done!)pass command line arguments to helix via bevy
 27.9. ^(helix uses std::env so nothing had to be done)
 27.10. handle lsp events
 27.11. make runtime autodetected. highlighting should work just from cargo run -r
-27.12. render doesnt detect changes in color
+27.12. (fixed)render doesnt detect changes in color
+27.13. add missing curly bracket keycodes to bevy
 
 28. HELIX POLISH
 28.1. separate Config from helix-term
@@ -133,12 +135,13 @@
 31. Perf
 31.1. hook up profiler
 31.2. look at what people do (bevy_efficient_forest_rendering)
-31.3. make an "atlas" of letters and replace mesh handles instead of respawning
+31.3. (done!)make an "atlas" of letters and replace mesh handles instead of respawning
 31.4. make an "atlas" of words along the way and replace commonly occuring set of letter-objects with single-object word or every word?
 31.4.1. generate word object after space is pressed every time 
 
 32. Features
 32.1. automatically load all fonts from assets
+32.2. adjustable cursor size
 
 33. HELIX DECOMPOSITION
 33.1. render all file instead of viewport
@@ -174,4 +177,4 @@ vfx
 4. animation on cursor-model when typing
 5. model/animation for autocomplete popup
 6. (done!)smooth cursor movement
-7. visualize helix mode near/at cursor
+7. visualize helix mode near/at cursor (show a label, draw a model whatever)

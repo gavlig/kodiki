@@ -265,8 +265,10 @@ fn on_symbol_changed(
 
 		cell_bevy.entity = Some(mesh_entity_id);
 	} else if !cache_found && space_symbol {
-		println!("no cache, space");
-		// commands.entity(root_entity)
+		if let Some(entity) = cell_bevy.entity {
+			// remove mesh
+			commands.entity(entity).remove::<Handle<Mesh>>();
+		}
 	} else if let Some(cache) = cache {
 		if let Some(entity) = cell_bevy.entity {
 			println!("cache, replacing mesh");
@@ -276,14 +278,16 @@ fn on_symbol_changed(
 				.insert(cache.clone_weak())
 				;
 		} else {
-			println!("cache, replacing mesh");
 			// spawn new entity with an existing mesh
-			commands.spawn_bundle(PbrBundle {
-				mesh : cache.clone_weak(),
-				material : cell_bevy.fg_handle.as_ref().unwrap().clone_weak(),
-				transform : Transform::from_translation(pos),
-				..default()
-			});
+			cell_bevy.entity = Some(
+				commands.spawn_bundle(PbrBundle {
+					mesh : cache.clone_weak(),
+					material : cell_bevy.fg_handle.as_ref().unwrap().clone_weak(),
+					transform : Transform::from_translation(pos),
+					..default()
+				})
+				.id()
+			);
 		}
 	}
     cell_bevy.symbol = cell_helix.symbol.clone();
