@@ -1,0 +1,180 @@
+1. (done!)make clean bevy 0.8 project
+2. (done!)update bevy_fly_camera to 0.8
+3. (done!)update bevy_text_mesh to 0.8
+2. (done!)draw file content as 3d mesh
+2.1. (done!)support mono font
+2.2. (done!)support tabs
+2.3. (fixed!)bug: spacing is broken
+2.4. (fixed!)bug: long lines overlap
+3. (done!)color highlight
+3.1. (prototype done with lsp!)try to hook up rust-analyzer
+3.2. (done!)try to hook up rustc_ast and parser
+3.3. (done!)use rustc parser to do syntax highlighting
+3.4. (done!)draw words separately for highlighting
+3.5. (done!)draw letters separately
+3.6. (fixed!)bug: indentation is broken after words became separate
+3.7. (done!)draw 3-4 more colors
+3.8. (nope!)nonterminal tokens?
+4. (done!)better camera init position
+5. (done!)try smooth camera (not worth it for now)
+6. (done!)add infinite grid
+7. (done!)better init camera position
+8. (done!)make slimmer origin axis
+9. bug: when cursor is hidden mouse picking still works
+10. (done!)line numbers
+
+11. CAMERA
+11.1. (done!)smooth scrolling by moving camera with snapping to lines
+11.2. following text cursor when out of visibility
+11.3. (done!)orthographic projection
+11.4. fit view to code
+11.5. goto line
+11.6. speed up movement optionally (scroll and shift)
+11.7. (done!)smooth out camera leaning target pitch calculation to avoid jitter
+11.8. (done!)better init position with loaded file
+11.9. (done!)lock to column in reader mode
+11.10. (done!)leaning needs more smoothing for small movements
+11.11. (done!)scrolling needs smoothing
+11.12. (done!)keep meta data about file in a separate component and use it for camera navigation
+11.13. (done!)scroll controlled with arrow keys
+11.14. (done!)combine scroll controls with keys and with mouse
+11.15. (done!)quantized scrolling
+11.16. (done!)slowly move camera to quantized position for better feel
+11.17. (blocked by 11.24) scroll with wheel too
+11.18. (done! with LAlt)fast switch between keyboard and mouse
+11.19. (done!)time based smoothing instead of fps based
+11.20. (done!)time based scrolling with keys
+11.21. (done!)zoom smoothing
+11.22. smart scrolling: find dominant direction and don't let the other one change its value
+11.23. weaker scroll reset for slow mouse movements
+11.24. do not directly read mouse and kb events or use more flags?
+11.25. refactor camera to have smaller systems affecting translation/rotation/zoom
+11.26. refactor camera to have easings in all modes
+11.27. go to caret
+
+12. hide mouse by timeout (after inactivity in movement department)
+13. (done!)toggle hide mouse cursor on esc
+14. (done!)exit app on ctrl+esc
+15. (done!)highlightable/pickable lines
+16. hide mouse by gesture?
+
+17. TEXT EDITOR
+17.1. (done!)Movable cursor attached to file with row+col as position
+17.2. (?maybe helix integration instead)Erase symbols with backspace
+17.3. (?maybe helix integration instead)Type symbols
+17.4. (fixed with helix)pressed arrow buttons shouldn't start moving caret instantly
+17.5. (fixed with helix)limit caret movement
+
+18. pass material instead of font color to bevy_text_mesh
+19. (done!)spawn a background object/plane for code
+20. (done!)lines/words/letters need a background object for picking if we're going for that
+21. (done!)load fonts on startup or something
+
+22. TEXT VIEW
+22.1. visualize tabs and spaces
+22.2. simulate vscode plugin that changes brace color
+22.3. show scopes with vertical lines like vscode or something else
+22.4. (done!)show file name on top of it
+22.5. zoom out in ortho camera mode
+22.6. highlight current line in reader mode
+22.7. (done!)add background to empty lines
+22.8. reevaluate background quad
+22.9. (blocked by 22.8)make length of background of current line at least as long as length of next line
+22.10. (blocked by 22.8)toggle background quad visibility
+22.11. (blocked by 22.8)transparent background quad
+22.12. dim shadertoy on background
+
+24. open files without hardcode
+25. bevy console
+26. (done!)shadertoy support
+
+27. HELIX INTEGRATION
+27.1. (done!)research source code
+27.2. (done!)pass keyboard event to helix
+27.3. (done!)add helix as git submodule
+27.4. (done!)implement basic Compositor
+27.5. (done!)render data from helix
+27.5.1. (done!)passing render calls to helix
+27.6. (done!)instantiate bevy helix wrapper
+27.6.1. (done!)store app or parts of it in bevy
+27.6.2. (done!)pass the app startup
+27.7. make it possible to modify shader from inside bevy_helix
+27.7.1. (fixed!)qbackspace/cleanup doesnt work in command mode (:)
+27.7.2. (fixed!)cursor is not visible
+27.7.2.1. (done!)better cursor size
+27.7.2.2. (fixed!)see if we need to cover letter somehow?
+27.7.2.2. ^(made inverse cursor colors like in helix, looks awesome!)
+27.7.4. (done!)colors are not showing up (HELIX_RUNTIME)
+27.7.4.1. (fixed!)ERROR helix_view::editor: Failed to initialize the LSP for `source.rust` { cannot find binary path }
+27.7.4.1. ^(rust-analyzer cmd can be specified from languages.toml see "https://docs.helix-editor.com/master/languages.html")
+27.7.5. (fixed!)fast scrolling leads to crash. maybe time for 31.3?
+27.7.6. reload shadertoy on button or helix command?
+27.8. (done!)centered init camera position
+27.9. (done!)pass command line arguments to helix via bevy
+27.9. ^(helix uses std::env so nothing had to be done)
+27.10. handle lsp events
+27.11. make runtime autodetected. highlighting should work just from cargo run -r
+27.12. (fixed)render doesnt detect changes in color
+27.13. add missing curly bracket keycodes to bevy
+
+28. HELIX POLISH
+28.1. separate Config from helix-term
+28.2. separate Jobs from helix-term
+28.3. separate Args from helix-term
+28.3. ^(could be bad idea, nothing wrong with having terminal logic in bevy)
+28.4. check if all dependencies are needed with bevy
+
+29. HELIX TODO
+29.1. (done!)tutor
+
+30. Bugs
+30.1. some tabs and characters are still misaligned
+30.2. camera center changes pickable state together with mouse
+30.3. center picking gets broken after pressing esc
+
+31. Perf
+31.1. hook up profiler
+31.2. look at what people do (bevy_efficient_forest_rendering)
+31.3. (done!)make an "atlas" of letters and replace mesh handles instead of respawning
+31.4. make an "atlas" of words along the way and replace commonly occuring set of letter-objects with single-object word or every word?
+31.4.1. generate word object after space is pressed every time 
+
+32. Features
+32.1. automatically load all fonts from assets
+32.2. adjustable cursor size
+
+33. HELIX DECOMPOSITION
+33.1. render all file instead of viewport
+33.2. make viewport optional
+33.3. render every layer into separate surface for starters, we can render them into separate objects
+
+oof
+1. detect patterns in code editing and ask if repeat. (i was deleting Default:: a lot)
+2. text wrapping is a good opportunity to flex 3d?
+3. filtered view with only certain stuff rendered
+4. ngon with a file on each face
+5. project visualization with nodes etc
+6. callstack visualization with links between files
+7. show errors with lamps/whatever effects.
+8. mods will be epic. a corridor with each file as a door. flying spaceship with files/planets, custom 3d fonts, custom caret model you name it.
+9. attach words to their positions with joints and let them loose
+10. real constellations on nightsky shadertoy on background?
+11. record all activity for nice timelapses
+12. minimap for scrolling
+13. use system fonts as well
+14. show warnings about unused and other housekeeping stuff on request (special mode/overlay)
+15. quick commit: small change in two line should be committable in one-two clicks
+16. bookmarks on functions/lines with fast travel
+17. draggable shadertoy in a small 3d window in space
+18. autodocumentation at least like in vscode is a must
+19. ? operator is almost invisible when you what to find who(what line) returns error
+20. ! spaces and tabs are for compilers, not for humans to read. make meta data file over normal source code file with data about it's visual representation: models, corrdinates etc, basically serialized "level"
+
+vfx
+1. typewriter as Eric suggested
+2. letters flying/arriving from distance when typing
+3. cursor as some model
+4. animation on cursor-model when typing
+5. model/animation for autocomplete popup
+6. (done!)smooth cursor movement
+7. visualize helix mode near/at cursor (show a label, draw a model whatever)
