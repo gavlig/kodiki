@@ -1,4 +1,5 @@
 use bevy :: prelude :: *;
+use bevy :: utils :: HashMap;
 use iyes_loopless :: { prelude :: * };
 
 use crate :: game :: AppMode;
@@ -74,11 +75,19 @@ impl SurfaceBevy {
     }
 }
 
+pub type MeshesMap = HashMap<String, Handle<Mesh>>;
+
+#[derive(Default)]
+pub struct TextCache {
+    pub meshes: MeshesMap,
+}
+
 pub struct BevyHelixPlugin;
 
 impl Plugin for BevyHelixPlugin {
 	fn build(&self, app: &mut App) {
         app
+            .insert_resource(TextCache::default())
 			.add_startup_system(systems::startup.exclusive_system())
             .add_system_set(
 				ConditionSet::new()

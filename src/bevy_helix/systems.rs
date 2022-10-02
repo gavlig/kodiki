@@ -8,6 +8,7 @@ use super :: SurfaceBevy;
 use super :: CursorBevy;
 use super :: application :: Application;
 use super :: render;
+use super :: TextCache;
 
 use crate :: game :: DespawnResource;
 use crate :: game :: FontAssetHandles;
@@ -116,6 +117,8 @@ pub fn render(
 	mut	q_cursor_transform : Query<&mut Transform>,
 		app             : Option<NonSendMut<Application>>,
 		time			: Res<Time>,
+	mut ttf2_mesh_cache : ResMut<TTF2MeshCache>,
+	mut text_mesh_cache	: ResMut<TextCache>,
 	mut meshes			: ResMut<Assets<Mesh>>,
 	mut materials		: ResMut<Assets<StandardMaterial>>,
 	mut despawn         : ResMut<DespawnResource>,
@@ -155,8 +158,9 @@ pub fn render(
 			bevy_helix_entity,
 			surface_helix.as_mut(),
 			surface_bevy.as_mut(),
-			font_handle,
 			&mut font.ttf_font,
+			&mut ttf2_mesh_cache,
+			&mut text_mesh_cache.meshes,
 			&mut meshes,
 			&mut materials,
 			despawn.as_mut(),

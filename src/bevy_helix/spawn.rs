@@ -10,9 +10,6 @@ use ttf2mesh 			:: { Glyph };
 
 use super				:: { * };
 
-use mesh as spawn_mesh;
-use bevy::render::mesh::shape as render_shape;
-
 use helix_tui 			:: { buffer :: Buffer as SurfaceHelix };
 use helix_view::graphics::Color as HelixColor;
 
@@ -61,45 +58,6 @@ fn quad(
 		..default()
 	})
 	.insert(PickableMesh::default())
-	.id()
-}
-
-const DEFAULT_FONT_SIZE  : f32 = 36.;
-const DEFAULT_FONT_WIDTH : f32 = DEFAULT_FONT_SIZE * 10.;
-const DEFAULT_FONT_HEIGHT: f32 = DEFAULT_FONT_SIZE * 5.;
-const DEFAULT_FONT_DEPTH : f32 = DEFAULT_FONT_SIZE * 0.10;
-
-pub fn mesh(
-	text_in				: &String,
-	pos					: Vec3,
-	font_handle			: &Handle<TextMeshFont>,
-	font_size			: SizeUnit,
-	font_depth			: f32,
-	color				: Color,
-	commands			: &mut Commands,
-) -> Entity {
-    commands.spawn_bundle(TextMeshBundle {
-        text_mesh: TextMesh {
-            text		: text_in.clone(),
-            style		: TextMeshStyle {
-				color	: color,
-                font     : font_handle.clone(),
-                font_size : font_size,
-                ..default()
-            },
-            size: TextMeshSize {
-				depth	: Some(SizeUnit::NonStandard(DEFAULT_FONT_SIZE * font_depth)),
-				wrapping : false,
-                ..default()
-            },
-            ..default()
-        },
-        transform: Transform {
-            translation: pos,
-            ..default()
-        },
-        ..default()
-    })
 	.id()
 }
 
@@ -157,7 +115,6 @@ pub fn surface(
 	let mut y		= 0.0;
 	let mut column	= 0 as u32;
 	let mut row		= 0 as u32;
-	// let mut empty_line = false;
 	let mut column_max = 0 as u32;
 	let mut row_max = 0 as u32;
 	
@@ -176,10 +133,9 @@ pub fn surface(
 
 			// println!("[{} {}] cell {}", x_cell, y_cell, cell.symbol);
 
-			let column_offset = (column as f32) * glyph_width;
-			let x = column_offset;
-
-			let pos = local_position + Vec3::new(x, y, 0.0);
+			// let column_offset = (column as f32) * glyph_width;
+			// let x = column_offset;
+			// let pos = local_position + Vec3::new(x, y, 0.0);
 
 			// use crate :: game :: spawn :: WorldAxisDesc;
 			// use crate :: game :: spawn :: world_axis as spawn_world_axis;
@@ -231,9 +187,9 @@ pub fn surface(
 	};
 
 	commands.entity(root_entity)
-	.insert(text_descriptor.clone())
-	.insert(BevyHelix)
-	.push_children(children.as_slice());
+		.insert(text_descriptor.clone())
+		.insert(BevyHelix)
+		.push_children(children.as_slice());
 
 	(root_entity, text_descriptor)
 }
