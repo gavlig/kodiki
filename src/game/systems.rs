@@ -41,7 +41,7 @@ pub fn setup_world_system(
 	
 	let mut pos		= Vec3::new(0.0, 0.0, 0.0);
 
-	let (file_entity, text_descriptor) =
+	let file_entity =
 	bevy_helix::spawn::surface(
 		&surface_tui,
 		&mut surface_bevy,
@@ -163,6 +163,7 @@ pub fn cursor_visibility_system(
 	mut q_camera	: Query<&mut FlyCamera>,
 		app_mode	: Res<CurrentState<AppMode>>,
 	mut picking		: ResMut<PickingPluginsState>,
+	mut mouse_state	: ResMut<MouseCursorState>,
 	mut	commands	: Commands
 ) {
 	let window 		= windows.get_primary_mut();
@@ -170,7 +171,7 @@ pub fn cursor_visibility_system(
 		return;
 	}
 	let window		= window.unwrap();
-	let cursor_visible = window.cursor_visible();
+	mouse_state.visible = window.cursor_visible();
 	let window_id	= window.id();
 
 	let mut set_cursor_visibility = |v| {
@@ -191,7 +192,7 @@ pub fn cursor_visibility_system(
 	};
 
 	if key.just_pressed(KeyCode::Escape) {
-		let toggle 	= !cursor_visible;
+		let toggle 	= !mouse_state.visible;
 		set_visibility(toggle);
 	}
 
@@ -212,6 +213,7 @@ pub fn cursor_visibility_system(
 pub fn input_system(
 		btn			: Res<Input<MouseButton>>,
 		key			: Res<Input<KeyCode>>,
+		mouse_state	: Res<MouseCursorState>,
 		time		: Res<Time>,
 	mut camera_ids	: ResMut<CameraIDs>,
 	mut shadertoy_canvas : ResMut<ShadertoyCanvas>,
@@ -255,37 +257,40 @@ pub fn input_system(
 	if !q_fly_camera.is_empty() {
 		let mut camera = q_fly_camera.single_mut();
 
-		if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Space) {
-			let toggle 	= !camera.enabled_reader;
-			camera.enabled_reader = toggle;
-		}
+		// if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Space) {
+		// 	let toggle 	= !camera.enabled_reader;
+		// 	camera.enabled_reader = toggle;
+		// }
 
-		camera.enabled_reader = key.pressed(KeyCode::LAlt);
+		camera.enabled_reader = !key.pressed(KeyCode::LAlt);
+
+		camera.enabled_rotation = true;
+		camera.enabled_zoom = true;
 
 		if camera.enabled_reader {
-			camera.enabled_rotation = true;
-			camera.enabled_translation = true;
-			camera.enabled_zoom = true;
+			// if key.pressed(KeyCode::Left) {
+			// 	camera.column_dec(delta_seconds);
+			// }
 
-			if key.pressed(KeyCode::Left) {
-				camera.column_dec(delta_seconds);
-			}
+			// if key.pressed(KeyCode::Right) {
+			// 	camera.column_inc(delta_seconds);
+			// }
 
-			if key.pressed(KeyCode::Right) {
-				camera.column_inc(delta_seconds);
-			}
+			// if key.pressed(KeyCode::Up) {
+			// 	camera.row_dec(delta_seconds);
+			// }
 
-			if key.pressed(KeyCode::Up) {
-				camera.row_dec(delta_seconds);
-			}
-
-			if key.pressed(KeyCode::Down) {
-				camera.row_inc(delta_seconds);
-			}
+			// if key.pressed(KeyCode::Down) {
+			// 	camera.row_inc(delta_seconds);
+			// }
 		} else {
-			camera.enabled_rotation = false;
-			camera.enabled_translation = false;
-			camera.enabled_zoom = false;
+			// camera.enabled_rotation = true;
+			// camera.enabled_translation = true;
+			// camera.enabled_zoom = true;
+		}
+
+		if key.just_released(KeyCode::Escape) {
+			camera.enabled_translation = !mouse_state.visible; // 
 		}
 	}
 }
@@ -304,11 +309,11 @@ pub fn stats_system(
 			(0.0, 0.0)
 		};
 
-		screen_print!("row: {}({:.3}) col: {}({:.3}) zoom: {:.3} pitch: {:.3} glyph_w: {:.3} glyph_h: {:.3}",
+		screen_print!("row: {}({:.1}) col: {}({:.1}) zoom: {:.1} pitch: {:.1} glyph_w: {:.1} glyph_h: {:.1}",
 			fly_camera.row,
-			fly_camera.row_scroll_accum,
+			fly_camera.vertical_scroll,
 			fly_camera.column,
-			fly_camera.column_scroll_accum,
+			fly_camera.horizontal_scroll,
 			fly_camera.zoom,
 			fly_camera.pitch,
 			qw,

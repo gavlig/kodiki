@@ -55,6 +55,11 @@ pub enum AppMode {
 }
 
 #[derive(Default)]
+pub struct MouseCursorState {
+	pub visible : bool
+}
+
+#[derive(Default)]
 pub struct FontAssetHandles {
 	pub droid_sans_mono: Handle<TextMeshFont>,
 	pub open_dyslexic: Handle<TextMeshFont>,
@@ -104,6 +109,8 @@ impl Plugin for AppPlugin {
 				position: Vec3::new(0.0, 0.0, 0.0),
 				active: true,
 			})
+
+			.insert_resource(MouseCursorState::default())
 			
 			.add_enter_system_set(
 				AppMode::AssetsLoaded,

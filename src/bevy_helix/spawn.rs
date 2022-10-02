@@ -95,7 +95,7 @@ pub fn surface(
 	meshes			: &mut ResMut<Assets<Mesh>>,
 	materials		: &mut ResMut<Assets<StandardMaterial>>,
 	commands		: &mut Commands
-) -> (Entity, TextDescriptor)
+) -> Entity
 {
 	surface_bevy.content.resize_with(surface_helix.content.len(), || { CellBevy::default() });
 
@@ -187,9 +187,9 @@ pub fn surface(
 	};
 
 	commands.entity(root_entity)
-		.insert(text_descriptor.clone())
+		.insert(text_descriptor)
 		.insert(BevyHelix)
 		.push_children(children.as_slice());
 
-	(root_entity, text_descriptor)
+	root_entity
 }
