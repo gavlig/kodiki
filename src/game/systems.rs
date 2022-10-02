@@ -191,7 +191,7 @@ pub fn cursor_visibility_system(
 		));
 	};
 
-	if key.just_pressed(KeyCode::Escape) {
+	if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Escape) {
 		let toggle 	= !mouse_state.visible;
 		set_visibility(toggle);
 	}
@@ -226,7 +226,7 @@ pub fn input_system(
 ) {
 	let delta_seconds = time.delta_seconds();
 
-	if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Escape) {
+	if key.pressed(KeyCode::LControl) && key.pressed(KeyCode::LAlt) && key.just_pressed(KeyCode::Escape) {
 		exit.send(AppExit);
 	}
 
