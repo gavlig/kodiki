@@ -9,6 +9,7 @@ mod render;
 pub mod application;
 pub use application :: *;
 mod compositor;
+mod editor;
 mod systems;
 
 #[derive(Component)]

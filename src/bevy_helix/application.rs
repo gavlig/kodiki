@@ -30,6 +30,7 @@ use {
 type Signals = futures_util::stream::Empty<()>;
 
 use super :: compositor :: CompositorBevy;
+use super :: editor;
 
 const LSP_DEADLINE: Duration = Duration::from_millis(16);
 
@@ -123,7 +124,7 @@ impl Application {
 			&config.keys
 		}));
 
-		let editor_view = Box::new(helix_term::ui::EditorView::new(Keymaps::new(keys)));
+		let editor_view = Box::new(editor::EditorViewBevy::new(Keymaps::new(keys)));
 		compositor.push(editor_view);
 
 		if args.load_tutor {
