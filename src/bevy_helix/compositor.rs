@@ -1,11 +1,11 @@
+use bevy_debug_text_overlay::screen_print;
+
 use helix_core :: Position;
 use helix_view :: graphics :: { CursorKind, Rect };
 
 use helix_tui :: buffer :: Buffer as Surface;
 
-use helix_term :: compositor :: { Compositor, Component, Context, EventResult, Callback };
-
-// pub type Callback = Box<dyn FnOnce(&mut dyn Compositor, &mut Context)>;
+use helix_term :: compositor :: { Compositor, Component, Context, EventResult, Callback, SurfacesMap };
 
 // Cursive-inspired
 use helix_term::job::Jobs;
@@ -115,6 +115,7 @@ impl Compositor for CompositorBevy {
 		let surface = surface.unwrap();
 		let area = *surface.area();
 
+		screen_print!("layers: {}", self.layers.len());
 		for layer in &mut self.layers {
 		    layer.render(area, surface, cx);
 		}
@@ -123,6 +124,12 @@ impl Compositor for CompositorBevy {
 		// let pos = pos.map(|pos| (pos.col as u16, pos.row as u16));
 
 		// self.terminal.draw(pos, kind).unwrap();
+	}
+
+	fn render_ext(&mut self, area: Rect, surfaces: &mut SurfacesMap, cx: &mut Context) {
+		for layer in &mut self.layers {
+		    layer.render_ext(area, surfaces, cx);
+		}
 	}
 
 	fn cursor(&self, area: Rect, editor: &Editor) -> (Option<Position>, CursorKind) {

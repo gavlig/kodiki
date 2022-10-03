@@ -22,12 +22,13 @@ TEXT EDITOR
 6. dim shadertoy on background
 7. add missing curly bracket keycodes to bevy
 8. adjustable cursor size
+9. keep EditorView inside EditorViewBevy to avoid major code duplication
 
 HELIX DECOMPOSITION
 1. render all file instead of viewport
 1.1. (done!)render huge viewport vertically
 2. make viewport optional
-3. render every layer into separate surface for starters, we can render them into separate objects
+3. pass vec of surfaces to render pipeline
 
 HELIX
 1. make runtime autodetected. highlighting should work just from cargo run -r

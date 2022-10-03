@@ -3,6 +3,8 @@ use bevy :: input :: *;
 use bevy :: input :: keyboard :: *;
 use bevy_text_mesh :: prelude :: * ;
 
+use bevy_debug_text_overlay :: screen_print;
+
 use super :: BevyHelix;
 use super :: SurfaceBevy;
 use super :: CursorBevy;
@@ -15,6 +17,7 @@ use crate :: game :: FontAssetHandles;
 
 use helix_term  :: config :: Config;
 use helix_term  :: args :: Args;
+use helix_term	:: compositor :: SurfacesMap as SurfacesMapHelix;
 use helix_tui   :: buffer :: Buffer as SurfaceHelix;
 use helix_view  :: graphics :: *;
 use helix_view  :: keyboard :: KeyCode as KeyCodeHelix;
@@ -57,8 +60,8 @@ pub fn startup(
 	let rect = Rect {
 		x : 0,
 		y : 0,
-		width : 160,
-		height : 40,
+		width : 100,
+		height : 400,
 	};
 
 	let surface = SurfaceHelix::empty(rect);
@@ -66,9 +69,6 @@ pub fn startup(
 
 	let surface_bevy = SurfaceBevy::empty(rect);
 	world.insert_resource(surface_bevy);
-
-	let cursor_bevy = CursorBevy::default();
-	world.insert_resource(cursor_bevy);
 
 	let app = startup_impl();
 	world.insert_non_send_resource(app.unwrap());
@@ -110,6 +110,7 @@ async fn startup_impl() -> Result<Application, Error> {
 pub fn render(
 	mut surface_helix   : ResMut<SurfaceHelix>,
 	mut surface_bevy    : ResMut<SurfaceBevy>,
+	mut surfaces_helix	: ResMut<SurfacesMapHelix>,
 	mut fonts           : ResMut<Assets<TextMeshFont>>,
 		font_handles    : Res<FontAssetHandles>,
 		q_bevy_helix    : Query<Entity, With<BevyHelix>>,
@@ -147,7 +148,9 @@ pub fn render(
 	}
 
 	// first let helix render into surface_helix
-	app.render(surface_helix.as_mut());
+	app.render_ext(surface_helix.area, surfaces_helix.as_mut());
+
+	screen_print!("surfaces rendered: {}", surfaces_helix.len());
 
 	let font_handle = &font_handles.share_tech;
 	let font		= fonts.get_mut(font_handle).unwrap();

@@ -1,5 +1,5 @@
 use helix_term::commands;
-use helix_term::compositor::{Component, Context, Event, EventResult};
+use helix_term::compositor::{Component, Context, Event, EventResult, SurfacesMap};
 use helix_term::{job, key};
 use helix_term::keymap::{KeymapResult, Keymaps};
 use helix_term::ui::{Completion, ProgressSpinners};
@@ -153,28 +153,28 @@ impl EditorViewBevy {
         }
 
         // if we're not at the edge of the screen, draw a right border
-        if viewport.right() != view.area.right() {
-            let x = area.right();
-            let border_style = theme.get("ui.window");
-            for y in area.top()..area.bottom() {
-                surface[(x, y)]
-                    .set_symbol(helix_tui::symbols::line::VERTICAL)
-                    //.set_symbol(" ")
-                    .set_style(border_style);
-            }
-        }
+        // if viewport.right() != view.area.right() {
+        //     let x = area.right();
+        //     let border_style = theme.get("ui.window");
+        //     for y in area.top()..area.bottom() {
+        //         surface[(x, y)]
+        //             .set_symbol(helix_tui::symbols::line::VERTICAL)
+        //             //.set_symbol(" ")
+        //             .set_style(border_style);
+        //     }
+        // }
 
-        self.render_diagnostics(doc, view, inner, surface, theme);
+        // self.render_diagnostics(doc, view, inner, surface, theme);
 
-        let statusline_area = view
-            .area
-            .clip_top(view.area.height.saturating_sub(1))
-            .clip_bottom(1); // -1 from bottom to remove commandline
+        // let statusline_area = view
+        //     .area
+        //     .clip_top(view.area.height.saturating_sub(1))
+        //     .clip_bottom(1); // -1 from bottom to remove commandline
 
-        let mut context =
-            statusline::RenderContext::new(editor, doc, view, is_focused, &self.spinners);
+        // let mut context =
+        //     statusline::RenderContext::new(editor, doc, view, is_focused, &self.spinners);
 
-        statusline::render(&mut context, statusline_area, surface);
+        // statusline::render(&mut context, statusline_area, surface);
     }
 
     pub fn render_rulers(
@@ -1357,95 +1357,130 @@ impl Component for EditorViewBevy {
         };
 
         // -1 for commandline and -1 for bufferline
-        let mut editor_area = area.clip_bottom(1);
-        if use_bufferline {
-            editor_area = editor_area.clip_top(1);
-        }
+        // let mut editor_area = area.clip_bottom(1);
+        // if use_bufferline {
+        //     editor_area = editor_area.clip_top(1);
+        // }
 
 		let editor_area = area;
 
         // if the terminal size suddenly changed, we need to trigger a resize
         cx.editor.resize(editor_area);
 
-        if use_bufferline {
-            Self::render_bufferline(cx.editor, area.with_height(1), surface);
-        }
+        // if use_bufferline {
+        //     Self::render_bufferline(cx.editor, area.with_height(1), surface);
+        // }
 
         for (view, is_focused) in cx.editor.tree.views() {
             let doc = cx.editor.document(view.doc).unwrap();
             self.render_view(cx.editor, doc, view, area, surface, is_focused);
         }
 
-        if config.auto_info {
-            if let Some(mut info) = cx.editor.autoinfo.take() {
-                info.render(area, surface, cx);
-                cx.editor.autoinfo = Some(info)
-            }
-        }
+        // if config.auto_info {
+        //     if let Some(mut info) = cx.editor.autoinfo.take() {
+        //         info.render(area, surface, cx);
+        //         cx.editor.autoinfo = Some(info)
+        //     }
+        // }
 
-        let key_width = 15u16; // for showing pending keys
-        let mut status_msg_width = 0;
+        // let key_width = 15u16; // for showing pending keys
+        // let mut status_msg_width = 0;
 
-        // render status msg
-        if let Some((status_msg, severity)) = &cx.editor.status_msg {
-            status_msg_width = status_msg.width();
-            use helix_view::editor::Severity;
-            let style = if *severity == Severity::Error {
-                cx.editor.theme.get("error")
-            } else {
-                cx.editor.theme.get("ui.text")
-            };
+        // // render status msg
+        // if let Some((status_msg, severity)) = &cx.editor.status_msg {
+        //     status_msg_width = status_msg.width();
+        //     use helix_view::editor::Severity;
+        //     let style = if *severity == Severity::Error {
+        //         cx.editor.theme.get("error")
+        //     } else {
+        //         cx.editor.theme.get("ui.text")
+        //     };
 
-            surface.set_string(
-                area.x,
-                area.y + area.height.saturating_sub(1),
-                status_msg,
-                style,
-            );
-        }
+        //     surface.set_string(
+        //         area.x,
+        //         area.y + area.height.saturating_sub(1),
+        //         status_msg,
+        //         style,
+        //     );
+        // }
 
-        if area.width.saturating_sub(status_msg_width as u16) > key_width {
-            let mut disp = String::new();
-            if let Some(count) = cx.editor.count {
-                disp.push_str(&count.to_string())
-            }
-            for key in self.keymaps.pending() {
-                disp.push_str(&key.key_sequence_format());
-            }
-            if let Some(pseudo_pending) = &cx.editor.pseudo_pending {
-                disp.push_str(pseudo_pending.as_str())
-            }
-            let style = cx.editor.theme.get("ui.text");
-            let macro_width = if cx.editor.macro_recording.is_some() {
-                3
-            } else {
-                0
-            };
-            surface.set_string(
-                area.x + area.width.saturating_sub(key_width + macro_width),
-                area.y + area.height.saturating_sub(1),
-                disp.get(disp.len().saturating_sub(key_width as usize)..)
-                    .unwrap_or(&disp),
-                style,
-            );
-            if let Some((reg, _)) = cx.editor.macro_recording {
-                let disp = format!("[{}]", reg);
-                let style = style
-                    .fg(helix_view::graphics::Color::Yellow)
-                    .add_modifier(Modifier::BOLD);
-                surface.set_string(
-                    area.x + area.width.saturating_sub(3),
-                    area.y + area.height.saturating_sub(1),
-                    &disp,
-                    style,
-                );
-            }
-        }
+        // if area.width.saturating_sub(status_msg_width as u16) > key_width {
+        //     let mut disp = String::new();
+        //     if let Some(count) = cx.editor.count {
+        //         disp.push_str(&count.to_string())
+        //     }
+        //     for key in self.keymaps.pending() {
+        //         disp.push_str(&key.key_sequence_format());
+        //     }
+        //     if let Some(pseudo_pending) = &cx.editor.pseudo_pending {
+        //         disp.push_str(pseudo_pending.as_str())
+        //     }
+        //     let style = cx.editor.theme.get("ui.text");
+        //     let macro_width = if cx.editor.macro_recording.is_some() {
+        //         3
+        //     } else {
+        //         0
+        //     };
+        //     surface.set_string(
+        //         area.x + area.width.saturating_sub(key_width + macro_width),
+        //         area.y + area.height.saturating_sub(1),
+        //         disp.get(disp.len().saturating_sub(key_width as usize)..)
+        //             .unwrap_or(&disp),
+        //         style,
+        //     );
+        //     if let Some((reg, _)) = cx.editor.macro_recording {
+        //         let disp = format!("[{}]", reg);
+        //         let style = style
+        //             .fg(helix_view::graphics::Color::Yellow)
+        //             .add_modifier(Modifier::BOLD);
+        //         surface.set_string(
+        //             area.x + area.width.saturating_sub(3),
+        //             area.y + area.height.saturating_sub(1),
+        //             &disp,
+        //             style,
+        //         );
+        //     }
+        // }
 
-        if let Some(completion) = self.completion.as_mut() {
-            completion.render(area, surface, cx);
-        }
+        // if let Some(completion) = self.completion.as_mut() {
+        //     completion.render(area, surface, cx);
+        // }
     }
+
+	fn render_ext(&mut self, area: Rect, surfaces: &mut SurfacesMap, cx: &mut Context) {
+		let ID = String::from("editor-component");
+
+		let surface = match surfaces.get_mut(&ID) {
+			Some(surface) => surface,
+        	None => {
+				let new_surface = Surface::empty(area);
+				surfaces.insert(ID.clone(), new_surface);
+				surfaces.get_mut(&ID).unwrap()
+			}
+		};
+
+		// clear with background color
+        surface.set_style(area, cx.editor.theme.get("ui.background"));
+        let config = cx.editor.config();
+
+        // check if bufferline should be rendered
+        use helix_view::editor::BufferLine;
+        let use_bufferline = match config.bufferline {
+            BufferLine::Always => true,
+            BufferLine::Multiple if cx.editor.documents.len() > 1 => true,
+            _ => false,
+        };
+
+		let editor_area = area;
+
+        // if the terminal size suddenly changed, we need to trigger a resize
+        cx.editor.resize(editor_area);
+
+        for (view, is_focused) in cx.editor.tree.views() {
+            let doc = cx.editor.document(view.doc).unwrap();
+            self.render_view(cx.editor, doc, view, area, surface, is_focused);
+        }
+	}
 
     fn cursor(&self, _area: Rect, editor: &Editor) -> (Option<Position>, CursorKind) {
         match editor.cursor() {

@@ -2,6 +2,8 @@ use bevy :: prelude :: *;
 use bevy :: utils :: HashMap;
 use iyes_loopless :: { prelude :: * };
 
+use helix_term :: compositor :: SurfacesMap as SurfacesMapHelix;
+
 use crate :: game :: AppMode;
 
 pub mod spawn;
@@ -88,7 +90,10 @@ pub struct BevyHelixPlugin;
 impl Plugin for BevyHelixPlugin {
 	fn build(&self, app: &mut App) {
         app
+            .insert_resource(CursorBevy::default())
             .insert_resource(TextCache::default())
+            .insert_resource(SurfacesMapHelix::default())
+
 			.add_startup_system(systems::startup.exclusive_system())
             .add_system_set(
 				ConditionSet::new()

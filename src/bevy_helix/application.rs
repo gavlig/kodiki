@@ -1,5 +1,7 @@
 use bevy            :: { prelude :: * };
 
+use bevy_debug_text_overlay::screen_print;
+
 use arc_swap        :: { access::Map, ArcSwap };
 use futures_util    :: { Stream };
 use helix_core      :: {
@@ -8,8 +10,8 @@ use helix_core      :: {
 	pos_at_coords, syntax, Selection,
 };
 use helix_lsp       :: { lsp, util :: lsp_pos_to_pos, LspProgressMap };
-use helix_view      :: { align_view, editor :: ConfigEvent, theme, tree :: Layout, Align, Editor };
-use helix_term      :: { config::Config, job :: Jobs, args::Args, keymap::Keymaps, compositor::Compositor };
+use helix_view      :: { align_view, editor :: ConfigEvent, theme, tree :: Layout, Align, Editor, graphics :: Rect };
+use helix_term      :: { config::Config, job :: Jobs, args::Args, keymap::Keymaps, compositor::Compositor, compositor::SurfacesMap };
 use helix_tui 		:: { buffer :: Buffer as Surface };
 use serde_json      :: { json };
 
@@ -111,6 +113,7 @@ impl Application {
 
 		let mut compositor = CompositorBevy::new().context("build compositor")?;
 		let config = Arc::new(ArcSwap::from_pointee(config));
+
 		let mut editor = Editor::new(
 			helix_view::graphics::Rect::default(),
 			theme_loader.clone(),
@@ -233,6 +236,125 @@ impl Application {
 
 		compositor.render(Some(surface), &mut cx);
 	}
+
+	pub fn render_ext(&mut self, area: Rect, surfaces: &mut SurfacesMap) {
+		let compositor = &mut self.compositor;
+
+		let mut cx = helix_term::compositor::Context {
+		     editor: &mut self.editor,
+		     jobs: &mut self.jobs,
+		     scroll: None,
+		};
+
+		compositor.render_ext(area, surfaces, &mut cx);
+	}
+
+	// pub fn render_editor(&mut self, surface: &mut Surface) {
+	// 	let mut cx = helix_term::compositor::Context {
+    //         editor: &mut self.editor,
+    //         jobs: &mut self.jobs,
+    //         scroll: None,
+    //     };
+
+	// 	let area = surface.area;
+
+	// 	// clear with background color
+	// 	surface.set_style(area, cx.editor.theme.get("ui.background"));
+	// 	let config = cx.editor.config();
+
+	// 	// check if bufferline should be rendered
+	// 	use helix_view::editor::BufferLine;
+	// 	let use_bufferline = match config.bufferline {
+	// 		BufferLine::Always => true,
+	// 		BufferLine::Multiple if cx.editor.documents.len() > 1 => true,
+	// 		_ => false,
+	// 	};
+
+	// 	// -1 for commandline and -1 for bufferline
+	// 	let mut editor_area = area.clip_bottom(1);
+	// 	if use_bufferline {
+	// 		editor_area = editor_area.clip_top(1);
+	// 	}
+
+	// 	// if use_bufferline {
+	// 	// 	Self::render_bufferline(cx.editor, area.with_height(1), surface);
+	// 	// }
+
+	// 	for (view, is_focused) in cx.editor.tree.views() {
+	// 		let doc = cx.editor.document(view.doc).unwrap();
+	// 		self.render_view(cx.editor, doc, view, area, surface, is_focused);
+	// 	}
+
+	// 	// if config.auto_info {
+	// 	// 	if let Some(mut info) = cx.editor.autoinfo.take() {
+	// 	// 		info.render(area, surface, cx);
+	// 	// 		cx.editor.autoinfo = Some(info)
+	// 	// 	}
+	// 	// }
+
+	// 	let key_width = 15u16; // for showing pending keys
+	// 	let mut status_msg_width = 0;
+
+	// 	// render status msg
+	// 	// if let Some((status_msg, severity)) = &cx.editor.status_msg {
+	// 	// 	status_msg_width = status_msg.width();
+	// 	// 	use helix_view::editor::Severity;
+	// 	// 	let style = if *severity == Severity::Error {
+	// 	// 		cx.editor.theme.get("error")
+	// 	// 	} else {
+	// 	// 		cx.editor.theme.get("ui.text")
+	// 	// 	};
+
+	// 	// 	surface.set_string(
+	// 	// 		area.x,
+	// 	// 		area.y + area.height.saturating_sub(1),
+	// 	// 		status_msg,
+	// 	// 		style,
+	// 	// 	);
+	// 	// }
+
+	// 	// if area.width.saturating_sub(status_msg_width as u16) > key_width {
+	// 	// 	let mut disp = String::new();
+	// 	// 	if let Some(count) = cx.editor.count {
+	// 	// 		disp.push_str(&count.to_string())
+	// 	// 	}
+	// 	// 	for key in self.keymaps.pending() {
+	// 	// 		disp.push_str(&key.key_sequence_format());
+	// 	// 	}
+	// 	// 	if let Some(pseudo_pending) = &cx.editor.pseudo_pending {
+	// 	// 		disp.push_str(pseudo_pending.as_str())
+	// 	// 	}
+	// 	// 	let style = cx.editor.theme.get("ui.text");
+	// 	// 	let macro_width = if cx.editor.macro_recording.is_some() {
+	// 	// 		3
+	// 	// 	} else {
+	// 	// 		0
+	// 	// 	};
+	// 	// 	surface.set_string(
+	// 	// 		area.x + area.width.saturating_sub(key_width + macro_width),
+	// 	// 		area.y + area.height.saturating_sub(1),
+	// 	// 		disp.get(disp.len().saturating_sub(key_width as usize)..)
+	// 	// 			.unwrap_or(&disp),
+	// 	// 		style,
+	// 	// 	);
+	// 	// 	if let Some((reg, _)) = cx.editor.macro_recording {
+	// 	// 		let disp = format!("[{}]", reg);
+	// 	// 		let style = style
+	// 	// 			.fg(helix_view::graphics::Color::Yellow)
+	// 	// 			.add_modifier(Modifier::BOLD);
+	// 	// 		surface.set_string(
+	// 	// 			area.x + area.width.saturating_sub(3),
+	// 	// 			area.y + area.height.saturating_sub(1),
+	// 	// 			&disp,
+	// 	// 			style,
+	// 	// 		);
+	// 	// 	}
+	// 	// }
+
+	// 	// if let Some(completion) = self.completion.as_mut() {
+	// 	// 	completion.render(area, surface, cx);
+	// 	// }
+	// }
 
 	pub fn handle_event(&mut self, event : &helix_view::input::Event) {
 		let mut cx = helix_term::compositor::Context {
