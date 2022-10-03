@@ -36,7 +36,7 @@ fn main() {
 		.add_plugin(FlyCameraPlugin)
 		.add_plugin(TextMeshPlugin)
 		.add_plugin(ShadertoyPlugin)
-		.add_plugin(OverlayPlugin { font_size: 32.0, fallback_color: Color::rgb(0.8, 0.8, 0.8), ..default() })
+		.add_plugin(OverlayPlugin { font_size: 16.0, fallback_color: Color::rgb(0.8, 0.8, 0.8), ..default() })
 
 		// .add_plugin(InfiniteGridPlugin)
 
