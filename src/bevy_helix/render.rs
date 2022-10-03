@@ -408,7 +408,6 @@ pub fn cursor(
 
 	// spawn background quad for cursor
 	if cursor.entity == None && cell_bevy.bg_handle.is_some() {
-
 		let quad_width		= glyph_width;
 		let quad_height		= (ybounds[1] - ybounds[0]) * font_size_scalar * 1.7; // ybounds contain offset for letter 'y'
 		let quad_pos		= Vec3::new(0., 0., -0.25 / 72.);

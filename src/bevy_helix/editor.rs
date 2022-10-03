@@ -54,6 +54,9 @@ impl Default for EditorViewBevy {
 }
 
 impl EditorViewBevy {
+    pub const ID: &'static str = "editor-component";
+    pub const ID_statusline: &'static str = "statusline-component";
+
     pub fn new(keymaps: Keymaps) -> Self {
         Self {
             keymaps,
@@ -74,9 +77,22 @@ impl EditorViewBevy {
         doc: &Document,
         view: &View,
         viewport: Rect,
-        surface: &mut Surface,
+        surfaces: &mut SurfacesMap,
         is_focused: bool,
     ) {
+        let surface_editor = match surfaces.get_mut(&String::from(EditorViewBevy::ID)) {
+			Some(surface) => surface,
+        	None => {
+				let new_surface = Surface::empty(viewport);
+                let component_name = String::from(EditorViewBevy::ID);
+				surfaces.insert(component_name.clone(), new_surface);
+				surfaces.get_mut(&component_name).unwrap()
+			}
+		};
+
+		// clear with background color
+        surface_editor.set_style(viewport, editor.theme.get("ui.background"));
+
         let inner = view.inner_area();
         let area = view.area;
         let theme = &editor.theme;
@@ -102,7 +118,7 @@ impl EditorViewBevy {
             {
                 let line = frame.line - 1; // convert to 0-indexing
                 if line >= view.offset.row && line < view.offset.row + area.height as usize {
-                    surface.set_style(
+                    surface_editor.set_style(
                         Rect::new(
                             area.x,
                             area.y + (line - view.offset.row) as u16,
@@ -116,7 +132,7 @@ impl EditorViewBevy {
         }
 
         if is_focused && editor.config().cursorline {
-            Self::highlight_cursorline(doc, view, surface, theme);
+            Self::highlight_cursorline(doc, view, surface_editor, theme);
         }
 
         let highlights = Self::doc_syntax_highlights(doc, view.offset, inner.height, theme);
@@ -140,16 +156,16 @@ impl EditorViewBevy {
             doc,
             view.offset,
             inner,
-            surface,
+            surface_editor,
             theme,
             highlights,
             &editor.config(),
         );
-        Self::render_gutter(editor, doc, view, view.area, surface, theme, is_focused);
-        Self::render_rulers(editor, doc, view, inner, surface, theme);
+        Self::render_gutter(editor, doc, view, view.area, surface_editor, theme, is_focused);
+        Self::render_rulers(editor, doc, view, inner, surface_editor, theme);
 
         if is_focused {
-            Self::render_focused_view_elements(view, doc, inner, theme, surface);
+            Self::render_focused_view_elements(view, doc, inner, theme, surface_editor);
         }
 
         // if we're not at the edge of the screen, draw a right border
@@ -166,15 +182,22 @@ impl EditorViewBevy {
 
         // self.render_diagnostics(doc, view, inner, surface, theme);
 
-        // let statusline_area = view
-        //     .area
-        //     .clip_top(view.area.height.saturating_sub(1))
-        //     .clip_bottom(1); // -1 from bottom to remove commandline
+        let statusline_area = Rect::new(0, 0, area.width, 3);
 
-        // let mut context =
-        //     statusline::RenderContext::new(editor, doc, view, is_focused, &self.spinners);
+        let mut context =
+            statusline::RenderContext::new(editor, doc, view, is_focused, &self.spinners);
 
-        // statusline::render(&mut context, statusline_area, surface);
+        let statusline_name = String::from(EditorViewBevy::ID_statusline);
+        let statusline_surface = match surfaces.get_mut(&statusline_name) {
+			Some(surface) => surface,
+        	None => {
+				let new_surface = Surface::empty(statusline_area);
+				surfaces.insert(statusline_name.clone(), new_surface);
+				surfaces.get_mut(&statusline_name).unwrap()
+			}
+		};
+
+        statusline::render(&mut context, statusline_area, statusline_surface);
     }
 
     pub fn render_rulers(
@@ -1027,10 +1050,6 @@ impl EditorViewBevy {
 
         EventResult::Consumed(None)
     }
-}
-
-impl EditorViewBevy {
-    pub const ID: &'static str = "editor-component";
 
     fn handle_mouse_event(
         &mut self,
@@ -1373,10 +1392,10 @@ impl Component for EditorViewBevy {
         //     Self::render_bufferline(cx.editor, area.with_height(1), surface);
         // }
 
-        for (view, is_focused) in cx.editor.tree.views() {
-            let doc = cx.editor.document(view.doc).unwrap();
-            self.render_view(cx.editor, doc, view, area, surface, is_focused);
-        }
+        // for (view, is_focused) in cx.editor.tree.views() {
+        //     let doc = cx.editor.document(view.doc).unwrap();
+        //     self.render_view(cx.editor, doc, view, area, surface, is_focused);
+        // }
 
         // if config.auto_info {
         //     if let Some(mut info) = cx.editor.autoinfo.take() {
@@ -1450,18 +1469,6 @@ impl Component for EditorViewBevy {
     }
 
 	fn render_ext(&mut self, area: Rect, surfaces: &mut SurfacesMap, cx: &mut Context) {
-		let surface = match surfaces.get_mut(&String::from(EditorViewBevy::ID)) {
-			Some(surface) => surface,
-        	None => {
-				let new_surface = Surface::empty(area);
-                let component_name = String::from(EditorViewBevy::ID);
-				surfaces.insert(component_name.clone(), new_surface);
-				surfaces.get_mut(&component_name).unwrap()
-			}
-		};
-
-		// clear with background color
-        surface.set_style(area, cx.editor.theme.get("ui.background"));
         let config = cx.editor.config();
 
         // check if bufferline should be rendered
@@ -1472,14 +1479,22 @@ impl Component for EditorViewBevy {
             _ => false,
         };
 
-		let editor_area = area;
+        // -1 for commandline and -1 for bufferline
+        let mut editor_area = area.clip_bottom(1);
+        if use_bufferline {
+            editor_area = editor_area.clip_top(1);
+        }
 
         // if the terminal size suddenly changed, we need to trigger a resize
         cx.editor.resize(editor_area);
 
+        // if use_bufferline {
+            // Self::render_bufferline(cx.editor, area.with_height(1), surface);
+        // }
+
         for (view, is_focused) in cx.editor.tree.views() {
             let doc = cx.editor.document(view.doc).unwrap();
-            self.render_view(cx.editor, doc, view, area, surface, is_focused);
+            self.render_view(cx.editor, doc, view, area, surfaces, is_focused);
         }
 	}
 

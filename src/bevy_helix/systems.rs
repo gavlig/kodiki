@@ -66,7 +66,7 @@ pub fn startup(
 		x : 0,
 		y : 0,
 		width : 100,
-		height : 400,
+		height : 40,
 	};
 
 	let surface_editor = SurfaceHelix::empty(rect);
@@ -75,12 +75,12 @@ pub fn startup(
 	world.insert_resource(surfaces_helix);
 	world.insert_resource(surfaces_bevy);
 
-	let app = startup_impl();
+	let app = startup_impl(rect);
 	world.insert_non_send_resource(app.unwrap());
 }
 
 #[tokio::main]
-async fn startup_impl() -> Result<Application, Error> {
+async fn startup_impl(area: Rect) -> Result<Application, Error> {
 	let args = Args::parse_args().context("could not parse arguments").unwrap();
 
 	// let logpath = args.log_file.as_ref().cloned().unwrap_or(helix_loader::log_file());
@@ -107,7 +107,7 @@ async fn startup_impl() -> Result<Application, Error> {
 		Err(err) => { eprintln!("Error while loading config from {}: {}", helix_loader::config_file().display(), err); return Err(anyhow::anyhow!("!!!")); }
 	};
 
-	let app = Application::new(args, config).context("unable to create new application");
+	let app = Application::new(args, config, area).context("unable to create new application");
 
 	app
 }
@@ -117,7 +117,6 @@ pub fn render(
 	mut surfaces_bevy	: ResMut<SurfacesMapBevy>,
 	mut fonts           : ResMut<Assets<TextMeshFont>>,
 		font_handles    : Res<FontAssetHandles>,
-		q_bevy_helix    : Query<Entity, With<BevyHelix>>,
 	mut	cursor          : ResMut<CursorBevy>,
 	mut	q_cursor_transform : Query<&mut Transform>,
 		app             : Option<NonSendMut<Application>>,
@@ -135,14 +134,22 @@ pub fn render(
 
 	let mut app = app.unwrap();
 
+	let editor_area = app.area;
+
 	// erase previous frame
-	for (name, surface) in surfaces_helix.iter_mut() {
+	for (_name, surface) in surfaces_helix.iter_mut() {
 		surface.reset();
 	}
 
-	let mut surface_helix_editor = surfaces_helix.get_mut(&String::from(EditorViewBevy::ID)).unwrap();
+	// first let helix render into surface_helix
+	// app.render(surface_helix.as_mut());
 
-	let (cursor_pos, cursor_kind) = app.cursor(surface_helix_editor.area);
+	// first let helix render into surface_helix
+	app.render_ext(editor_area, surfaces_helix.as_mut());
+
+	let surface_helix_editor = surfaces_helix.get(&String::from(EditorViewBevy::ID)).unwrap();
+
+	let (cursor_pos, cursor_kind) = app.cursor(editor_area);
 	if let Some(cursor_pos) = cursor_pos {
 		// cursor position changed so we reset easing timer
 		if cursor.x != cursor_pos.0
@@ -156,12 +163,6 @@ pub fn render(
 		cursor.kind = cursor_kind;
 	}
 
-	// first let helix render into surface_helix
-	// app.render(surface_helix.as_mut());
-
-	// first let helix render into surface_helix
-	app.render_ext(surface_helix_editor.area, surfaces_helix.as_mut());
-
 	screen_print!("surfaces rendered: {}", surfaces_helix.len());
 
 	let font_handle = &font_handles.share_tech;
@@ -169,6 +170,7 @@ pub fn render(
 
 	let mut pos		= Vec3::new(0.0, 0.0, 1.0);
 
+	// create bevy surfaces for every helix surface
 	for (layer_name, surface_helix) in surfaces_helix.iter() {
 		if surfaces_bevy.contains_key(layer_name) {
 			continue;
@@ -190,7 +192,7 @@ pub fn render(
 	}
 
 	for (layer_name, surface_helix) in surfaces_helix.iter() {
-		let mut surface_bevy = surfaces_bevy.get_mut(layer_name).unwrap();
+		let surface_bevy = surfaces_bevy.get_mut(layer_name).unwrap();
 
 		render::surface(
 			surface_helix,
@@ -203,10 +205,13 @@ pub fn render(
 			despawn.as_mut(),
 			&mut commands
 		);
+	}
 
+	{
+		let surface_bevy_editor = surfaces_bevy.get(&String::from(EditorViewBevy::ID)).unwrap();
 		render::cursor(
-			surface_helix,
-			surface_bevy,
+			surface_helix_editor,
+			surface_bevy_editor,
 			&mut font.ttf_font,
 			cursor.as_mut(),
 			&mut q_cursor_transform,

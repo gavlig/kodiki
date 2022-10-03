@@ -39,6 +39,7 @@ const LSP_DEADLINE: Duration = Duration::from_millis(16);
 pub struct Application {
 	compositor	: CompositorBevy,
 	pub editor	: Editor,
+	pub area	: Rect,
 
 	config		: Arc<ArcSwap<Config>>,
 
@@ -74,7 +75,7 @@ fn setup_integration_logging() {
 }
 
 impl Application {
-	pub fn new(args: Args, config: Config) -> Result<Self, Error> {
+	pub fn new(args: Args, config: Config, area: Rect) -> Result<Self, Error> {
 		// #[cfg(feature = "integration")]
 		// setup_integration_logging();
 
@@ -210,6 +211,7 @@ impl Application {
 		let app = Self {
 			compositor,
 			editor,
+			area,
 
 			config,
 
