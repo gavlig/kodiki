@@ -7,10 +7,12 @@ use bevy_debug_text_overlay :: screen_print;
 
 use super :: BevyHelix;
 use super :: SurfaceBevy;
+use super :: SurfacesMapBevy;
 use super :: CursorBevy;
+use super :: TextCache;
 use super :: application :: Application;
 use super :: render;
-use super :: TextCache;
+use super :: editor :: EditorViewBevy;
 
 use crate :: game :: DespawnResource;
 use crate :: game :: FontAssetHandles;
@@ -57,6 +59,9 @@ fn setup_logging(logpath: PathBuf, verbosity: u64) -> Result<()> {
 pub fn startup(
 	world: &mut World
 ) {
+	let mut surfaces_helix = SurfacesMapHelix::default();
+	let 	surfaces_bevy = SurfacesMapBevy::default();
+	
 	let rect = Rect {
 		x : 0,
 		y : 0,
@@ -64,11 +69,11 @@ pub fn startup(
 		height : 400,
 	};
 
-	let surface = SurfaceHelix::empty(rect);
-	world.insert_resource(surface);
+	let surface_editor = SurfaceHelix::empty(rect);
+	surfaces_helix.insert(String::from(EditorViewBevy::ID), surface_editor);
 
-	let surface_bevy = SurfaceBevy::empty(rect);
-	world.insert_resource(surface_bevy);
+	world.insert_resource(surfaces_helix);
+	world.insert_resource(surfaces_bevy);
 
 	let app = startup_impl();
 	world.insert_non_send_resource(app.unwrap());
@@ -108,9 +113,8 @@ async fn startup_impl() -> Result<Application, Error> {
 }
 
 pub fn render(
-	mut surface_helix   : ResMut<SurfaceHelix>,
-	mut surface_bevy    : ResMut<SurfaceBevy>,
 	mut surfaces_helix	: ResMut<SurfacesMapHelix>,
+	mut surfaces_bevy	: ResMut<SurfacesMapBevy>,
 	mut fonts           : ResMut<Assets<TextMeshFont>>,
 		font_handles    : Res<FontAssetHandles>,
 		q_bevy_helix    : Query<Entity, With<BevyHelix>>,
@@ -128,12 +132,17 @@ pub fn render(
 	if app.is_none() {
 		return;
 	}
+
 	let mut app = app.unwrap();
 
 	// erase previous frame
-	surface_helix.reset();
+	for (name, surface) in surfaces_helix.iter_mut() {
+		surface.reset();
+	}
 
-	let (cursor_pos, cursor_kind) = app.cursor(surface_helix.area);
+	let mut surface_helix_editor = surfaces_helix.get_mut(&String::from(EditorViewBevy::ID)).unwrap();
+
+	let (cursor_pos, cursor_kind) = app.cursor(surface_helix_editor.area);
 	if let Some(cursor_pos) = cursor_pos {
 		// cursor position changed so we reset easing timer
 		if cursor.x != cursor_pos.0
@@ -148,19 +157,44 @@ pub fn render(
 	}
 
 	// first let helix render into surface_helix
-	app.render_ext(surface_helix.area, surfaces_helix.as_mut());
+	// app.render(surface_helix.as_mut());
+
+	// first let helix render into surface_helix
+	app.render_ext(surface_helix_editor.area, surfaces_helix.as_mut());
 
 	screen_print!("surfaces rendered: {}", surfaces_helix.len());
 
 	let font_handle = &font_handles.share_tech;
 	let font		= fonts.get_mut(font_handle).unwrap();
 
-	// now we render surface_helix, using surface_bevy to store intermediate state for rendering
-	for bevy_helix_entity in q_bevy_helix.iter() {
+	let mut pos		= Vec3::new(0.0, 0.0, 1.0);
+
+	for (layer_name, surface_helix) in surfaces_helix.iter() {
+		if surfaces_bevy.contains_key(layer_name) {
+			continue;
+		}
+
+		let mut surface_bevy = SurfaceBevy::default();
+
+		let layer_entity =
+		super::spawn::surface(
+			&surface_helix,
+			&mut surface_bevy,
+			&mut font.ttf_font,
+			pos,
+			&mut commands
+		);
+
+		surface_bevy.entity = Some(layer_entity);
+		surfaces_bevy.insert(layer_name.clone(), surface_bevy);
+	}
+
+	for (layer_name, surface_helix) in surfaces_helix.iter() {
+		let mut surface_bevy = surfaces_bevy.get_mut(layer_name).unwrap();
+
 		render::surface(
-			bevy_helix_entity,
-			surface_helix.as_mut(),
-			surface_bevy.as_mut(),
+			surface_helix,
+			surface_bevy,
 			&mut font.ttf_font,
 			&mut ttf2_mesh_cache,
 			&mut text_mesh_cache.meshes,
@@ -171,9 +205,8 @@ pub fn render(
 		);
 
 		render::cursor(
-			bevy_helix_entity,
-			surface_helix.as_ref(),
-			surface_bevy.as_ref(),
+			surface_helix,
+			surface_bevy,
 			&mut font.ttf_font,
 			cursor.as_mut(),
 			&mut q_cursor_transform,

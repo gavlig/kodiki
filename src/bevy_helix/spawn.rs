@@ -89,11 +89,8 @@ fn color_from_helix(helix_color: HelixColor) -> Color {
 pub fn surface(
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
-	font_handle 	: &Handle<TextMeshFont>,
 	font			: &mut ttf2mesh::TTFFile,
 	world_position	: Vec3,
-	meshes			: &mut ResMut<Assets<Mesh>>,
-	materials		: &mut ResMut<Assets<StandardMaterial>>,
 	commands		: &mut Commands
 ) -> Entity
 {
@@ -108,61 +105,8 @@ pub fn surface(
 	let glyph_width	= reference_glyph.inner.advance * font_size_scalar;
 	let glyph_height = row_offset.abs();
 
-	let local_position = Vec3::ZERO;
-
-	let mut children : Vec<Entity> = Vec::new();
-
-	let mut y		= 0.0;
-	let mut column	= 0 as u32;
-	let mut row		= 0 as u32;
-	let mut column_max = 0 as u32;
-	let mut row_max = 0 as u32;
-	
 	let width = surface_helix.area.width;
 	let height = surface_helix.area.height;
-	let content_helix = &surface_helix.content;
-	let content_bevy = &mut surface_bevy.content;
-
-	for y_cell in 0..height {
-		y = calc_vertical_offset(row as f32, &reference_glyph);
-		
-		for x_cell in 0..width {
-			let content_index = (y_cell * width + x_cell) as usize;
-			let _cell_helix = &content_helix[content_index];
-			let _cell_bevy = &mut content_bevy[content_index];
-
-			// println!("[{} {}] cell {}", x_cell, y_cell, cell.symbol);
-
-			// let column_offset = (column as f32) * glyph_width;
-			// let x = column_offset;
-			// let pos = local_position + Vec3::new(x, y, 0.0);
-
-			// use crate :: game :: spawn :: WorldAxisDesc;
-			// use crate :: game :: spawn :: world_axis as spawn_world_axis;
-
-			// spawn_world_axis(
-			// 	Transform::from_translation(pos),
-			// 	WorldAxisDesc {
-			// 		min_dim : 0.005,
-			// 		max_dim : 0.04,
-			// 		offset	: 0.001,
-			// 	},
-			// 	meshes,
-			// 	materials,
-			// 	commands
-			// );
-
-
-			column += 1;
-		}
-
-		column_max	= column_max.max(column);
-
-		column		= 0;
-		row			+= 1;
-	}
-
-	row_max			= row;
 
 	//
 	//
@@ -180,8 +124,8 @@ pub fn surface(
 	.id();
 
 	let text_descriptor = TextDescriptor {
-		rows: row_max,
-		columns: column_max,
+		rows: height as u32,
+		columns: width as u32,
 		glyph_width: glyph_width,
 		glyph_height: glyph_height
 	};
@@ -189,7 +133,7 @@ pub fn surface(
 	commands.entity(root_entity)
 		.insert(text_descriptor)
 		.insert(BevyHelix)
-		.push_children(children.as_slice());
+		;
 
 	root_entity
 }

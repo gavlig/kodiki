@@ -112,7 +112,6 @@ fn mesh_from_symbol(
 }
 
 pub fn surface(
-	root_entity		: Entity,
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
 	font			: &mut ttf2mesh::TTFFile,
@@ -124,6 +123,8 @@ pub fn surface(
 	commands		: &mut Commands
 )
 {
+	let root_entity = surface_bevy.entity.unwrap();
+
 	surface_bevy.content.resize_with(surface_helix.content.len(), || { CellBevy::default() });
 
 	let font_size	= 9.;
@@ -347,7 +348,6 @@ fn on_color_changed(
 }
 
 pub fn cursor(
-	root_entity		: Entity,
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &SurfaceBevy,
 	font			: &mut ttf2mesh::TTFFile,
@@ -358,6 +358,8 @@ pub fn cursor(
 	commands		: &mut Commands
 )
 {
+	let root_entity = surface_bevy.entity.unwrap();
+
 	let font_size	= 9.;
 	let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
 
@@ -382,7 +384,8 @@ pub fn cursor(
 	let content_bevy 		= &surface_bevy.content;
 
 	// move background quad
-	if let Some(cursor_entity) = cursor.entity && cursor.easing_accum < 1.0 {
+	if cursor.entity.is_some() && cursor.easing_accum < 1.0 {
+		let cursor_entity 	= cursor.entity.unwrap();
 		let column_offset 	= (cursor.x as f32) * glyph_width;
 		let target_x 		= column_offset + (glyph_width / 2.0) + lbearing;
 		let target_y 		= calc_vertical_offset(cursor.y as f32) + (glyph_height / 2.0) + (ybounds[0] * font_size_scalar);

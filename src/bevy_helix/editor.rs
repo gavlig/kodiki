@@ -1030,6 +1030,8 @@ impl EditorViewBevy {
 }
 
 impl EditorViewBevy {
+    pub const ID: &'static str = "editor-component";
+
     fn handle_mouse_event(
         &mut self,
         event: &MouseEvent,
@@ -1448,14 +1450,13 @@ impl Component for EditorViewBevy {
     }
 
 	fn render_ext(&mut self, area: Rect, surfaces: &mut SurfacesMap, cx: &mut Context) {
-		let ID = String::from("editor-component");
-
-		let surface = match surfaces.get_mut(&ID) {
+		let surface = match surfaces.get_mut(&String::from(EditorViewBevy::ID)) {
 			Some(surface) => surface,
         	None => {
 				let new_surface = Surface::empty(area);
-				surfaces.insert(ID.clone(), new_surface);
-				surfaces.get_mut(&ID).unwrap()
+                let component_name = String::from(EditorViewBevy::ID);
+				surfaces.insert(component_name.clone(), new_surface);
+				surfaces.get_mut(&component_name).unwrap()
 			}
 		};
 

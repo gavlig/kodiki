@@ -7,18 +7,21 @@ use iyes_loopless	:: { prelude :: * };
 use bevy_shadertoy_wgsl :: { * };
 use bevy_debug_text_overlay :: { screen_print };
 
-use super::spawn::WorldAxisDesc;
+use super			:: spawn :: WorldAxisDesc;
 use super           :: { * };
 use crate			:: { text };
+use crate			:: {  };
 use crate			:: { bevy_helix };
+use crate			:: { bevy_helix :: SurfacesMapBevy };
+use crate			:: { bevy_helix :: SurfaceBevy };
+use crate			:: { bevy_helix :: editor :: EditorViewBevy };
 
-use bevy::render::mesh::shape as render_shape;
-use bevy_helix::SurfaceBevy as SurfaceBevy;
-use helix_tui::buffer::Buffer as SurfaceTui;
+use helix_term	:: compositor	:: SurfacesMap	as SurfacesMapHelix;
+use helix_tui   :: buffer 		:: Buffer		as SurfaceHelix;
 
 pub fn setup_world_system(
-	mut surface_tui	: ResMut<SurfaceTui>,
-	mut surface_bevy: ResMut<SurfaceBevy>,
+	mut surfaces_helix	: ResMut<SurfacesMapHelix>,
+	mut surfaces_bevy	: ResMut<SurfacesMapBevy>,
 	mut	meshes		: ResMut<Assets<Mesh>>,
 	mut	materials	: ResMut<Assets<StandardMaterial>>,
 		font_handles: Res<FontAssetHandles>,
@@ -41,18 +44,29 @@ pub fn setup_world_system(
 	
 	let mut pos		= Vec3::new(0.0, 0.0, 0.0);
 
-	let file_entity =
-	bevy_helix::spawn::surface(
-		&surface_tui,
-		&mut surface_bevy,
-		font_handle,
-		&mut font.ttf_font,
-		pos,
-		&mut meshes,
-		&mut materials,
-		&mut commands
-	);
+	for (layer_name, surface_helix) in surfaces_helix.iter() {
+		if surfaces_bevy.contains_key(layer_name) {
+			continue;
+		}
 
+		let mut surface_bevy = SurfaceBevy::default();
+
+		let layer_entity =
+		bevy_helix::spawn::surface(
+			&surface_helix,
+			&mut surface_bevy,
+			&mut font.ttf_font,
+			pos,
+			&mut commands
+		);
+
+		surface_bevy.entity = Some(layer_entity);
+		surfaces_bevy.insert(layer_name.clone(), surface_bevy);
+	}
+
+	let surface_bevy_editor = surfaces_bevy.get(&String::from(EditorViewBevy::ID)).unwrap();
+
+	
 	// let (file_entity, text_descriptor) =
 	// text::spawn::file(
 	// 	"playground/herringbone_spawn.rs", // "playground/rustc_ast.rs",
@@ -64,7 +78,11 @@ pub fn setup_world_system(
 	// 	&mut commands
 	// );
 
-	spawn::camera	(file_entity, &mut camera_ids, &mut commands);
+	spawn::camera(
+		surface_bevy_editor.entity.unwrap(),
+		&mut camera_ids,
+		&mut commands
+	);
 
 	// text::spawn::caret(file_entity, &text_descriptor, &mut meshes, &mut materials, &mut commands);
 

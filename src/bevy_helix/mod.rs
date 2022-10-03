@@ -11,7 +11,7 @@ mod render;
 pub mod application;
 pub use application :: *;
 mod compositor;
-mod editor;
+pub mod editor;
 mod systems;
 
 #[derive(Component)]
@@ -57,6 +57,7 @@ impl Default for CellBevy {
 // representation of helix_tui::buffer::Buffer in Bevy
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct SurfaceBevy {
+    pub entity  : Option<Entity>,
 	pub content : Vec<CellBevy>,
 }
 
@@ -77,6 +78,8 @@ impl SurfaceBevy {
         SurfaceBevy { content, ..default() }
     }
 }
+
+pub type SurfacesMapBevy = HashMap<String, SurfaceBevy>;
 
 pub type MeshesMap = HashMap<String, Handle<Mesh>>;
 
