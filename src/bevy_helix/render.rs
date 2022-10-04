@@ -178,6 +178,8 @@ pub fn surface(
 
 			let wrong_symbol = cell_helix.symbol != cell_bevy.symbol;
 			if wrong_symbol {
+				// println!("[{} {}] wrong symbol [{}] <= [{}]", x_cell, y_cell, cell_helix.symbol, cell_bevy.symbol);
+
 				on_symbol_changed(
 					pos,
 					cell_helix,
@@ -191,6 +193,8 @@ pub fn surface(
 					meshes,
 					commands
 				);
+
+				// print!("\n");
 			}
 
 			column += 1;
@@ -222,7 +226,11 @@ fn on_symbol_changed(
     let cache_found = cache.is_some();
     let space_symbol = cell_helix.symbol == " ";
     if !cache_found && !space_symbol {
+		// println!("cache not found for [{}]", cell_helix.symbol);
+
 		if cell_bevy.entity.is_none() {
+			// println!("spawning new entity for [{}] pos: {:?} ", cell_helix.symbol, pos);
+
 			cell_bevy.entity = Some(
 				commands.spawn_bundle(
 					PbrBundle {
@@ -258,18 +266,26 @@ fn on_symbol_changed(
 
 		cell_bevy.entity = Some(mesh_entity_id);
 	} else if !cache_found && space_symbol {
+		// println!("cache not found but we dont care it's space");
+
 		if let Some(entity) = cell_bevy.entity {
 			// remove mesh
 			commands.entity(entity).remove::<Handle<Mesh>>();
 		}
 	} else if let Some(cache) = cache {
+		// println!("cache found for [{}]", cell_helix.symbol);
+
 		if let Some(entity) = cell_bevy.entity {
+			// println!("replacing mesh handle for [{}]", cell_helix.symbol);
+
 			// replace previous mesh with new one
 			commands.entity(entity)
 				.remove::<Handle<Mesh>>()
 				.insert(cache.clone_weak())
 				;
 		} else {
+			// println!("spawning new entity with an existing mesh for [{}] pos: {:?}", cell_helix.symbol, pos);
+
 			// spawn new entity with an existing mesh
 			cell_bevy.entity = Some(
 				commands.spawn_bundle(PbrBundle {

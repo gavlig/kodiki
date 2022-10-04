@@ -165,7 +165,7 @@ pub fn render(
 		cursor.kind = cursor_kind;
 	}
 
-	screen_print!("surfaces rendered: {}", surfaces_helix.len());
+	let mut surface_names_str = String::default();
 
 	let font_handle = &font_handles.share_tech;
 	let font		= fonts.get_mut(font_handle).unwrap();
@@ -191,6 +191,8 @@ pub fn render(
 
 		surface_bevy.entity = Some(layer_entity);
 		surfaces_bevy.insert(layer_name.clone(), surface_bevy);
+
+		println!("new bevy surface created: {}", layer_name);
 	}
 
 	for (layer_name, surface_helix) in surfaces_helix.iter() {
@@ -207,6 +209,16 @@ pub fn render(
 			despawn.as_mut(),
 			&mut commands
 		);
+
+		// println!("rendering surface {} len {}", layer_name, surface_bevy.content.len());
+		// println!("layer content:");
+		// for y in 0..surface_helix.area.height {
+		// 	for x in 0..surface_helix.area.width {
+		// 		let content_index = (y * surface_helix.area.width + x) as usize;
+		// 		print!("{}", surface_helix.content[content_index].symbol);
+		// 	}
+		// 	print!("\n");
+		// }
 	}
 
 	{
