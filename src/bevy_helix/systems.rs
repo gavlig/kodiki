@@ -141,14 +141,16 @@ pub fn render(
 		surface.reset();
 	}
 
-	// first let helix render into surface_helix
-	// app.render_ext(editor_area, surfaces_helix.as_mut());
+	let old_style = false;
 
-	{
+	// first let helix render into surface_helix
+	if old_style {
 		let surface_helix_editor = surfaces_helix.get_mut(&String::from(EditorViewBevy::ID)).unwrap();
 
 		// first let helix render into surface_helix
 		app.render(surface_helix_editor);
+	} else {
+		app.render_ext(editor_area, surfaces_helix.as_mut());
 	}
 
 	let (cursor_pos, cursor_kind) = app.cursor(editor_area);
@@ -166,6 +168,13 @@ pub fn render(
 	}
 
 	let mut surface_names_str = String::default();
+	surface_names_str.push_str(format!("{} helix layers:\n", surfaces_helix.len()).as_str());
+	for (name, _surface) in surfaces_helix.iter() {
+		surface_names_str.push_str(" - ");
+		surface_names_str.push_str(name);
+		surface_names_str.push('\n');
+	}
+	screen_print!("\n{}", surface_names_str);
 
 	let font_handle = &font_handles.share_tech;
 	let font		= fonts.get_mut(font_handle).unwrap();
