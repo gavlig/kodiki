@@ -142,12 +142,14 @@ pub fn render(
 	}
 
 	// first let helix render into surface_helix
-	// app.render(surface_helix.as_mut());
+	// app.render_ext(editor_area, surfaces_helix.as_mut());
 
-	// first let helix render into surface_helix
-	app.render_ext(editor_area, surfaces_helix.as_mut());
+	{
+		let surface_helix_editor = surfaces_helix.get_mut(&String::from(EditorViewBevy::ID)).unwrap();
 
-	let surface_helix_editor = surfaces_helix.get(&String::from(EditorViewBevy::ID)).unwrap();
+		// first let helix render into surface_helix
+		app.render(surface_helix_editor);
+	}
 
 	let (cursor_pos, cursor_kind) = app.cursor(editor_area);
 	if let Some(cursor_pos) = cursor_pos {
@@ -208,6 +210,7 @@ pub fn render(
 	}
 
 	{
+		let surface_helix_editor = surfaces_helix.get(&String::from(EditorViewBevy::ID)).unwrap();
 		let surface_bevy_editor = surfaces_bevy.get(&String::from(EditorViewBevy::ID)).unwrap();
 		render::cursor(
 			surface_helix_editor,
