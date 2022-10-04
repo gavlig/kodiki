@@ -280,6 +280,7 @@ fn on_symbol_changed(
 				})
 				.id()
 			);
+			children.push(cell_bevy.entity.unwrap());
 		}
 	}
     cell_bevy.symbol = cell_helix.symbol.clone();
