@@ -55,7 +55,7 @@ impl Default for EditorViewBevy {
 }
 
 impl EditorViewBevy {
-    pub const ID: &'static str = "editor-component";
+    pub const ID: &'static str = "editor-bevy-component";
     pub const ID_STATUSLINE: &'static str = "statusline-component";
     pub const ID_BUFFERLINE: &'static str = "bufferline-component";
     pub const ID_DIAGNOSTICS: &'static str = "diagnostics-component";
@@ -1575,24 +1575,24 @@ impl Component for EditorViewBevy {
         let config = cx.editor.config();
 
         // check if bufferline should be rendered
-        use helix_view::editor::BufferLine;
-        let use_bufferline = match config.bufferline {
-            BufferLine::Always => true,
-            BufferLine::Multiple if cx.editor.documents.len() > 1 => true,
-            _ => false,
-        };
+        // use helix_view::editor::BufferLine;
+        // let use_bufferline = match config.bufferline {
+        //     BufferLine::Always => true,
+        //     BufferLine::Multiple if cx.editor.documents.len() > 1 => true,
+        //     _ => false,
+        // };
 
         // -1 for commandline and -1 for bufferline
-        let mut editor_area = area.clip_bottom(1);
-        if use_bufferline {
-            editor_area = editor_area.clip_top(1);
-        }
+        // let mut editor_area = area.clip_bottom(1);
+        // if use_bufferline {
+        //     editor_area = editor_area.clip_top(1);
+        // }
 
         // if the terminal size suddenly changed, we need to trigger a resize
-        cx.editor.resize(editor_area);
+        cx.editor.resize(area);
 
         // if use_bufferline {
-            // Self::render_bufferline(cx.editor, area.with_height(1), surface);
+        //     Self::render_bufferline(cx.editor, area.with_height(1), surface);
         // }
 
         for (view, is_focused) in cx.editor.tree.views() {
@@ -1611,7 +1611,7 @@ impl Component for EditorViewBevy {
 	}
     
     fn id(&self) -> Option<&'static str> {
-        Some("editor-bevy-component")
+        Some(EditorViewBevy::ID)
     }
 
     fn cursor(&self, _area: Rect, editor: &Editor) -> (Option<Position>, CursorKind) {

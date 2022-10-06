@@ -119,11 +119,6 @@ impl Compositor for CompositorBevy {
 		for layer in &mut self.layers {
 		    layer.render(area, surface, cx);
 		}
-
-		// let (pos, kind) = self.cursor(area, cx.editor);
-		// let pos = pos.map(|pos| (pos.col as u16, pos.row as u16));
-
-		// self.terminal.draw(pos, kind).unwrap();
 	}
 
 	fn render_ext(&mut self, area: Rect, surfaces: &mut SurfacesMap, cx: &mut Context) {

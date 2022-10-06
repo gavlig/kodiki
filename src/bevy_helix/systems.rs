@@ -17,12 +17,12 @@ use super :: editor :: EditorViewBevy;
 use crate :: game :: DespawnResource;
 use crate :: game :: FontAssetHandles;
 
-use helix_term  :: config :: Config;
-use helix_term  :: args :: Args;
-use helix_term	:: compositor :: SurfacesMap as SurfacesMapHelix;
-use helix_tui   :: buffer :: Buffer as SurfaceHelix;
-use helix_view  :: graphics :: *;
-use helix_view  :: keyboard :: KeyCode as KeyCodeHelix;
+use helix_term  :: config		:: Config;
+use helix_term  :: args			:: Args;
+use helix_term	:: compositor	:: SurfacesMap as SurfacesMapHelix;
+use helix_tui   :: buffer		:: Buffer as SurfaceHelix;
+use helix_view  :: graphics 	:: *;
+use helix_view  :: keyboard 	:: KeyCode as KeyCodeHelix;
 
 use anyhow      :: { Context, Error, Result };
 
@@ -208,6 +208,7 @@ pub fn render(
 		let surface_bevy = surfaces_bevy.get_mut(layer_name).unwrap();
 
 		render::surface(
+			pos,
 			surface_helix,
 			surface_bevy,
 			&mut font.ttf_font,

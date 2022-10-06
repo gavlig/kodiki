@@ -112,6 +112,7 @@ fn mesh_from_symbol(
 }
 
 pub fn surface(
+	offset			: Vec3,
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
 	font			: &mut ttf2mesh::TTFFile,
@@ -119,7 +120,7 @@ pub fn surface(
 	text_mesh_cache	: &mut MeshesMap,
 	meshes			: &mut Assets<Mesh>,
 	materials		: &mut Assets<StandardMaterial>,
-	_despawn			: &mut DespawnResource,
+	_despawn		: &mut DespawnResource,
 	commands		: &mut Commands
 )
 {
@@ -135,8 +136,6 @@ pub fn surface(
 	let row_offset = calc_vertical_offset(1.0);
 	let glyph_width	= reference_glyph.inner.advance * font_size_scalar;
 	let glyph_height = row_offset.abs();
-
-	let local_position = Vec3::ZERO;
 
 	let mut children : Vec<Entity> = Vec::new();
 
@@ -174,7 +173,7 @@ pub fn surface(
 
 			// now spawn new mesh if needed
 			let x = (column as f32) * glyph_width;
-			let pos = local_position + Vec3::new(x, y, 0.0);
+			let pos = offset + Vec3::new(x, y, 0.0);
 
 			let wrong_symbol = cell_helix.symbol != cell_bevy.symbol;
 			if wrong_symbol {
