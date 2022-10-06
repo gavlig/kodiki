@@ -34,9 +34,12 @@ HELIX DECOMPOSITION
 3. (done!)pass vec of surfaces to render pipeline
 3.1. (done!)finish render_ext for all layers
 3.2. (done!)reduce render_ext and surface creation boilerplate
+3.3. (done)utilize Component::id for render_ext
 4. (fixed!)space mode is not working
 5. render border symbols
 6. render background for each surface
+7. find where to place extra surfaces
+8. clean up inactive bevy_surfaces
 
 HELIX
 1. make runtime autodetected. highlighting should work just from cargo run -r
