@@ -12,23 +12,31 @@ CAMERA
 8. refactor camera to have smaller systems affecting translation/rotation/zoom
 9. refactor camera to have easings in all modes
 10. go to caret
+11. zoom out in ortho camera mode
 
 TEXT EDITOR
 1. page up/down doesnt work with vertically expanded view
 2. visualize tabs and spaces
 3. simulate vscode plugin that changes brace color
 4. show scopes with vertical lines like vscode or something else
-5. zoom out in ortho camera mode
 6. dim shadertoy on background
 7. add missing curly bracket keycodes to bevy
 8. adjustable cursor size
 9. keep EditorView inside EditorViewBevy to avoid major code duplication
 
+CODE OUTLINE
+1. find what is in helix first
+
 HELIX DECOMPOSITION
 1. render all file instead of viewport
 1.1. (done!)render huge viewport vertically
-2. make viewport optional
-3. pass vec of surfaces to render pipeline
+2. make viewport optional if we want to render whole file at once
+3. (done!)pass vec of surfaces to render pipeline
+3.1. (done!)finish render_ext for all layers
+3.2. (done!)reduce render_ext and surface creation boilerplate
+4. (fixed!)space mode is not working
+5. render border symbols
+6. render background for each surface
 
 HELIX
 1. make runtime autodetected. highlighting should work just from cargo run -r
@@ -40,7 +48,8 @@ PERF
 2. look at what people do (bevy_efficient_forest_rendering)
 3. (done!)make an "atlas" of letters and replace mesh handles instead of respawning
 4. make an "atlas" of words along the way and replace commonly occuring set of letter-objects with single-object word or every word?
-4.1. generate word object after space is pressed every time 
+4.1. generate word object after space is pressed every time
+4.1. ^(not sure about this one anymore)
 
 oof
 1. detect patterns in code editing and ask if repeat. (i was deleting Default:: a lot)
@@ -63,6 +72,15 @@ oof
 18. autodocumentation at least like in vscode is a must
 19. ? operator is almost invisible when you what to find who(what line) returns error
 20. ! spaces and tabs are for compilers, not for humans to read. make meta data file over normal source code file with data about it's visual representation: models, corrdinates etc, basically serialized "level"
+
+bif oof
+1. bring the best from games into coding
+1.1. reduce friction by having a way to do most things without writing words but by interacting with interface
+1.2. make a representation of code with a visual schematic model, most likely as a graph (think visual nodes, but more transparent: i want to keep an ability to read code directly)
+1.2.1. like all "use" stuff has it's dedicated area and can be rendered as a tree of links to other files.
+1.2.2. "ifs" have two branches, it's a good opportunity to flex 3d
+1.2.3. all code parts have to be attachable to each other to represent the order of execution
+1.3. navigation of this code has to be at least as easy as in vs or vim
 
 vfx
 1. typewriter as Eric suggested

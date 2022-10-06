@@ -1,5 +1,5 @@
 use helix_term::commands;
-use helix_term::compositor::{Component, Context, Event, EventResult, SurfacesMap};
+use helix_term::compositor::{Component, Context, Event, EventResult, SurfacesMap, surface_by_id_mut};
 use helix_term::{job, key};
 use helix_term::keymap::{KeymapResult, Keymaps};
 use helix_term::ui::{Completion, ProgressSpinners};
@@ -55,7 +55,9 @@ impl Default for EditorViewBevy {
 
 impl EditorViewBevy {
     pub const ID: &'static str = "editor-component";
-    pub const ID_statusline: &'static str = "statusline-component";
+    pub const ID_STATUSLINE: &'static str = "statusline-component";
+    pub const ID_BUFFERLINE: &'static str = "bufferline-component";
+    pub const ID_DIAGNOSTICS: &'static str = "diagnostics-component";
 
     pub fn new(keymaps: Keymaps) -> Self {
         Self {
@@ -189,15 +191,8 @@ impl EditorViewBevy {
         surfaces: &mut SurfacesMap,
         is_focused: bool,
     ) {
-        let surface_editor = match surfaces.get_mut(&String::from(EditorViewBevy::ID)) {
-			Some(surface) => surface,
-        	None => {
-				let new_surface = Surface::empty(viewport);
-                let component_name = String::from(EditorViewBevy::ID);
-				surfaces.insert(component_name.clone(), new_surface);
-				surfaces.get_mut(&component_name).unwrap()
-			}
-		};
+        let editor_component_name = String::from(self.id().unwrap());
+        let surface_editor = surface_by_id_mut(&editor_component_name, viewport, surfaces);
 
 		// clear with background color
         surface_editor.set_style(viewport, editor.theme.get("ui.background"));
@@ -277,26 +272,17 @@ impl EditorViewBevy {
             Self::render_focused_view_elements(view, doc, inner, theme, surface_editor);
         }
 
-        // if we're not at the edge of the screen, draw a right border
-        // if viewport.right() != view.area.right() {
-        //     let x = area.right();
-        //     let border_style = theme.get("ui.window");
-        //     for y in area.top()..area.bottom() {
-        //         surface[(x, y)]
-        //             .set_symbol(helix_tui::symbols::line::VERTICAL)
-        //             //.set_symbol(" ")
-        //             .set_style(border_style);
-        //     }
-        // }
+        let diagnostics_name = String::from(EditorViewBevy::ID_DIAGNOSTICS);
+        let diagnostics_surface = surface_by_id_mut(&diagnostics_name, area, surfaces);
 
-        // self.render_diagnostics(doc, view, inner, surface, theme);
+        self.render_diagnostics(doc, view, area, diagnostics_surface, theme);
 
-        let statusline_area = Rect::new(0, 0, area.width, 3);
+        let statusline_area = Rect::new(0, 0, area.width, 1);
 
         let mut context =
             statusline::RenderContext::new(editor, doc, view, is_focused, &self.spinners);
 
-        let statusline_name = String::from(EditorViewBevy::ID_statusline);
+        let statusline_name = String::from(EditorViewBevy::ID_STATUSLINE);
         let statusline_surface = match surfaces.get_mut(&statusline_name) {
 			Some(surface) => surface,
         	None => {
@@ -1605,7 +1591,20 @@ impl Component for EditorViewBevy {
             let doc = cx.editor.document(view.doc).unwrap();
             self.render_view(cx.editor, doc, view, area, surfaces, is_focused);
         }
+
+        let auto_info_component_name = String::from("auto-info-component");
+        let auto_info_surface = surface_by_id_mut(&auto_info_component_name, area, surfaces); 
+        if config.auto_info {
+            if let Some(mut info) = cx.editor.autoinfo.take() {
+                info.render(area, auto_info_surface, cx);
+                cx.editor.autoinfo = Some(info)
+            }
+        }
 	}
+    
+    fn id(&self) -> Option<&'static str> {
+        Some("editor-bevy-component")
+    }
 
     fn cursor(&self, _area: Rect, editor: &Editor) -> (Option<Position>, CursorKind) {
         match editor.cursor() {
