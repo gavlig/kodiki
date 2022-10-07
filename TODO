@@ -40,8 +40,8 @@ HELIX DECOMPOSITION
 6. render background for each surface
 7. find where to place extra surfaces
 8. clean up inactive bevy_surfaces
-9. calling :open asserts in tokio
-10. cursor position is not in editor
+9. (fixed!)calling :open asserts in tokio
+10. (fixed!)cursor position is not in editor
 
 HELIX
 1. make runtime autodetected. highlighting should work just from cargo run -r
