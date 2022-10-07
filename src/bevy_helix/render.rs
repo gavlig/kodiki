@@ -364,6 +364,7 @@ fn on_color_changed(
 }
 
 pub fn cursor(
+	offset			: Vec3,
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &SurfaceBevy,
 	font			: &mut ttf2mesh::TTFFile,
@@ -391,8 +392,6 @@ pub fn cursor(
 	let glyph_width			= reference_glyph.inner.advance * font_size_scalar;
 	let glyph_height		= row_offset.abs();
 
-	let local_position		= Vec3::ZERO;
-
 	let mut children : Vec<Entity> = Vec::new();
 
 	let width				= surface_helix.area.width;
@@ -406,7 +405,7 @@ pub fn cursor(
 		let target_x 		= column_offset + (glyph_width / 2.0) + lbearing;
 		let target_y 		= calc_vertical_offset(cursor.y as f32) + (glyph_height / 2.0) + (ybounds[0] * font_size_scalar);
 
-		let target_pos		= local_position + Vec3::new(target_x, target_y, -0.25 / 72.);
+		let target_pos		= offset + Vec3::new(target_x, target_y, -0.25 / 72.);
 
 		let delta_seconds	= time.delta_seconds();
 		let delta_accum		= delta_seconds / /*cursor_easing_seconds*/0.05;

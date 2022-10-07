@@ -179,7 +179,7 @@ pub fn render(
 	let font_handle = &font_handles.share_tech;
 	let font		= fonts.get_mut(font_handle).unwrap();
 
-	let mut pos		= Vec3::new(0.0, 0.0, 1.0);
+	let mut pos		= Vec3::new(0.0, 0.0, 0.5);
 
 	// create bevy surfaces for every helix surface
 	for (layer_name, surface_helix) in surfaces_helix.iter() {
@@ -203,6 +203,8 @@ pub fn render(
 
 		println!("new bevy surface created: {}", layer_name);
 	}
+	
+	pos.z = 0.0;
 
 	for (layer_name, surface_helix) in surfaces_helix.iter() {
 		let surface_bevy = surfaces_bevy.get_mut(layer_name).unwrap();
@@ -235,6 +237,7 @@ pub fn render(
 		let surface_helix_editor = surfaces_helix.get(&String::from(EditorViewBevy::ID)).unwrap();
 		let surface_bevy_editor = surfaces_bevy.get(&String::from(EditorViewBevy::ID)).unwrap();
 		render::cursor(
+			pos,
 			surface_helix_editor,
 			surface_bevy_editor,
 			&mut font.ttf_font,
