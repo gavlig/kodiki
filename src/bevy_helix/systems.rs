@@ -247,7 +247,8 @@ pub fn render(
 	}
 }
 
-pub fn input(
+#[tokio::main]
+pub async fn input(
 	mut ev_keyboard : EventReader<KeyboardInput>,
 	key			    : Res<Input<KeyCode>>,
 	app             : Option<NonSendMut<Application>>,
