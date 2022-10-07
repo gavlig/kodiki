@@ -1600,10 +1600,10 @@ impl Component for EditorViewBevy {
             self.render_view(cx.editor, doc, view, area, surfaces, is_focused);
         }
 
-        let auto_info_component_name = String::from("auto-info-component");
-        let auto_info_surface = surface_by_id_mut(&auto_info_component_name, area, surfaces); 
         if config.auto_info {
             if let Some(mut info) = cx.editor.autoinfo.take() {
+                let auto_info_component_name = String::from("auto-info-component");
+                let auto_info_surface = surface_by_id_mut(&auto_info_component_name, area, surfaces); 
                 info.render(area, auto_info_surface, cx);
                 cx.editor.autoinfo = Some(info)
             }
