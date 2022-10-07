@@ -22,7 +22,7 @@ TEXT EDITOR
 6. dim shadertoy on background
 7. add missing curly bracket keycodes to bevy
 8. adjustable cursor size
-9. keep EditorView inside EditorViewBevy to avoid major code duplication
+9. (done!)keep EditorView inside EditorViewBevy to avoid major code duplication
 
 CODE OUTLINE
 1. find what is in helix first
@@ -46,6 +46,7 @@ HELIX DECOMPOSITION
 HELIX
 1. make runtime autodetected. highlighting should work just from cargo run -r
 2. handle lsp events
+3. handle mouse events
 3. reload shadertoy on button or helix command?
 
 PERF
@@ -86,6 +87,9 @@ bif oof
 1.2.2. "ifs" have two branches, it's a good opportunity to flex 3d
 1.2.3. all code parts have to be attachable to each other to represent the order of execution
 1.3. navigation of this code has to be at least as easy as in vs or vim
+1.3.1. per-symbol navigation is slow and redundant.
+1.3.1. l/rbracket in helix is a good step forward, visualizing that more would be a good start 
+1.3.2. step-per-token? per-ast-node?
 
 vfx
 1. typewriter as Eric suggested
