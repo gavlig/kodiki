@@ -39,7 +39,7 @@ HELIX DECOMPOSITION
 5. render border symbols
 6. render background for each surface
 7. find where to place extra surfaces
-8. clean up inactive bevy_surfaces
+8. (done!)clean up inactive surfaces
 9. (fixed!)calling :open asserts in tokio
 10. (fixed!)cursor position is not in editor
 

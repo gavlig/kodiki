@@ -180,6 +180,38 @@ pub fn render(
 	let font		= fonts.get_mut(font_handle).unwrap();
 
 	let mut pos		= Vec3::new(0.0, 0.0, 0.5);
+	
+	{ // clean up unused surfaces
+		let mut to_remove = Vec::<String>::default();
+		
+		for (layer_name, surface_helix) in surfaces_helix.iter_mut() {
+			if surface_helix.dirty {
+				continue;
+			}
+					
+			to_remove.push(layer_name.clone());
+			println!("unused helix surface removed: {}", layer_name);
+		}
+	
+		for layer in to_remove.iter() {
+			surfaces_helix.remove(layer);
+		}
+		
+		for (layer_name, surface_bevy) in surfaces_bevy.iter_mut() {
+			if surfaces_helix.contains_key(layer_name) {
+				continue;
+			}
+			
+			despawn.entities.push(surface_bevy.entity.unwrap());
+		
+			to_remove.push(layer_name.clone());
+			println!("unused bevy surface removed: {}", layer_name);
+		}
+	
+		for layer in to_remove {
+			surfaces_bevy.remove(&layer);
+		}
+	}
 
 	// create bevy surfaces for every helix surface
 	for (layer_name, surface_helix) in surfaces_helix.iter() {
@@ -206,7 +238,8 @@ pub fn render(
 	
 	pos.z = 0.0;
 
-	for (layer_name, surface_helix) in surfaces_helix.iter() {
+	// render surfaces
+	for (layer_name, surface_helix) in surfaces_helix.iter_mut() {
 		let surface_bevy = surfaces_bevy.get_mut(layer_name).unwrap();
 
 		render::surface(
@@ -221,7 +254,7 @@ pub fn render(
 			despawn.as_mut(),
 			&mut commands
 		);
-
+		
 		// println!("rendering surface {} len {}", layer_name, surface_bevy.content.len());
 		// println!("layer content:");
 		// for y in 0..surface_helix.area.height {
@@ -233,7 +266,7 @@ pub fn render(
 		// }
 	}
 
-	{
+	{ // render cursor
 		let surface_helix_editor = surfaces_helix.get(&String::from(EditorViewBevy::ID)).unwrap();
 		let surface_bevy_editor = surfaces_bevy.get(&String::from(EditorViewBevy::ID)).unwrap();
 		render::cursor(

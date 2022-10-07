@@ -87,20 +87,26 @@ impl Compositor for CompositorBevy {
 		// propagate events through the layers until we either find a layer that consumes it or we
 		// run out of layers (event bubbling)
 		for layer in self.layers.iter_mut().rev() {
+			println!("handle_event layer {}", layer.id().unwrap());
 			match layer.handle_event(event, cx) {
 				EventResult::Consumed(Some(callback)) => {
 					callbacks.push(callback);
 					consumed = true;
+					println!("event consumed with callback");
 					break;
 				}
 				EventResult::Consumed(None) => {
+					println!("event consumed None");
 					consumed = true;
 					break;
 				}
 				EventResult::Ignored(Some(callback)) => {
+					println!("event IGNORED with callback");
 					callbacks.push(callback);
 				}
-				EventResult::Ignored(None) => {}
+				EventResult::Ignored(None) => {
+					println!("event IGNORED");
+				}
 			};
 		}
 
@@ -122,6 +128,7 @@ impl Compositor for CompositorBevy {
 	}
 
 	fn render_ext(&mut self, area: Rect, surfaces: &mut SurfacesMap, cx: &mut Context) {
+		screen_print!("layers: {}", self.layers.len());
 		for layer in &mut self.layers {
 		    layer.render_ext(area, surfaces, cx);
 		}
