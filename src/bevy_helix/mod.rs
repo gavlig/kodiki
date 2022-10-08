@@ -31,7 +31,8 @@ pub struct CursorBevy {
 // representation of helix_tui::buffer::Cell in Bevy
 #[derive(Debug, Clone, PartialEq)]
 pub struct CellBevy {
-    pub entity  : Option<Entity>,
+    pub entity_symbol : Option<Entity>,
+    pub entity_bg_quad : Option<Entity>,
     pub symbol  : String,
     pub fg      : helix_view::graphics::Color,
     pub bg      : helix_view::graphics::Color,
@@ -43,7 +44,8 @@ pub struct CellBevy {
 impl Default for CellBevy {
     fn default() -> Self {
         Self {
-            entity  : None,
+            entity_symbol : None,
+            entity_bg_quad : None,
             symbol  : " ".into(),
             fg      : helix_view::graphics::Color::Reset,
             bg      : helix_view::graphics::Color::Reset,

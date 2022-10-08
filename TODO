@@ -41,6 +41,9 @@ HELIX DECOMPOSITION
 4. (fixed!)space mode is not working
 5. render border symbols
 6. render background for each surface
+6.1. (done!)render background for editor surface
+6.2. smaller surfaces have too much space allocated
+6.3. use clone_weak for all handles again
 7. find where to place extra surfaces
 8. (done!)clean up inactive surfaces
 9. (fixed!)calling :open asserts in tokio
@@ -52,6 +55,7 @@ HELIX
 3. handle mouse events
 4. reload shadertoy on button or helix command?
 5. show variable type when suggesting it in autocomplete
+6. show in which function cursor is
 
 PERF
 1. hook up profiler

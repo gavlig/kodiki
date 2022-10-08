@@ -168,8 +168,8 @@ pub fn surface(
 			
 			// figure out colors first
 			let reversed = cell_helix.modifier == helix_view::graphics::Modifier::REVERSED;
-			let wrong_color = !reversed && cell_bevy.fg != cell_helix.fg;
-			let reversed_and_wrong_color = reversed && cell_bevy.fg != cell_helix.bg;
+			let wrong_color = !reversed && (cell_bevy.fg != cell_helix.fg || cell_bevy.bg != cell_helix.bg);
+			let reversed_and_wrong_color = reversed && (cell_bevy.fg != cell_helix.bg || cell_bevy.bg != cell_helix.fg);
 
 			if wrong_color || reversed_and_wrong_color {
 				update_cell_materials(
@@ -238,10 +238,10 @@ fn update_cell_mesh(
     if !cache_found && !space_symbol {
 		// println!("cache not found for [{}]", cell_helix.symbol);
 
-		if cell_bevy.entity.is_none() {
+		if cell_bevy.entity_symbol.is_none() {
 			// println!("spawning new entity for [{}] pos: {:?} ", cell_helix.symbol, pos);
 
-			cell_bevy.entity = Some(
+			cell_bevy.entity_symbol = Some(
 				commands.spawn_bundle(
 					PbrBundle {
 						transform : Transform::from_translation(pos),
@@ -251,7 +251,7 @@ fn update_cell_mesh(
 				.id()
 			);
 		}
-		let mesh_entity_id = cell_bevy.entity.unwrap();
+		let mesh_entity_id = cell_bevy.entity_symbol.unwrap();
 
 		let mesh_handle =
 		mesh_from_symbol(
@@ -274,18 +274,18 @@ fn update_cell_mesh(
 		children.push(mesh_entity_id);
 		mesh_cache.insert(cell_helix.symbol.clone(), mesh_handle);
 
-		cell_bevy.entity = Some(mesh_entity_id);
+		cell_bevy.entity_symbol = Some(mesh_entity_id);
 	} else if !cache_found && space_symbol {
 		// println!("cache not found but we dont care it's space");
 
-		if let Some(entity) = cell_bevy.entity {
+		if let Some(entity) = cell_bevy.entity_symbol {
 			// remove mesh
 			commands.entity(entity).remove::<Handle<Mesh>>();
 		}
 	} else if let Some(cache) = cache {
 		// println!("cache found for [{}]", cell_helix.symbol);
 
-		if let Some(entity) = cell_bevy.entity {
+		if let Some(entity) = cell_bevy.entity_symbol {
 			// println!("replacing mesh handle for [{}]", cell_helix.symbol);
 
 			// replace previous mesh with new one
@@ -297,7 +297,7 @@ fn update_cell_mesh(
 			// println!("spawning new entity with an existing mesh for [{}] pos: {:?}", cell_helix.symbol, pos);
 
 			// spawn new entity with an existing mesh
-			cell_bevy.entity = Some(
+			cell_bevy.entity_symbol = Some(
 				commands.spawn_bundle(PbrBundle {
 					mesh : cache.clone_weak(),
 					material : cell_bevy.fg_handle.as_ref().unwrap().clone_weak(),
@@ -306,7 +306,7 @@ fn update_cell_mesh(
 				})
 				.id()
 			);
-			children.push(cell_bevy.entity.unwrap());
+			children.push(cell_bevy.entity_symbol.unwrap());
 		}
 	}
     cell_bevy.symbol = cell_helix.symbol.clone();
@@ -334,44 +334,18 @@ pub fn update_cell_materials(
     cell_bevy.fg_handle = Some(get_helix_color_material_handle(color_fg, helix_colors_cache, material_assets));
     cell_bevy.bg_handle = Some(get_helix_color_material_handle(color_bg, helix_colors_cache, material_assets));
 
-		
- //    for m in materials.iter() {
-	// 	if m.1.base_color == color_fg && cell_bevy.fg_handle.is_none() {
-	// 		cell_bevy.fg_handle = Some(materials.get_handle(m.0));
-	// 	}
-	// 	if m.1.base_color == color_bg && cell_bevy.bg_handle.is_none() {
-	// 		cell_bevy.bg_handle = Some(materials.get_handle(m.0));
-	// 	}
-
-	// 	if cell_bevy.fg_handle.is_some() && cell_bevy.bg_handle.is_some() {
-	// 		break;
-	// 	}
-	// }
-
- //    if None == cell_bevy.fg_handle {
-	// 	cell_bevy.fg_handle = Some(materials.add(
-	// 		StandardMaterial {
-	// 			base_color : color_fg,
-	// 			unlit : true,
-	// 			..default()
-	// 		}
-	// 	));
-	// }
- //    if None == cell_bevy.bg_handle {
-	// 	cell_bevy.bg_handle = Some(materials.add(
-	// 		StandardMaterial {
-	// 			base_color : color_bg,
-	// 			unlit : true,
-	// 			..default()
-	// 		}
-	// 	));
-	// }
-
     // replace material to reflect changed color
-    if let Some(cell_bevy_entity) = cell_bevy.entity {
-		commands.entity		(cell_bevy_entity)
+    if let Some(cell_bevy_entity_symbol) = cell_bevy.entity_symbol {
+		commands.entity		(cell_bevy_entity_symbol)
 		.remove::<Handle<StandardMaterial>>()
-		.insert(cell_bevy.fg_handle.as_ref().unwrap().clone_weak())
+		.insert(cell_bevy.fg_handle.as_ref().unwrap().clone())
+		;
+	}
+	
+	if let Some(cell_bevy_entity_bg_quad) = cell_bevy.entity_bg_quad {
+		commands.entity		(cell_bevy_entity_bg_quad)
+		.remove::<Handle<StandardMaterial>>()
+		.insert(cell_bevy.bg_handle.as_ref().unwrap().clone())
 		;
 	}
 }

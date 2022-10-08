@@ -1,5 +1,4 @@
 use bevy				:: prelude :: { * };
-use bevy_text_mesh		:: prelude :: { * };
 use bevy_mod_picking	:: { * };
 use bevy_fly_camera		:: { * };
 use bevy_contrib_colors	:: { Tailwind };
@@ -65,7 +64,6 @@ fn quad(
 	quad_pos_in		: Vec3,
 	quad_size		: Vec2,
 	quad_mesh_handle: Handle<Mesh>,
-	material_handle	: Handle<StandardMaterial>,
 	commands		: &mut Commands
 ) -> Entity {
 	let quad_width		= quad_size.x;
@@ -75,7 +73,6 @@ fn quad(
 
 	commands.spawn_bundle(PbrBundle {
 		mesh			: quad_mesh_handle.clone_weak(),
-		material		: material_handle.clone_weak(),
 		transform		: Transform {
 			translation	: quad_pos,
 			// rotation	: Quat::from_rotation_y(std::f32::consts::PI), // winding ccw something something
@@ -85,7 +82,6 @@ fn quad(
 	})
 	.id()
 }
-
 
 fn color_from_helix(helix_color: HelixColor) -> Color {
 	match helix_color {
@@ -170,9 +166,9 @@ pub fn surface(
 			// mesh handle
 			let quad_mesh_name	= String::from("character-background-quad");
 			let quad_mesh_handle = match mesh_cache.get(&quad_mesh_name) {
-				Some(handle) => handle.clone_weak(),
+				Some(handle) => handle.clone(),
 				None => {
-					mesh_assets.add(
+					let handle = mesh_assets.add(
 						Mesh::from(
 							shape::Quad::new(
 								Vec2::new(
@@ -181,12 +177,11 @@ pub fn surface(
 				    			)
 							)
 						)
-					)
+					);
+					
+					mesh_cache.insert_unique_unchecked(quad_mesh_name.clone(), handle).1.clone()
 				}
 			};
-			
-			// material handle
-			super::render::update_cell_materials(cell_bevy, cell_helix, false, helix_colors_cache, material_assets, commands);
 			
 			let quad_pos		= Vec3::new(x, y, -0.25 / 72.);
 			let quad_entity_id	= 
@@ -194,9 +189,10 @@ pub fn surface(
 			 	quad_pos,
 			 	Vec2::new(quad_width, quad_height),
 			 	quad_mesh_handle,
-			 	cell_bevy.bg_handle.as_ref().unwrap().clone_weak(),
 			 	commands
 			);
+			
+			cell_bevy.entity_bg_quad = Some(quad_entity_id);
 
 			commands.entity(quad_entity_id)
 			.insert(Row { 0: row })
@@ -212,8 +208,6 @@ pub fn surface(
 		row			+= 1;
 	}
 
-	
-	
 	//
 	//
 	//
