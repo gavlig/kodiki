@@ -96,7 +96,7 @@ fn mesh_from_symbol(
 	let text_mesh_desc	= TextMesh {
 		text			: text_in.clone(),
 		style			: TextMeshStyle {
-			font_size 	: font_size,
+			font_size,
 			..default()
 		},
 		size: TextMeshSize {
@@ -117,9 +117,10 @@ pub fn surface(
 	surface_bevy	: &mut SurfaceBevy,
 	font			: &mut ttf2mesh::TTFFile,
 	ttf2_mesh_cache	: &mut TTF2MeshCache,
-	text_mesh_cache	: &mut MeshesMap,
-	meshes			: &mut Assets<Mesh>,
-	materials		: &mut Assets<StandardMaterial>,
+	mesh_cache		: &mut MeshesMap,
+	helix_colors_cache : &mut MaterialsMap,
+	mesh_assets		: &mut Assets<Mesh>,
+	material_assets	: &mut Assets<StandardMaterial>,
 	_despawn		: &mut DespawnResource,
 	commands		: &mut Commands
 )
@@ -155,18 +156,28 @@ pub fn surface(
 			let content_index = (y_cell * width + x_cell) as usize;
 			let cell_helix = &content_helix[content_index];
 			let cell_bevy = &mut content_bevy[content_index];
+			
+			//
+			//
+			// Background
+			
 
+			//
+			//
+			// Character
+			
 			// figure out colors first
 			let reversed = cell_helix.modifier == helix_view::graphics::Modifier::REVERSED;
 			let wrong_color = !reversed && cell_bevy.fg != cell_helix.fg;
 			let reversed_and_wrong_color = reversed && cell_bevy.fg != cell_helix.bg;
 
 			if wrong_color || reversed_and_wrong_color {
-				on_color_changed(
+				update_cell_materials(
 					cell_bevy,
 					cell_helix,
 					reversed,
-					materials,
+					helix_colors_cache,
+					material_assets,
 					commands
 				);
 			}
@@ -179,17 +190,17 @@ pub fn surface(
 			if wrong_symbol {
 				// println!("[{} {}] wrong symbol [{}] <= [{}]", x_cell, y_cell, cell_helix.symbol, cell_bevy.symbol);
 
-				on_symbol_changed(
+				update_cell_mesh(
 					pos,
 					cell_helix,
 					cell_bevy,
 					font,
 					font_size,
 					font_depth,
-					text_mesh_cache,
+					mesh_cache,
 					ttf2_mesh_cache,
 					&mut children,
-					meshes,
+					mesh_assets,
 					commands
 				);
 
@@ -208,20 +219,20 @@ pub fn surface(
 	}
 }
 
-fn on_symbol_changed(
+fn update_cell_mesh(
 	pos				: Vec3,
 	cell_helix		: &CellHelix,
 	cell_bevy		: &mut CellBevy,
 	font			: &mut TTFFile,
 	font_size		: f32, 
 	font_depth		: f32,
-	text_mesh_cache	: &mut MeshesMap,
+	mesh_cache		: &mut MeshesMap,
 	ttf2_mesh_cache	: &mut TTF2MeshCache,
 	children		: &mut Vec<Entity>,
 	meshes			: &mut Assets<Mesh>,
 	commands		: &mut Commands
 ) {
-    let cache = text_mesh_cache.get(&cell_helix.symbol);
+    let cache = mesh_cache.get(&cell_helix.symbol);
     let cache_found = cache.is_some();
     let space_symbol = cell_helix.symbol == " ";
     if !cache_found && !space_symbol {
@@ -261,7 +272,7 @@ fn on_symbol_changed(
 		);
 
 		children.push(mesh_entity_id);
-		text_mesh_cache.insert(cell_helix.symbol.clone(), mesh_handle);
+		mesh_cache.insert(cell_helix.symbol.clone(), mesh_handle);
 
 		cell_bevy.entity = Some(mesh_entity_id);
 	} else if !cache_found && space_symbol {
@@ -301,11 +312,12 @@ fn on_symbol_changed(
     cell_bevy.symbol = cell_helix.symbol.clone();
 }
 
-fn on_color_changed(
+pub fn update_cell_materials(
 	cell_bevy: &mut CellBevy,
 	cell_helix: &CellHelix,
 	reversed: bool,
-	materials: &mut Assets<StandardMaterial>,
+	helix_colors_cache: &mut MaterialsMap,
+	material_assets: &mut Assets<StandardMaterial>,
 	commands: &mut Commands
 ) {
 	// first take care of reversed colors: if reversed foreground becomes background
@@ -319,40 +331,41 @@ fn on_color_changed(
     let color_fg = color_from_helix(cell_bevy.fg);
     let color_bg = color_from_helix(cell_bevy.bg);
 
-    cell_bevy.fg_handle = None;
-    cell_bevy.bg_handle = None;
+    cell_bevy.fg_handle = Some(get_helix_color_material_handle(color_fg, helix_colors_cache, material_assets));
+    cell_bevy.bg_handle = Some(get_helix_color_material_handle(color_bg, helix_colors_cache, material_assets));
 
-    for m in materials.iter() {
-		if m.1.base_color == color_fg && cell_bevy.fg_handle.is_none() {
-			cell_bevy.fg_handle = Some(materials.get_handle(m.0));
-		}
-		if m.1.base_color == color_bg && cell_bevy.bg_handle.is_none() {
-			cell_bevy.bg_handle = Some(materials.get_handle(m.0));
-		}
+		
+ //    for m in materials.iter() {
+	// 	if m.1.base_color == color_fg && cell_bevy.fg_handle.is_none() {
+	// 		cell_bevy.fg_handle = Some(materials.get_handle(m.0));
+	// 	}
+	// 	if m.1.base_color == color_bg && cell_bevy.bg_handle.is_none() {
+	// 		cell_bevy.bg_handle = Some(materials.get_handle(m.0));
+	// 	}
 
-		if cell_bevy.fg_handle.is_some() && cell_bevy.bg_handle.is_some() {
-			break;
-		}
-	}
+	// 	if cell_bevy.fg_handle.is_some() && cell_bevy.bg_handle.is_some() {
+	// 		break;
+	// 	}
+	// }
 
-    if None == cell_bevy.fg_handle {
-		cell_bevy.fg_handle = Some(materials.add(
-			StandardMaterial {
-				base_color : color_fg,
-				unlit : true,
-				..default()
-			}
-		));
-	}
-    if None == cell_bevy.bg_handle {
-		cell_bevy.bg_handle = Some(materials.add(
-			StandardMaterial {
-				base_color : color_bg,
-				unlit : true,
-				..default()
-			}
-		));
-	}
+ //    if None == cell_bevy.fg_handle {
+	// 	cell_bevy.fg_handle = Some(materials.add(
+	// 		StandardMaterial {
+	// 			base_color : color_fg,
+	// 			unlit : true,
+	// 			..default()
+	// 		}
+	// 	));
+	// }
+ //    if None == cell_bevy.bg_handle {
+	// 	cell_bevy.bg_handle = Some(materials.add(
+	// 		StandardMaterial {
+	// 			base_color : color_bg,
+	// 			unlit : true,
+	// 			..default()
+	// 		}
+	// 	));
+	// }
 
     // replace material to reflect changed color
     if let Some(cell_bevy_entity) = cell_bevy.entity {

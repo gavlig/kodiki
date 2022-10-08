@@ -13,11 +13,11 @@ use super				:: { * };
 use helix_tui 			:: { buffer :: Buffer as SurfaceHelix };
 use helix_view::graphics::Color as HelixColor;
 
-fn calc_vertical_offset(row : f32, reference_glyph : &Glyph) -> f32 {
-	row * -0.13 // (reference_glyph.inner.ybounds[0] - reference_glyph.inner.ybounds[1]) / 72.
+fn calc_vertical_offset(row : f32) -> f32 {
+	row * -0.13
 }
 
-fn quad(
+fn quad_old(
 	quad_pos_in		: Vec3,
 	quad_size		: Vec2,
 	meshes			: &mut ResMut<Assets<Mesh>>,
@@ -61,6 +61,32 @@ fn quad(
 	.id()
 }
 
+fn quad(
+	quad_pos_in		: Vec3,
+	quad_size		: Vec2,
+	quad_mesh_handle: Handle<Mesh>,
+	material_handle	: Handle<StandardMaterial>,
+	commands		: &mut Commands
+) -> Entity {
+	let quad_width		= quad_size.x;
+	let quad_height		= quad_size.y;
+
+	let quad_pos		= quad_pos_in + Vec3::new(quad_width / 2.0, 0., 0.);//-quad_height / 2.0, 0.0);
+
+	commands.spawn_bundle(PbrBundle {
+		mesh			: quad_mesh_handle.clone_weak(),
+		material		: material_handle.clone_weak(),
+		transform		: Transform {
+			translation	: quad_pos,
+			// rotation	: Quat::from_rotation_y(std::f32::consts::PI), // winding ccw something something
+			..default()
+		},
+		..default()
+	})
+	.id()
+}
+
+
 fn color_from_helix(helix_color: HelixColor) -> Color {
 	match helix_color {
 		HelixColor::Reset => Color::WHITE,
@@ -91,6 +117,10 @@ pub fn surface(
 	surface_bevy	: &mut SurfaceBevy,
 	font			: &mut ttf2mesh::TTFFile,
 	world_position	: Vec3,
+	mesh_cache		: &mut MeshesMap,
+	helix_colors_cache : &mut MaterialsMap,
+	mesh_assets		: &mut Assets<Mesh>,
+	material_assets : &mut Assets<StandardMaterial>,
 	commands		: &mut Commands
 ) -> Entity
 {
@@ -101,13 +131,89 @@ pub fn surface(
 	let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
 
 	let reference_glyph : Glyph = font.glyph_from_char('a').unwrap(); // and omega
-	let row_offset = calc_vertical_offset(1.0, &reference_glyph);
+	let row_offset	= calc_vertical_offset(1.0);
 	let glyph_width	= reference_glyph.inner.advance * font_size_scalar;
 	let glyph_height = row_offset.abs();
 
-	let width = surface_helix.area.width;
-	let height = surface_helix.area.height;
+	let width		= surface_helix.area.width;
+	let height		= surface_helix.area.height;
 
+	let mut children : Vec<Entity> = Vec::new();
+
+	let mut y		= 0.0;
+	let mut column	= 0 as u32;
+	let mut row		= 0 as u32;
+	
+	let width		= surface_helix.area.width;
+	let height		= surface_helix.area.height;
+	let content_helix = &surface_helix.content;
+	let content_bevy = &mut surface_bevy.content;
+
+	for y_cell in 0..height {
+		y			= calc_vertical_offset(row as f32);
+		
+		for x_cell in 0..width {
+			let content_index = (y_cell * width + x_cell) as usize;
+			let cell_helix = &content_helix[content_index];
+			let cell_bevy = &mut content_bevy[content_index];
+			
+			let x	= (column as f32) * glyph_width;
+			let pos = Vec3::new(x, y, 0.0);
+			
+			let quad_width		= glyph_width;
+			let quad_height		= glyph_height;
+			
+			//
+			//
+			// Background Quad
+			
+			// mesh handle
+			let quad_mesh_name	= String::from("character-background-quad");
+			let quad_mesh_handle = match mesh_cache.get(&quad_mesh_name) {
+				Some(handle) => handle.clone_weak(),
+				None => {
+					mesh_assets.add(
+						Mesh::from(
+							shape::Quad::new(
+								Vec2::new(
+									quad_width,
+									quad_height
+				    			)
+							)
+						)
+					)
+				}
+			};
+			
+			// material handle
+			super::render::update_cell_materials(cell_bevy, cell_helix, false, helix_colors_cache, material_assets, commands);
+			
+			let quad_pos		= Vec3::new(x, y, -0.25 / 72.);
+			let quad_entity_id	= 
+			quad(
+			 	quad_pos,
+			 	Vec2::new(quad_width, quad_height),
+			 	quad_mesh_handle,
+			 	cell_bevy.bg_handle.as_ref().unwrap().clone_weak(),
+			 	commands
+			);
+
+			commands.entity(quad_entity_id)
+			.insert(Row { 0: row })
+			.insert(Column { 0: column })
+			;
+
+			children.push(quad_entity_id);
+
+			column 	+= 1;
+		}
+
+		column		= 0;
+		row			+= 1;
+	}
+
+	
+	
 	//
 	//
 	//
@@ -126,14 +232,18 @@ pub fn surface(
 	let text_descriptor = TextDescriptor {
 		rows: height as u32,
 		columns: width as u32,
-		glyph_width: glyph_width,
-		glyph_height: glyph_height
+		glyph_width,
+		glyph_height
 	};
 
 	commands.entity(root_entity)
 		.insert(text_descriptor)
 		.insert(BevyHelix)
 		;
+	
+	if children.len() > 0 {
+		commands.entity(root_entity).push_children(children.as_slice());
+	}
 
 	root_entity
 }

@@ -83,9 +83,42 @@ pub type SurfacesMapBevy = HashMap<String, SurfaceBevy>;
 
 pub type MeshesMap = HashMap<String, Handle<Mesh>>;
 
+pub type MaterialsMap = HashMap<String, Handle<StandardMaterial>>;
+
 #[derive(Default)]
 pub struct TextCache {
     pub meshes: MeshesMap,
+}
+
+#[derive(Default)]
+pub struct HelixColorsCache {
+    pub materials: MaterialsMap,
+}
+
+pub fn get_helix_color_material_handle(
+	color_bevy: Color,
+	helix_colors_cache: &mut MaterialsMap,
+	material_assets: &mut Assets<StandardMaterial>
+) -> Handle<StandardMaterial> {
+    let mut color_u8 : [u8; 3] = [0; 3];
+    color_u8[0] = (color_bevy.r() * 255.) as u8;
+    color_u8[1] = (color_bevy.g() * 255.) as u8;
+    color_u8[2] = (color_bevy.b() * 255.) as u8;
+    let color_string = hex::encode(color_u8);
+    match helix_colors_cache.get(&color_string) {
+		Some(handle) => handle.clone_weak(),
+		None => {
+			let handle = material_assets.add(
+				StandardMaterial {
+				    base_color : color_bevy,
+				    unlit : true,
+				    ..default()
+				}
+			);
+
+			helix_colors_cache.insert_unique_unchecked(color_string, handle).1.clone_weak()
+		}
+	}
 }
 
 pub struct BevyHelixPlugin;
@@ -95,6 +128,7 @@ impl Plugin for BevyHelixPlugin {
         app
             .insert_resource(CursorBevy::default())
             .insert_resource(TextCache::default())
+            .insert_resource(HelixColorsCache::default())
             .insert_resource(SurfacesMapHelix::default())
 
 			.add_startup_system(systems::startup.exclusive_system())

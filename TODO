@@ -1,5 +1,8 @@
 KODIKI
 1. automatically load all fonts from assets
+2. optionally show hints about possible actions (like in witcher3 for example)
+3. show all known types like in vscode on ctrl+alt
+4. make it easy to go from documentation to implementation from it 
 
 CAMERA
 1. (!)following text cursor when out of visibility
@@ -47,7 +50,8 @@ HELIX
 1. make runtime autodetected. highlighting should work just from cargo run -r
 2. handle lsp events
 3. handle mouse events
-3. reload shadertoy on button or helix command?
+4. reload shadertoy on button or helix command?
+5. show variable type when suggesting it in autocomplete
 
 PERF
 1. hook up profiler

@@ -1,32 +1,19 @@
-use helix_term::commands;
 use helix_term::compositor::{Component, Context, Event, EventResult, SurfacesMap, surface_by_id_mut};
-use helix_term::{job, key};
-use helix_term::keymap::{KeymapResult, Keymaps};
-use helix_term::ui::{Completion, ProgressSpinners, EditorView};
+use helix_term::keymap::Keymaps;
+use helix_term::ui::EditorView;
 
 use helix_core::{
-    graphemes::{
-        ensure_grapheme_boundary_next_byte, next_grapheme_boundary, prev_grapheme_boundary,
-    },
-    movement::Direction,
     syntax::{self, HighlightEvent},
-    unicode::width::UnicodeWidthStr,
-    LineEnding, Position, Range, Selection, Transaction,
+    Position,
 };
-use helix_view::view;
-use helix_view::doc_mut;
-use helix_view::current;
-use helix_view::view_mut;
 
 use helix_view::{
-    document::{Mode, SCRATCH_BUFFER_NAME},
-    editor::{CompleteAction, CursorShapeConfig},
-    graphics::{Color, CursorKind, Modifier, Rect, Style},
-    input::{KeyEvent, MouseButton, MouseEvent, MouseEventKind},
+    editor::CompleteAction,
+    graphics::{CursorKind, Rect},
+    input::KeyEvent,
     keyboard::{KeyCode, KeyModifiers},
-    Document, Editor, Theme, View
+    Document, Editor, View
 };
-use std::{borrow::Cow, path::PathBuf};
 
 use helix_tui::buffer::Buffer as Surface;
 

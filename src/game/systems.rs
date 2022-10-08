@@ -15,6 +15,8 @@ use crate			:: { bevy_helix };
 use crate			:: { bevy_helix :: SurfacesMapBevy };
 use crate			:: { bevy_helix :: SurfaceBevy };
 use crate			:: { bevy_helix :: editor :: EditorViewBevy };
+use crate           :: { bevy_helix :: TextCache };
+use crate           :: { bevy_helix :: HelixColorsCache };
 
 use helix_term	:: compositor	:: SurfacesMap	as SurfacesMapHelix;
 use helix_tui   :: buffer 		:: Buffer		as SurfaceHelix;
@@ -22,8 +24,10 @@ use helix_tui   :: buffer 		:: Buffer		as SurfaceHelix;
 pub fn setup_world_system(
 	mut surfaces_helix	: ResMut<SurfacesMapHelix>,
 	mut surfaces_bevy	: ResMut<SurfacesMapBevy>,
-	mut	meshes		: ResMut<Assets<Mesh>>,
-	mut	materials	: ResMut<Assets<StandardMaterial>>,
+    mut mesh_cache  : ResMut<TextCache>,
+    mut helix_colors_cache : ResMut<HelixColorsCache>,
+	mut	mesh_assets	: ResMut<Assets<Mesh>>,
+	mut	material_assets : ResMut<Assets<StandardMaterial>>,
 		font_handles: Res<FontAssetHandles>,
 	mut fonts		: ResMut<Assets<TextMeshFont>>,
 	mut camera_ids	: ResMut<CameraIDs>,
@@ -33,9 +37,9 @@ pub fn setup_world_system(
 ) {
 	// spawn::infinite_grid(&mut commands);
 
-	spawn::world_axis	(Transform::identity(), WorldAxisDesc::default(), &mut meshes, &mut materials, &mut commands);
+	spawn::world_axis	(Transform::identity(), WorldAxisDesc::default(), &mut mesh_assets, &mut material_assets, &mut commands);
 
-	spawn::fixed_sphere	(Transform::identity(), 0.02, Color::SEA_GREEN, &mut meshes, &mut materials, &mut commands);
+	spawn::fixed_sphere	(Transform::identity(), 0.02, Color::SEA_GREEN, &mut mesh_assets, &mut material_assets, &mut commands);
 
 	let font_handle = &font_handles.share_tech;
 
@@ -57,6 +61,10 @@ pub fn setup_world_system(
 			&mut surface_bevy,
 			&mut font.ttf_font,
 			pos,
+            &mut mesh_cache.meshes,
+            &mut helix_colors_cache.materials,
+            mesh_assets.as_mut(),
+            material_assets.as_mut(),
 			&mut commands
 		);
 

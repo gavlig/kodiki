@@ -5,11 +5,11 @@ use bevy_text_mesh :: prelude :: * ;
 
 use bevy_debug_text_overlay :: screen_print;
 
-use super :: BevyHelix;
 use super :: SurfaceBevy;
 use super :: SurfacesMapBevy;
 use super :: CursorBevy;
 use super :: TextCache;
+use super :: HelixColorsCache;
 use super :: application :: Application;
 use super :: render;
 use super :: editor :: EditorViewBevy;
@@ -122,9 +122,10 @@ pub fn render(
 		app             : Option<NonSendMut<Application>>,
 		time			: Res<Time>,
 	mut ttf2_mesh_cache : ResMut<TTF2MeshCache>,
-	mut text_mesh_cache	: ResMut<TextCache>,
-	mut meshes			: ResMut<Assets<Mesh>>,
-	mut materials		: ResMut<Assets<StandardMaterial>>,
+	mut mesh_cache		: ResMut<TextCache>,
+	mut helix_colors_cache : ResMut<HelixColorsCache>,
+	mut mesh_assets		: ResMut<Assets<Mesh>>,
+	mut material_assets	: ResMut<Assets<StandardMaterial>>,
 	mut despawn         : ResMut<DespawnResource>,
 	mut commands        : Commands,
 ) {
@@ -227,6 +228,10 @@ pub fn render(
 			&mut surface_bevy,
 			&mut font.ttf_font,
 			pos,
+			&mut mesh_cache.meshes,
+			&mut helix_colors_cache.materials,
+			mesh_assets.as_mut(),
+			material_assets.as_mut(),
 			&mut commands
 		);
 
@@ -248,9 +253,10 @@ pub fn render(
 			surface_bevy,
 			&mut font.ttf_font,
 			&mut ttf2_mesh_cache,
-			&mut text_mesh_cache.meshes,
-			&mut meshes,
-			&mut materials,
+			&mut mesh_cache.meshes,
+			&mut helix_colors_cache.materials,
+			&mut mesh_assets,
+			&mut material_assets,
 			despawn.as_mut(),
 			&mut commands
 		);
@@ -277,7 +283,7 @@ pub fn render(
 			cursor.as_mut(),
 			&mut q_cursor_transform,
 			&time,
-			&mut meshes,
+			&mut mesh_assets,
 			&mut commands
 		);
 	}
