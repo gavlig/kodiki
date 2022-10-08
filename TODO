@@ -44,6 +44,7 @@ HELIX DECOMPOSITION
 6.1. (done!)render background for editor surface
 6.2. smaller surfaces have too much space allocated
 6.3. use clone_weak for all handles again
+6.4. replace all quads of default bg color with one big bg quad
 7. find where to place extra surfaces
 8. (done!)clean up inactive surfaces
 9. (fixed!)calling :open asserts in tokio
