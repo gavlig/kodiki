@@ -139,9 +139,9 @@ impl EditorViewBevy {
         }
 
         let diagnostics_name = String::from(EditorViewBevy::ID_DIAGNOSTICS);
-        let diagnostics_surface = surface_by_id_mut(&diagnostics_name, area, surfaces);
+        // let diagnostics_surface = surface_by_id_mut(&diagnostics_name, area, surfaces);
 
-        self.editor_view_helix.render_diagnostics(doc, view, area, diagnostics_surface, theme);
+        // self.editor_view_helix.render_diagnostics(doc, view, area, diagnostics_surface, theme);
 
         let statusline_area = Rect::new(0, 0, area.width, 1);
 

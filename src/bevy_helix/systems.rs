@@ -170,9 +170,9 @@ pub fn render(
 
 	let mut surface_names_str = String::default();
 	surface_names_str.push_str(format!("{} helix layers:\n", surfaces_helix.len()).as_str());
-	for (name, _surface) in surfaces_helix.iter() {
+	for (name, surface) in surfaces_helix.iter() {
 		surface_names_str.push_str(" - ");
-		surface_names_str.push_str(name);
+		surface_names_str.push_str(format!("{} len: {}", name, surface.content.len()).as_str());
 		surface_names_str.push('\n');
 	}
 	screen_print!("\n{}", surface_names_str);
@@ -224,6 +224,7 @@ pub fn render(
 
 		let layer_entity =
 		super::spawn::surface(
+			layer_name,
 			&surface_helix,
 			&mut surface_bevy,
 			&mut font.ttf_font,

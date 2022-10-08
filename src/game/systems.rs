@@ -57,6 +57,7 @@ pub fn setup_world_system(
 
 		let layer_entity =
 		bevy_helix::spawn::surface(
+			layer_name,
 			&surface_helix,
 			&mut surface_bevy,
 			&mut font.ttf_font,

@@ -109,6 +109,7 @@ fn color_from_helix(helix_color: HelixColor) -> Color {
 }
 
 pub fn surface(
+	name			: &String,
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
 	font			: &mut ttf2mesh::TTFFile,
@@ -130,10 +131,7 @@ pub fn surface(
 	let row_offset	= calc_vertical_offset(1.0);
 	let glyph_width	= reference_glyph.inner.advance * font_size_scalar;
 	let glyph_height = row_offset.abs();
-
-	let width		= surface_helix.area.width;
-	let height		= surface_helix.area.height;
-
+	
 	let mut children : Vec<Entity> = Vec::new();
 
 	let mut y		= 0.0;
@@ -144,7 +142,9 @@ pub fn surface(
 	let height		= surface_helix.area.height;
 	let content_helix = &surface_helix.content;
 	let content_bevy = &mut surface_bevy.content;
-
+	
+	println!("spawn surface {} len {} w {} h {}", name, surface_helix.content.len(), width, height);
+	
 	for y_cell in 0..height {
 		y			= calc_vertical_offset(row as f32);
 		
