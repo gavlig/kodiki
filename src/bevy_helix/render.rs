@@ -44,7 +44,7 @@ fn quad(
 
 	commands.spawn_bundle(PbrBundle {
 		mesh			: quad_handle,
-		material		: material_handle.clone(),
+		material		: material_handle.clone_weak(),
 		transform		: Transform {
 			translation	: quad_pos,
 			// rotation	: Quat::from_rotation_y(std::f32::consts::PI), // winding ccw something something
@@ -338,14 +338,14 @@ pub fn update_cell_materials(
     if let Some(cell_bevy_entity_symbol) = cell_bevy.entity_symbol {
 		commands.entity		(cell_bevy_entity_symbol)
 		.remove::<Handle<StandardMaterial>>()
-		.insert(cell_bevy.fg_handle.as_ref().unwrap().clone())
+		.insert(cell_bevy.fg_handle.as_ref().unwrap().clone_weak())
 		;
 	}
 	
 	if let Some(cell_bevy_entity_bg_quad) = cell_bevy.entity_bg_quad {
 		commands.entity		(cell_bevy_entity_bg_quad)
 		.remove::<Handle<StandardMaterial>>()
-		.insert(cell_bevy.bg_handle.as_ref().unwrap().clone())
+		.insert(cell_bevy.bg_handle.as_ref().unwrap().clone_weak())
 		;
 	}
 }
@@ -430,7 +430,7 @@ pub fn cursor(
 	} else if cursor.color != color_bg && cell_bevy.bg_handle.is_some() {
 		commands.entity		(cursor.entity.unwrap())
 		.remove::<Handle<StandardMaterial>>()
-		.insert(cell_bevy.bg_handle.as_ref().unwrap().clone())
+		.insert(cell_bevy.bg_handle.as_ref().unwrap().clone_weak())
 		;
 		cursor.color		= color_bg;
 	}

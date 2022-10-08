@@ -19,13 +19,15 @@ CAMERA
 
 TEXT EDITOR
 1. page up/down doesnt work with vertically expanded view
-2. visualize tabs and spaces
+2. visualize tabs and spaces(helix can do that)
 3. simulate vscode plugin that changes brace color
 4. show scopes with vertical lines like vscode or something else
 6. dim shadertoy on background
-7. add missing curly bracket keycodes to bevy
+7. add missing keycodes
+7.1. curly brackets
 8. adjustable cursor size
 9. (done!)keep EditorView inside EditorViewBevy to avoid major code duplication
+10. letter spacings are corrupted
 
 CODE OUTLINE
 1. find what is in helix first
@@ -43,13 +45,18 @@ HELIX DECOMPOSITION
 6. render background for each surface
 6.1. (done!)render background for editor surface
 6.2. smaller surfaces have too much space allocated
-6.3. use clone_weak for all handles again
+6.2.1. fix diagnostics component
+6.2.2. fix area for space mode
+6.2.3. fix area for command mode
+6.2.4. fix area for goto mode
+6.3. (done!)use clone_weak for all handles again
 6.4. replace all quads of default bg color with one big bg quad
-6.5. fix diagnostics component
+6.5. cursor doesnt fit symbols: background quad size and position need adjusting
 7. find where to place extra surfaces
 8. (done!)clean up inactive surfaces
 9. (fixed!)calling :open asserts in tokio
 10. (fixed!)cursor position is not in editor
+11. file saving doesnt work
 
 HELIX
 1. make runtime autodetected. highlighting should work just from cargo run -r
