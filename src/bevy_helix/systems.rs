@@ -252,6 +252,7 @@ pub fn render(
 			pos,
 			surface_helix,
 			surface_bevy,
+			cursor.as_ref(),
 			&mut font.ttf_font,
 			&mut ttf2_mesh_cache,
 			&mut mesh_cache.meshes,
@@ -274,16 +275,17 @@ pub fn render(
 	}
 
 	{ // render cursor
-		let surface_helix_editor = surfaces_helix.get(&String::from(EditorViewBevy::ID)).unwrap();
 		let surface_bevy_editor = surfaces_bevy.get(&String::from(EditorViewBevy::ID)).unwrap();
 		render::cursor(
 			pos,
-			surface_helix_editor,
 			surface_bevy_editor,
 			&mut font.ttf_font,
 			cursor.as_mut(),
 			&mut q_cursor_transform,
 			&time,
+			&app.editor.theme,
+			&mut helix_colors_cache.materials,
+			&mut material_assets,
 			&mut mesh_assets,
 			&mut commands
 		);

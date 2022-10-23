@@ -104,10 +104,13 @@ impl EditorViewBevy {
         if is_focused && editor.config().cursorline {
             EditorView::highlight_cursorline(doc, view, surface_editor, theme);
         }
-
+        
         let highlights = EditorView::doc_syntax_highlights(doc, view.offset, inner.height, theme);
         let highlights = syntax::merge(highlights, EditorView::doc_diagnostics_highlights(doc, theme));
-        let highlights: Box<dyn Iterator<Item = HighlightEvent>> = if is_focused {
+        
+        let draw_native_cursor = false;
+        let highlights: Box<dyn Iterator<Item = HighlightEvent>> =
+        if is_focused && draw_native_cursor {
             Box::new(syntax::merge(
                 highlights,
                 EditorView::doc_selection_highlights(

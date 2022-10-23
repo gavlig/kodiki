@@ -14,6 +14,7 @@ use crate				:: game :: DespawnResource;
 
 use helix_tui 			:: { buffer :: Buffer as SurfaceHelix };
 use helix_tui			:: { buffer :: Cell as CellHelix };
+use helix_view			:: Theme;
 use helix_view::graphics::Color as HelixColor;
 
 fn calc_vertical_offset(row : f32) -> f32 {
@@ -115,6 +116,7 @@ pub fn surface(
 	offset			: Vec3,
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
+	cursor			: &CursorBevy,
 	font			: &mut ttf2mesh::TTFFile,
 	ttf2_mesh_cache	: &mut TTF2MeshCache,
 	mesh_cache		: &mut MeshesMap,
@@ -159,23 +161,21 @@ pub fn surface(
 			
 			//
 			//
-			// Background
-			
-
-			//
-			//
 			// Character
 			
 			// figure out colors first
 			let reversed = cell_helix.modifier == helix_view::graphics::Modifier::REVERSED;
-			let wrong_color = !reversed && (cell_bevy.fg != cell_helix.fg || cell_bevy.bg != cell_helix.bg);
-			let reversed_and_wrong_color = reversed && (cell_bevy.fg != cell_helix.bg || cell_bevy.bg != cell_helix.fg);
+			let is_cursor_pos = cursor.x == x_cell && cursor.y == y_cell;
+			let wrong_color = !reversed && !is_cursor_pos && (cell_bevy.fg != cell_helix.fg || cell_bevy.bg != cell_helix.bg);
+			let reversed_and_wrong_color = reversed && !is_cursor_pos && (cell_bevy.fg != cell_helix.bg || cell_bevy.bg != cell_helix.fg);
+			let in_cursor_pos_and_wrong_color = is_cursor_pos && cell_bevy.fg != cell_helix.bg;
 
-			if wrong_color || reversed_and_wrong_color {
+			if wrong_color || reversed_and_wrong_color || in_cursor_pos_and_wrong_color {
 				update_cell_materials(
 					cell_bevy,
 					cell_helix,
 					reversed,
+					is_cursor_pos,
 					helix_colors_cache,
 					material_assets,
 					commands
@@ -316,6 +316,7 @@ pub fn update_cell_materials(
 	cell_bevy: &mut CellBevy,
 	cell_helix: &CellHelix,
 	reversed: bool,
+	is_cursor_pos: bool,
 	helix_colors_cache: &mut MaterialsMap,
 	material_assets: &mut Assets<StandardMaterial>,
 	commands: &mut Commands
@@ -327,6 +328,11 @@ pub fn update_cell_materials(
 	} else {
 		(cell_helix.bg, cell_helix.fg)
 	};
+	
+	// emulate reversed color only for symbol because native cursor rendering is turned off
+	if is_cursor_pos {
+		cell_bevy.fg = cell_helix.bg;
+	}
 
     let color_fg = color_from_helix(cell_bevy.fg);
     let color_bg = color_from_helix(cell_bevy.bg);
@@ -352,12 +358,14 @@ pub fn update_cell_materials(
 
 pub fn cursor(
 	offset			: Vec3,
-	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &SurfaceBevy,
 	font			: &mut ttf2mesh::TTFFile,
 	cursor			: &mut CursorBevy,
 	q_cursor_transform : &mut Query<&mut Transform>,
 	time			: &Res<Time>,
+	theme			: &Theme,
+	helix_colors_cache : &mut MaterialsMap,
+	material_assets	: &mut Assets<StandardMaterial>,
 	meshes			: &mut ResMut<Assets<Mesh>>,
 	commands		: &mut Commands
 )
@@ -378,12 +386,9 @@ pub fn cursor(
 	let lbearing			= reference_glyph.inner.lbearing * font_size_scalar;
 	let glyph_width			= reference_glyph.inner.advance * font_size_scalar;
 	let glyph_height		= row_offset.abs();
+	let cursor_z			= -0.1 / 72.;
 
 	let mut children : Vec<Entity> = Vec::new();
-
-	let width				= surface_helix.area.width;
-	let content_helix 		= &surface_helix.content;
-	let content_bevy 		= &surface_bevy.content;
 
 	// move background quad
 	if cursor.entity.is_some() && cursor.easing_accum < 1.0 {
@@ -392,7 +397,7 @@ pub fn cursor(
 		let target_x 		= column_offset + (glyph_width / 2.0) + lbearing;
 		let target_y 		= calc_vertical_offset(cursor.y as f32) + (glyph_height / 2.0) + (ybounds[0] * font_size_scalar);
 
-		let target_pos		= offset + Vec3::new(target_x, target_y, -0.25 / 72.);
+		let target_pos		= offset + Vec3::new(target_x, target_y, cursor_z);
 
 		let delta_seconds	= time.delta_seconds();
 		let delta_accum		= delta_seconds / /*cursor_easing_seconds*/0.05;
@@ -401,38 +406,35 @@ pub fn cursor(
 		let mut cursor_transform = q_cursor_transform.get_mut(cursor_entity).unwrap();
 		cursor_transform.translation = cursor_transform.translation.lerp(target_pos, cursor.easing_accum);
 	}
-
-	let content_index 		= (cursor.y * width + cursor.x) as usize;
-	let cell_helix			= &content_helix[content_index];
-	let cell_bevy			= &content_bevy[content_index];
-
-	let color_bg 			= color_from_helix(cell_bevy.bg);
-
+	
+	let cursor_color_fg		= color_from_helix(theme.get("ui.cursor").bg.unwrap());
+	let material_handle		= get_helix_color_material_handle(cursor_color_fg, helix_colors_cache, material_assets);
+	
 	// spawn background quad for cursor
-	if cursor.entity == None && cell_bevy.bg_handle.is_some() {
+	if cursor.entity == None {
 		let quad_width		= glyph_width;
 		let quad_height		= (ybounds[1] - ybounds[0]) * font_size_scalar * 1.7; // ybounds contain offset for letter 'y'
-		let quad_pos		= Vec3::new(0., 0., -0.25 / 72.);
+		let quad_pos		= Vec3::new(0., 0., cursor_z);
 
 		let quad_entity_id	= 
 		quad(
 			quad_pos,
 			Vec2::new		(quad_width, quad_height),
 			meshes,
-			cell_bevy.bg_handle.as_ref().unwrap(),
+			&material_handle,
 			commands
 		);
 
 		children.push		(quad_entity_id);
 
 		cursor.entity 		= Some(quad_entity_id);
-		cursor.color		= color_bg;
-	} else if cursor.color != color_bg && cell_bevy.bg_handle.is_some() {
+		cursor.color		= cursor_color_fg;
+	} else if cursor.color != cursor_color_fg {
 		commands.entity		(cursor.entity.unwrap())
 		.remove::<Handle<StandardMaterial>>()
-		.insert(cell_bevy.bg_handle.as_ref().unwrap().clone_weak())
+		.insert(material_handle.clone_weak())
 		;
-		cursor.color		= color_bg;
+		cursor.color		= cursor_color_fg;
 	}
 
 	if children.len() > 0 {

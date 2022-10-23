@@ -28,6 +28,8 @@ TEXT EDITOR
 8. adjustable cursor size
 9. (done!)keep EditorView inside EditorViewBevy to avoid major code duplication
 10. letter spacings are corrupted
+10. ^ most likely use cosmic-text for font rendering instead of bevy_text_mesh
+11. toggle hide background quads
 
 CODE OUTLINE
 1. find what is in helix first
@@ -51,7 +53,8 @@ HELIX DECOMPOSITION
 6.2.4. fix area for goto mode
 6.3. (done!)use clone_weak for all handles again
 6.4. replace all quads of default bg color with one big bg quad
-6.5. cursor doesnt fit symbols: background quad size and position need adjusting
+6.5. (fixed!)cursor doesnt fit symbols: background quad size and position need adjusting
+6.5. ^ native terminal cursor replaced with a separate object
 7. find where to place extra surfaces
 8. (done!)clean up inactive surfaces
 9. (fixed!)calling :open asserts in tokio
@@ -65,6 +68,7 @@ HELIX
 4. reload shadertoy on button or helix command?
 5. show variable type when suggesting it in autocomplete
 6. show in which function cursor is
+7. going through code with arrows sometimes triggers autocomplete
 
 PERF
 1. hook up profiler
