@@ -127,8 +127,14 @@ pub fn surface(
 	let font_depth	= 0.1;
 	let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
 
+	let ybounds = {
+		let reference_glyph_y : Glyph = font.glyph_from_char('y').unwrap();
+		reference_glyph_y.inner.ybounds
+	};
+
 	let reference_glyph : Glyph = font.glyph_from_char('a').unwrap(); // and omega
 	let row_offset	= calc_vertical_offset(1.0);
+	let lbearing	= reference_glyph.inner.lbearing * font_size_scalar;
 	let glyph_width	= reference_glyph.inner.advance * font_size_scalar;
 	let glyph_height = row_offset.abs();
 	
@@ -146,25 +152,25 @@ pub fn surface(
 	println!("spawn surface {} len {} w {} h {}", name, surface_helix.content.len(), width, height);
 	
 	for y_cell in 0..height {
-		y			= calc_vertical_offset(row as f32);
+		let y 		= calc_vertical_offset(y_cell as f32) + (glyph_height / 2.0) + (ybounds[0] * font_size_scalar);
 		
 		for x_cell in 0..width {
 			let content_index = (y_cell * width + x_cell) as usize;
-			let cell_helix = &content_helix[content_index];
-			let cell_bevy = &mut content_bevy[content_index];
-			
-			let x	= (column as f32) * glyph_width;
+			let cell_helix	= &content_helix[content_index];
+			let cell_bevy	= &mut content_bevy[content_index];
+			let column_offset = (x_cell as f32) * glyph_width;
+			let x 			= column_offset + (glyph_width / 2.0) + lbearing;
 			let pos = Vec3::new(x, y, 0.0);
 			
-			let quad_width		= glyph_width;
-			let quad_height		= glyph_height;
+			let quad_width	= glyph_width;
+			let quad_height	= glyph_height;
 			
 			//
 			//
 			// Background Quad
 			
 			// mesh handle
-			let quad_mesh_name	= String::from("character-background-quad");
+			let quad_mesh_name = String::from("character-background-quad");
 			let quad_mesh_handle = match mesh_cache.get(&quad_mesh_name) {
 				Some(handle) => handle.clone(),
 				None => {

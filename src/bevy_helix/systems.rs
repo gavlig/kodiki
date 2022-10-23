@@ -147,8 +147,6 @@ pub fn render(
 	// first let helix render into surface_helix
 	if old_style {
 		let surface_helix_editor = surfaces_helix.get_mut(&String::from(EditorViewBevy::ID)).unwrap();
-
-		// first let helix render into surface_helix
 		app.render(surface_helix_editor);
 	} else {
 		app.render_ext(editor_area, surfaces_helix.as_mut());
