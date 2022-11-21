@@ -17,6 +17,8 @@ use super :: editor :: EditorViewBevy;
 use crate :: game :: DespawnResource;
 use crate :: game :: FontAssetHandles;
 
+use crate :: bevy_ab_glyph :: ABGlyphFont;
+
 use helix_term  :: config		:: Config;
 use helix_term  :: args			:: Args;
 use helix_term	:: compositor	:: SurfacesMap as SurfacesMapHelix;
@@ -116,14 +118,17 @@ pub fn render(
 	mut surfaces_helix	: ResMut<SurfacesMapHelix>,
 	mut surfaces_bevy	: ResMut<SurfacesMapBevy>,
 	mut fonts           : ResMut<Assets<TextMeshFont>>,
+		fonts2			: Res<Assets<ABGlyphFont>>,
 		font_handles    : Res<FontAssetHandles>,
 	mut	cursor          : ResMut<CursorBevy>,
 	mut	q_cursor_transform : Query<&mut Transform>,
 		app             : Option<NonSendMut<Application>>,
 		time			: Res<Time>,
-	mut ttf2_mesh_cache : ResMut<TTF2MeshCache>,
-	mut mesh_cache		: ResMut<TextCache>,
-	mut helix_colors_cache : ResMut<HelixColorsCache>,
+
+	(mut ttf2_mesh_cache, mut mesh_cache, mut helix_colors_cache) 
+	:
+	(ResMut<TTF2MeshCache>, ResMut<TextCache>, ResMut<HelixColorsCache>),
+
 	mut mesh_assets		: ResMut<Assets<Mesh>>,
 	mut material_assets	: ResMut<Assets<StandardMaterial>>,
 	mut despawn         : ResMut<DespawnResource>,
@@ -177,6 +182,9 @@ pub fn render(
 
 	let font_handle = &font_handles.share_tech;
 	let font		= fonts.get_mut(font_handle).unwrap();
+
+	let font_handle2 = &font_handles.ubuntu_mono;
+	let font2		= fonts2.get(font_handle2).unwrap();
 
 	let mut pos		= Vec3::new(0.0, 0.0, 0.5);
 	
@@ -252,6 +260,7 @@ pub fn render(
 			surface_bevy,
 			cursor.as_ref(),
 			&mut font.ttf_font,
+			&font2,
 			&mut ttf2_mesh_cache,
 			&mut mesh_cache.meshes,
 			&mut helix_colors_cache.materials,

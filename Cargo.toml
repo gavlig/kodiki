@@ -35,6 +35,17 @@ bevy-debug-text-overlay = { version = "3.0" }
 bevy_contrib_colors = { git = "https://github.com/gavlig/bevy_contrib_colors.git" }
 
 #
+# TEXT RENDERING START
+#
+
+ab_glyph            = "0.2.18"  # read ttf/otf and get parametric glyphs # { path = "../ab-glyph/glyph" }
+lyon                = "1.0.1"   # convert paramteric glyphs to 2d geometry # { path = "../lyon" }
+
+#
+# TEXT RENDERING END
+#
+
+#
 # HELIX START
 #
 

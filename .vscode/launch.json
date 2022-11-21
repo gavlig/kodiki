@@ -1,0 +1,17 @@
+{
+    "configurations": [
+    {
+        "type": "lldb",
+        "request": "launch",
+        "name": "Cargo launch lldb",
+        "cargo": {
+            "args": [
+                "build"
+            ]
+        },
+        "args": ["/home/gavlig/Workspace/project_kodiki/kodiki/src/bevy_helix/render.rs"],
+        "env": { "HELIX_RUNTIME" : "/var/lib/helix/runtime/", "RUST_BACKTRACE" : "1" },
+        "cwd": "/home/gavlig/Workspace/project_kodiki/kodiki/",
+    },
+    ],
+}

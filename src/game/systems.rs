@@ -362,6 +362,8 @@ pub fn load_assets(
 	font_handles.source_code_pro = ass.load("fonts/SourceCodePro-Regular.ttf");
 	font_handles.B612 = ass.load("fonts/B612Mono-Regular.ttf");
 	font_handles.share_tech = ass.load("fonts/ShareTechMono-Regular.ttf");
+
+	font_handles.ubuntu_mono = ass.load("fonts/UbuntuMono-Regular.otf");
 }
 
 pub fn asset_loading_events(

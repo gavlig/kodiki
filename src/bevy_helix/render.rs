@@ -7,6 +7,9 @@ use bevy_contrib_colors	:: { Tailwind };
 
 // use bevy_infinite_grid	:: { InfiniteGridBundle };
 
+use crate				:: bevy_ab_glyph :: ABGlyphFont;
+use crate				:: bevy_ab_glyph :: mesh_generator :: generate_glyph_mesh;
+
 use ttf2mesh 			:: { Glyph };
 
 use super				:: { * };
@@ -189,6 +192,8 @@ pub fn surface(
 			let wrong_symbol = cell_helix.symbol != cell_bevy.symbol;
 			if wrong_symbol {
 				// println!("[{} {}] wrong symbol [{}] <= [{}]", x_cell, y_cell, cell_helix.symbol, cell_bevy.symbol);
+
+				generate_glyph_mesh(&cell_helix.symbol, &font2.f);
 
 				update_cell_mesh(
 					pos,

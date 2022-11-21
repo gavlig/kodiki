@@ -15,6 +15,8 @@ use utils				:: *;
 
 use crate				:: text;
 
+use crate				:: bevy_ab_glyph :: { * };
+
 #[derive(Component, Default, Clone)]
 pub struct LogHolder {
 	pub data : String
@@ -66,6 +68,8 @@ pub struct FontAssetHandles {
 	pub source_code_pro: Handle<TextMeshFont>,
 	pub B612: Handle<TextMeshFont>,
 	pub share_tech: Handle<TextMeshFont>,
+
+	pub ubuntu_mono: Handle<ABGlyphFont>,
 
 	pub loaded_cnt: u32,
 }

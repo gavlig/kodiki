@@ -13,6 +13,8 @@ use bevy_debug_text_overlay	:: { OverlayPlugin, screen_print };
 mod game;
 use game			:: { AppPlugin };
 mod text;
+mod bevy_ab_glyph;
+use bevy_ab_glyph	:: { ABGlyphPlugin };
 mod bevy_helix;
 use bevy_helix      :: { BevyHelixPlugin };
 
@@ -31,6 +33,7 @@ fn main() {
 		.add_plugins(DefaultPlugins)
 
 		.add_plugin(AppPlugin)
+		.add_plugin(ABGlyphPlugin)
         .add_plugin(BevyHelixPlugin)
 
 		.add_plugin(FlyCameraPlugin)
