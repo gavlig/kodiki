@@ -121,6 +121,7 @@ pub fn surface(
 	surface_bevy	: &mut SurfaceBevy,
 	cursor			: &CursorBevy,
 	font			: &mut ttf2mesh::TTFFile,
+	font2			: &ABGlyphFont,
 	ttf2_mesh_cache	: &mut TTF2MeshCache,
 	mesh_cache		: &mut MeshesMap,
 	helix_colors_cache : &mut MaterialsMap,
