@@ -96,25 +96,25 @@ impl Plugin for AppPlugin {
 
 			.add_loopless_state(AppMode::AssetLoading)
 
+			.insert_resource(MouseCursorState::default())
 			.insert_resource(FontAssetHandles::default())
-			.add_startup_system(load_assets)
-			.add_system		(asset_loading_events.run_in_state(AppMode::AssetLoading))
 
-			.add_startup_system(setup_shadertoy)
-
-			.insert_resource(CameraIDs::default())
 			.insert_resource(clear_color)
 			.insert_resource(Msaa::default())
+			.insert_resource(CameraIDs::default())
 
 			.insert_resource(ShadertoyCanvas {
-				width: w,
-				height: h,
-				borders: 0.0,
-				position: Vec3::new(0.0, 0.0, 0.0),
-				active: true,
+				width:		w,
+				height:		h,
+				borders:	0.0,
+				position:	Vec3::new(0.0, 0.0, 0.0),
+				active:		true,
 			})
 
-			.insert_resource(MouseCursorState::default())
+			.add_startup_system(setup_shadertoy)
+			.add_startup_system(load_assets)
+
+			.add_system		(asset_loading_events.run_in_state(AppMode::AssetLoading))
 			
 			.add_enter_system_set(
 				AppMode::AssetsLoaded,

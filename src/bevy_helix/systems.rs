@@ -171,6 +171,7 @@ pub fn render(
 		cursor.kind = cursor_kind;
 	}
 
+	// show currently active helix layers with screen_print!
 	let mut surface_names_str = String::default();
 	surface_names_str.push_str(format!("{} helix layers:\n", surfaces_helix.len()).as_str());
 	for (name, surface) in surfaces_helix.iter() {
