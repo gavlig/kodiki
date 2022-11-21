@@ -1,5 +1,6 @@
 use bevy :: prelude :: { * };
 use bevy :: render :: render_resource :: PrimitiveTopology;
+use bevy :: render :: mesh :: { Indices, Mesh, VertexAttributeValues };
 
 use ab_glyph :: { Font, FontVec, OutlineCurve, GlyphId };
 
@@ -14,9 +15,9 @@ pub type LyonPoint      = lyon :: math :: Point;
 pub fn generate_glyph_mesh(
 	glyph_str: &String,
 	font: &FontVec,
-	// meshes: &mut Assets<Mesh>,
+	meshes: &mut Assets<Mesh>,
 	// cache: Option<&mut TTF2MeshCache>,
-) {// -> Handle<Mesh> {
+) -> Handle<Mesh> {
 	// println!("generate_glyph_mesh for {} called!", glyph_str);
 
 	let placeholder_glyph_id = font.glyph_id('?');
@@ -86,8 +87,10 @@ pub fn generate_glyph_mesh(
 	#[derive(Copy, Clone, Debug)]
 	struct Vertex3D { position: [f32; 3] };
 
+	// VertexAttributeValues::Float32x3
+
 	// Will contain the result of the tessellation.
-	let mut geometry: VertexBuffers<Vertex3D, u16> = VertexBuffers::new();
+	let mut geometry: VertexBuffers<[f32; 3], u16> = VertexBuffers::new();
 	let mut tessellator = FillTessellator::new();
 
 	{
@@ -96,10 +99,14 @@ pub fn generate_glyph_mesh(
 			&path,
 			&FillOptions::default(),
 			&mut BuffersBuilder::new(&mut geometry, |vertex: FillVertex| {
-				let pos2d = vertex.position();
-				Vertex3D {
-					position: [ pos2d.x, pos2d.y, 0.0],
-				}
+				let pos2d = vertex.position() / 500.;
+				// Vertex3D {
+				// 	position: [ pos2d.x, pos2d.y, 0.0],
+				// }
+
+				println!("pos2d {:?}", pos2d);
+
+				[ pos2d.x, pos2d.y, 0.0 ]
 			}),
 		).unwrap();
 	}
@@ -110,5 +117,12 @@ pub fn generate_glyph_mesh(
 	// 	geometry.indices.len()
 	// );
 
+	let normals: Vec<[f32; 3]> = vec![[0.0, 0.0, 1.0]; geometry.vertices.len()];
+
 	let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+	mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, geometry.vertices);
+	mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+	mesh.set_indices(Some(Indices::U16(geometry.indices)));
+
+	meshes.add(mesh)
 }

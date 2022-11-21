@@ -194,13 +194,12 @@ pub fn surface(
 			if wrong_symbol {
 				// println!("[{} {}] wrong symbol [{}] <= [{}]", x_cell, y_cell, cell_helix.symbol, cell_bevy.symbol);
 
-				generate_glyph_mesh(&cell_helix.symbol, &font2.f);
-
 				update_cell_mesh(
 					pos,
 					cell_helix,
 					cell_bevy,
 					font,
+					font2,
 					font_size,
 					font_depth,
 					mesh_cache,
@@ -230,12 +229,13 @@ fn update_cell_mesh(
 	cell_helix		: &CellHelix,
 	cell_bevy		: &mut CellBevy,
 	font			: &mut TTFFile,
+	font2			: &ABGlyphFont,
 	font_size		: f32, 
 	font_depth		: f32,
 	mesh_cache		: &mut MeshesMap,
 	ttf2_mesh_cache	: &mut TTF2MeshCache,
 	children		: &mut Vec<Entity>,
-	meshes			: &mut Assets<Mesh>,
+	mesh_assets		: &mut Assets<Mesh>,
 	commands		: &mut Commands
 ) {
     let cache = mesh_cache.get(&cell_helix.symbol);
@@ -260,13 +260,16 @@ fn update_cell_mesh(
 		let mesh_entity_id = cell_bevy.entity_symbol.unwrap();
 
 		let mesh_handle =
+
+		//generate_glyph_mesh(&cell_helix.symbol, &font2.f, mesh_assets);
+
 		mesh_from_symbol(
 			&cell_helix.symbol,
 			font,
 			SizeUnit::NonStandard(font_size),
 			font_depth,
 			ttf2_mesh_cache,
-			meshes
+			mesh_assets
 		);
 
 		// insert mesh
