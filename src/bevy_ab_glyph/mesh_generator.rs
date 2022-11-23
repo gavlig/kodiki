@@ -38,41 +38,58 @@ pub fn generate_glyph_mesh(
 
 	// handle first point
 	let first_curve = &outline.curves[0];
-	let first_point = match first_curve {
-		OutlineCurve::Line(p0, p1)            => LyonPoint::new(p0.x, p0.y),
-		OutlineCurve::Quad(p0, p1, p2)        => LyonPoint::new(p0.x, p0.y),
-		OutlineCurve::Cubic(p0, p1, p2, p3)   => LyonPoint::new(p0.x, p0.y),
+	let (mut first_point, mut last_point) = match first_curve {
+		OutlineCurve::Line(p0, p1)			=> (p0, p1),
+		OutlineCurve::Quad(p0, _, p2)		=> (p0, p2),
+		OutlineCurve::Cubic(p0, _, _, p3)	=> (p0, p3),
 	};
 
-	path_builder.begin(first_point);
+	path_builder.begin(LyonPoint::new(first_point.x, first_point.y));
 
 	// 
 
-	// let mut i = 0;
-	for curve in outline.curves {
+	for (i, curve) in outline.curves.iter().enumerate() {
 		match curve {
 			// Straight line from `.0` to `.1`.
 			OutlineCurve::Line(p0, p1) => {
-				// println!("[{}] OutlineCurve::Line {:?} {:?}", i, p0, p1);
+				if last_point != p0 && i > 0 {
+					path_builder.end(false);
+					path_builder.begin(LyonPoint::new(p0.x, p0.y));
+				}
+
 				path_builder.line_to(LyonPoint::new(p1.x, p1.y));
+
+				last_point = p1;
 			}
 			// Quadratic Bézier curve from `.0` to `.2` using `.1` as the control.
 			OutlineCurve::Quad(p0, p1, p2) => {
-				// println!("[{}] OutlineCurve::Quad {:?} {:?} {:?}", i, p0, p1, p2);
+				if last_point != p0 && i > 0 {
+					path_builder.end(false);
+					path_builder.begin(LyonPoint::new(p0.x, p0.y));
+				}
+
 				path_builder.quadratic_bezier_to(
 					LyonPoint::new(p1.x, p1.y),
 					LyonPoint::new(p2.x, p2.y)
 				);
+
+				last_point = p2;
 			}
 			// Cubic Bézier curve from `.0` to `.3` using `.1` as the control at the beginning of the
 			// curve and `.2` at the end of the curve.
 			OutlineCurve::Cubic(p0, p1, p2, p3) => {
-				// println!("[{}] OutlineCurve::Cubic {:?} {:?} {:?} {:?}", i, p0, p1, p2, p3);
+				if last_point != p0 && i > 0 {
+					path_builder.end(false);
+					path_builder.begin(LyonPoint::new(p0.x, p0.y));
+				}
+
 				path_builder.cubic_bezier_to(
 					LyonPoint::new(p1.x, p1.y),
 					LyonPoint::new(p2.x, p2.y),
 					LyonPoint::new(p3.x, p3.y)
 				);
+
+				last_point = p3;
 			}
 		}
 
