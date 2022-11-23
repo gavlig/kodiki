@@ -92,8 +92,6 @@ pub fn generate_glyph_mesh(
 				last_point = p3;
 			}
 		}
-
-		// i += 1;
 	}
 
 	path_builder.end(/*close=*/true);
@@ -104,35 +102,20 @@ pub fn generate_glyph_mesh(
 	#[derive(Copy, Clone, Debug)]
 	struct Vertex3D { position: [f32; 3] };
 
-	// VertexAttributeValues::Float32x3
-
 	// Will contain the result of the tessellation.
 	let mut geometry: VertexBuffers<[f32; 3], u16> = VertexBuffers::new();
 	let mut tessellator = FillTessellator::new();
 
 	{
-		// Compute the tessellation.
 		tessellator.tessellate_path(
 			&path,
 			&FillOptions::default(),
 			&mut BuffersBuilder::new(&mut geometry, |vertex: FillVertex| {
 				let pos2d = vertex.position() / 500.;
-				// Vertex3D {
-				// 	position: [ pos2d.x, pos2d.y, 0.0],
-				// }
-
-				println!("pos2d {:?}", pos2d);
-
 				[ pos2d.x, pos2d.y, 0.0 ]
 			}).with_inverted_winding(),
 		).unwrap();
 	}
-
-	// The tessellated geometry is ready to be uploaded to the GPU.
-	// println!(" -- {} vertices {} indices",
-	// 	geometry.vertices.len(),
-	// 	geometry.indices.len()
-	// );
 
 	let normals: Vec<[f32; 3]> = vec![[0.0, 0.0, 1.0]; geometry.vertices.len()];
 
