@@ -124,7 +124,7 @@ pub fn generate_glyph_mesh(
 				println!("pos2d {:?}", pos2d);
 
 				[ pos2d.x, pos2d.y, 0.0 ]
-			}),
+			}).with_inverted_winding(),
 		).unwrap();
 	}
 
