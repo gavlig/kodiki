@@ -1,15 +1,13 @@
 use bevy :: prelude :: { * };
 use bevy :: render :: render_resource :: PrimitiveTopology;
-use bevy :: render :: mesh :: { Indices, Mesh, VertexAttributeValues };
+use bevy :: render :: mesh :: { Indices, Mesh };
 use bevy_mod_picking :: { * };
 
 use bevy_debug_text_overlay	:: { screen_print };
 use bevy_polyline :: prelude :: { * };
 
-use ab_glyph :: { Font, FontVec, OutlineCurve, GlyphId };
+use ab_glyph :: { Font, FontVec, Outline, OutlineCurve };
 
-use lyon :: geom :: { LineSegment };
-use lyon :: path :: traits :: PathBuilder;
 use lyon :: path :: { Path };
 use lyon :: tessellation :: { * };
 
@@ -18,13 +16,11 @@ pub type LyonPoint      = lyon :: math :: Point;
 
 use bevy::render::mesh::shape as render_shape;
 
-pub fn generate_glyph_mesh(
+fn generate_glyph_outline(
 	glyph_str: &String,
-	depth: f32,
-	font: &FontVec,
-) -> Mesh {
-	// println!("generate_glyph_mesh for {} called!", glyph_str);
-
+	font: &FontVec
+) -> Outline
+{
 	let placeholder_glyph_id = font.glyph_id('?');
 
 	let glyph_id = font.glyph_id(glyph_str.chars().next().unwrap());
@@ -38,7 +34,13 @@ pub fn generate_glyph_mesh(
 
 	let outline = outline.unwrap();
 	// println!("got outline with {} curves!", outline.curves.len());
+	outline
+}
 
+fn generate_path_from_outline(
+	outline: Outline
+) -> Path
+{
 	let mut path_builder = Path::builder();
 
 	// handle first point
@@ -101,17 +103,23 @@ pub fn generate_glyph_mesh(
 
 	path_builder.end(/*close=*/true);
 
-	let path = path_builder.build();
+	path_builder.build()
+}
 
+fn generate_vertex_buffer_from_path(
+	path: Path,
+	tolerance: f32
+) -> VertexBuffers<[f32; 3], u16>
+{
 	#[derive(Copy, Clone, Debug)]
 	struct Vertex3D { position: [f32; 3] }
 	let mut geometry: VertexBuffers<[f32; 3], u16> = VertexBuffers::new();
 	let mut tessellator = FillTessellator::new();
 
-	{ // tesselate glyph and get geometry of a front face
+	{ 
 		tessellator.tessellate_path(
 			&path,
-			&FillOptions::tolerance(1.0),
+			&FillOptions::tolerance(tolerance),
 			&mut BuffersBuilder::new(&mut geometry, |vertex: FillVertex| {
 				let pos2d = vertex.position() / 500.;
 				[ pos2d.x, pos2d.y, 0.0 ]
@@ -119,58 +127,57 @@ pub fn generate_glyph_mesh(
 		).unwrap();
 	}
 
-	let mut normals: Vec<[f32; 3]> = vec![[0.0, 0.0, 1.0]; geometry.vertices.len()];
+	geometry
+}
 
-	// Now to "extrude" the said geometry to get a 3d glyph first we need to find the edges that are not adjacent with others. 
-	// Or in other words we need to find the contour edges
+#[derive(Debug, Clone, Copy)]
+struct Edge {
+	pub i0 : u16,
+	pub i1 : u16,
+	pub adjacent : bool,
+}
 
-	#[derive(Debug, Clone, Copy)]
-	struct Edge {
-		pub i0 : u16,
-		pub i1 : u16,
-		pub adjacent : bool,
-	}
-
-	impl Edge {
-		pub fn is_adjacent(&self, tri: &Triangle) -> bool {
-			for e in 0 .. 3 {
-				if (tri.edges[e].i0 == self.i0 && tri.edges[e].i1 == self.i1)
-				|| (tri.edges[e].i0 == self.i1 && tri.edges[e].i1 == self.i0)
-				{
-					return true;
-				}
+impl Edge {
+	pub fn is_adjacent(&self, tri: &Triangle) -> bool {
+		for e in 0 .. 3 {
+			if (tri.edges[e].i0 == self.i0 && tri.edges[e].i1 == self.i1)
+			|| (tri.edges[e].i0 == self.i1 && tri.edges[e].i1 == self.i0)
+			{
+				return true;
 			}
-
-			return false;
 		}
-	}
 
-	#[derive(Debug, Clone, Copy)]
-	struct Triangle {
-		pub edges : [Edge; 3]
+		return false;
 	}
+}
 
-	impl Triangle {
-		pub fn test_and_set_adjacent(&mut self, other_tri: &Triangle) {
-			for e in 0 .. 3 {
-				let mut edge = &mut self.edges[e];
-				if edge.is_adjacent(other_tri) {
-					edge.adjacent = true;
-				}
+#[derive(Debug, Clone, Copy)]
+struct Triangle {
+	pub edges : [Edge; 3]
+}
+
+impl Triangle {
+	pub fn test_and_set_adjacent(&mut self, other_tri: &Triangle) {
+		for e in 0 .. 3 {
+			let mut edge = &mut self.edges[e];
+			if edge.is_adjacent(other_tri) {
+				edge.adjacent = true;
 			}
 		}
 	}
+}
 
-	let vertices_cnt = geometry.vertices.len();
-	let indices_cnt = geometry.indices.len();
-	let triangles_cnt = indices_cnt / 3;
-
-	// collect geometry into triangles with 3 edges to find adjacent edges
+fn collect_triangles_from_vertex_buffer(
+	vertex_buffer: &VertexBuffers<[f32; 3], u16>
+) -> Vec<Triangle>
+{
+	let triangles_cnt = vertex_buffer.indices.len() / 3;
+	
 	let mut triangles : Vec<Triangle> = Vec::with_capacity(triangles_cnt);
 	for iter in 0 .. triangles_cnt {
-		let i0 = geometry.indices[(iter * 3) + 0];
-		let i1 = geometry.indices[(iter * 3) + 1];
-		let i2 = geometry.indices[(iter * 3) + 2];
+		let i0 = vertex_buffer.indices[(iter * 3) + 0];
+		let i1 = vertex_buffer.indices[(iter * 3) + 1];
+		let i2 = vertex_buffer.indices[(iter * 3) + 2];
 
 		let edge0 = Edge { i0: i0, i1: i1, adjacent: false };
 		let edge1 = Edge { i0: i1, i1: i2, adjacent: false };
@@ -192,8 +199,41 @@ pub fn generate_glyph_mesh(
 		}
 	}
 
-	// make back face with inverted winding and normals
-	let mut back_vertices = geometry.vertices.clone();
+	triangles
+}
+
+fn run_triangle_adjacency_tests(
+	triangles : &mut Vec<Triangle>
+)
+{
+	let triangles_cnt = triangles.len();
+
+	// test every trangle against each other to find adjacent edges (adjacent = edges shared between more than 1 triangle)
+	for iter0 in 0 .. triangles_cnt {
+		for iter1 in 0 .. triangles_cnt {
+			if iter0 == iter1 {
+				continue;
+			}
+
+			let tri1 = triangles[iter1].clone();
+			let tri0 = &mut triangles[iter0];
+			
+			tri0.test_and_set_adjacent(&tri1);
+		}
+	}
+}
+
+fn generate_glyph_back_face(
+	depth: f32,
+	vertex_buffer: &mut VertexBuffers<[f32; 3], u16>,
+	normals: &mut Vec<[f32; 3]>
+)
+{
+	let vertices_cnt = vertex_buffer.vertices.len();
+	let indices_cnt = vertex_buffer.indices.len();
+	let triangles_cnt = indices_cnt / 3;
+
+	let mut back_vertices = vertex_buffer.vertices.clone();
 	for v in back_vertices.iter_mut() {
 		// z coordinate gets negative offset of "depth"
 		v[2] -= depth;
@@ -202,32 +242,38 @@ pub fn generate_glyph_mesh(
 	// inverted winding + offset to index over back_vertices
 	let mut back_indices : Vec<u16> = Vec::with_capacity(indices_cnt);
 	for i in 0 .. triangles_cnt {
-		back_indices.push(geometry.indices[i * 3 + 0] + vertices_cnt as u16);
-		back_indices.push(geometry.indices[i * 3 + 2] + vertices_cnt as u16);
-		back_indices.push(geometry.indices[i * 3 + 1] + vertices_cnt as u16);
+		back_indices.push(vertex_buffer.indices[i * 3 + 0] + vertices_cnt as u16);
+		back_indices.push(vertex_buffer.indices[i * 3 + 2] + vertices_cnt as u16);
+		back_indices.push(vertex_buffer.indices[i * 3 + 1] + vertices_cnt as u16);
 	}
 
 	// inverted normals
 	let mut back_normals = normals.clone();
 	for n in back_normals.iter_mut() {
-		// z coordinate gets inverted since it's a backface
+		// only z coordinate gets inverted since since we assume glyph always faces forward as in +z
 		n[2] *= -1.0;
 	}
 
-	geometry.vertices.append(&mut back_vertices);
-	geometry.indices.append(&mut back_indices);
+	// store results back into vertex_buffer
+	vertex_buffer.vertices.append(&mut back_vertices);
+	vertex_buffer.indices.append(&mut back_indices);
 	normals.append(&mut back_normals);
+}
 
-	// make connecting quads
-	for (i, tri) in triangles.iter().enumerate() {
-		println!("{} tri", i);
+fn generate_connecting_quads(
+	triangles: &Vec<Triangle>,
+	vertex_buffer: &mut VertexBuffers<[f32; 3], u16>,
+	normals: &mut Vec<[f32; 3]>,
+)
+{
+	let vertices_cnt = vertex_buffer.vertices.len() / 2; // dividing by two because it is expected that vertex buffer already has geometry for front and back face
+	let backface_offset = vertices_cnt as u16;
 
+	for tri in triangles.iter() {
 		for edge in tri.edges.iter() {
 			if edge.adjacent {
 				continue;
 			}
-
-			let backface_offset = vertices_cnt as u16;
 
 			// add new vertices with same coords but different normals for better shading
 
@@ -236,13 +282,13 @@ pub fn generate_glyph_mesh(
 			let i1 = edge.i0;
 			let i2 = edge.i0 + backface_offset;
 
-			let p0 = geometry.vertices[i0 as usize].clone();
-			let p1 = geometry.vertices[i1 as usize].clone();
-			let p2 = geometry.vertices[i2 as usize].clone();
+			let p0 = vertex_buffer.vertices[i0 as usize].clone();
+			let p1 = vertex_buffer.vertices[i1 as usize].clone();
+			let p2 = vertex_buffer.vertices[i2 as usize].clone();
 
-			let last_geom_id = geometry.vertices.len() as u16;
-			geometry.vertices.extend_from_slice(&[p0, p1, p2]);
-			geometry.indices.extend_from_slice(&[last_geom_id, last_geom_id + 1, last_geom_id + 2]);
+			let last_geom_id = vertex_buffer.vertices.len() as u16;
+			vertex_buffer.vertices.extend_from_slice(&[p0, p1, p2]);
+			vertex_buffer.indices.extend_from_slice(&[last_geom_id, last_geom_id + 1, last_geom_id + 2]);
 
 			let vec0 = (Vec3::from_array(p1) - Vec3::from_array(p0)).normalize();
 			let vec1 = (Vec3::from_array(p2) - Vec3::from_array(p0)).normalize();
@@ -254,13 +300,13 @@ pub fn generate_glyph_mesh(
 			let i4 = edge.i1 + backface_offset;
 			let i5 = edge.i1;
 
-			let p3 = geometry.vertices[i3 as usize].clone();
-			let p4 = geometry.vertices[i4 as usize].clone();
-			let p5 = geometry.vertices[i5 as usize].clone();
+			let p3 = vertex_buffer.vertices[i3 as usize].clone();
+			let p4 = vertex_buffer.vertices[i4 as usize].clone();
+			let p5 = vertex_buffer.vertices[i5 as usize].clone();
 
-			let last_geom_id = geometry.vertices.len() as u16;
-			geometry.vertices.extend_from_slice(&[p3, p4, p5]);
-			geometry.indices.extend_from_slice(&[last_geom_id, last_geom_id + 1, last_geom_id + 2]);
+			let last_geom_id = vertex_buffer.vertices.len() as u16;
+			vertex_buffer.vertices.extend_from_slice(&[p3, p4, p5]);
+			vertex_buffer.indices.extend_from_slice(&[last_geom_id, last_geom_id + 1, last_geom_id + 2]);
 
 			let vec0 = (Vec3::from_array(p4) - Vec3::from_array(p3)).normalize();
 			let vec1 = (Vec3::from_array(p5) - Vec3::from_array(p3)).normalize();
@@ -268,11 +314,43 @@ pub fn generate_glyph_mesh(
 			normals.extend_from_slice(&[normal.into(); 3]);
 		}
 	}
+}
+
+pub fn generate_glyph_mesh(
+	glyph_str: &String,
+	depth: f32,
+	font: &FontVec,
+) -> Mesh {
+	// println!("generate_glyph_mesh for {} called!", glyph_str);
+
+	let glyph_outline		= generate_glyph_outline(glyph_str, font);
+
+	let path				= generate_path_from_outline(glyph_outline);
+
+	// geometry of a glyph's front face
+	let mut vertex_buffer	= generate_vertex_buffer_from_path(path, 1.0);
+
+	let vertices_cnt		= vertex_buffer.vertices.len();
+	let mut normals: Vec<[f32; 3]> = vec![[0.0, 0.0, 1.0]; vertices_cnt];
+
+	// Now to "extrude" the said geometry to get a 3d glyph first we need to find the edges that are not adjacent with others. 
+	// Or in other words we need to find the contour edges
+
+	// collect vertices into triangles with 3 edges to find adjacent edges
+	let mut triangles = collect_triangles_from_vertex_buffer(&vertex_buffer);
+
+	run_triangle_adjacency_tests(&mut triangles);
+
+	// make back face with inverted winding and normals
+	generate_glyph_back_face(depth, &mut vertex_buffer, &mut normals);
+
+	// make connecting quads
+	generate_connecting_quads(&triangles, &mut vertex_buffer, &mut normals);
 
 	let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-	mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, geometry.vertices);
+	mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertex_buffer.vertices);
 	mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
-	mesh.set_indices(Some(Indices::U16(geometry.indices)));
+	mesh.set_indices(Some(Indices::U16(vertex_buffer.indices)));
 
 	mesh
 }
