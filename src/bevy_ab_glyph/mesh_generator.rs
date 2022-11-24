@@ -500,22 +500,6 @@ pub fn generate_glyph_mesh_dbg(
 
 	println!("\n\n");
 
-	for (i, tri) in triangles.iter().enumerate() {
-		println!("{} tri", i);
-
-		for edge in tri.edges.iter() {
-			if edge.adjacent {
-				continue;
-			}
-
-			println!("	edge {:?}", edge);
-
-			let p0 = Vec3::new(geometry.vertices[edge.i0 as usize][0], geometry.vertices[edge.i0 as usize][1], 1.05);
-			let p1 = Vec3::new(geometry.vertices[edge.i1 as usize][0], geometry.vertices[edge.i1 as usize][1], 1.05);
-			spawn_line(0, p0, p1, polylines, polyline_materials, commands);
-		}
-	}
-
 	// make back face with inverted winding and normals
 	let mut back_vertices = geometry.vertices.clone();
 	for v in back_vertices.iter_mut() {
@@ -540,27 +524,31 @@ pub fn generate_glyph_mesh_dbg(
 		n[2] *= -1.0;
 	}
 
-	println!("vertices before: {} indices before: {} normals before: {}", geometry.vertices.len(), geometry.indices.len(), normals.len());
 
 	geometry.vertices.append(&mut back_vertices);
 	geometry.indices.append(&mut back_indices);
 	normals.append(&mut back_normals);
 
-	println!("vertices after: {} indices after: {} normals after: {}", geometry.vertices.len(), geometry.indices.len(), normals.len());
+	// make connecting quads
+	for (i, tri) in triangles.iter().enumerate() {
+		println!("{} tri", i);
 
-	// println!("all vertices:");
-	// for (iter, v) in geometry.vertices.iter().enumerate() {
-	// 	println!("{} {:?}", iter, v);
-	// }
+		for edge in tri.edges.iter() {
+			if edge.adjacent {
+				continue;
+			}
 
-	// println!("all indices:");
-	// for (iter, i) in geometry.indices.iter().enumerate() {
-	// 	println!("{} {}", iter, i);
-	// }
+			let p0 = Vec3::new(geometry.vertices[edge.i0 as usize][0], geometry.vertices[edge.i0 as usize][1], 1.05);
+			let p1 = Vec3::new(geometry.vertices[edge.i1 as usize][0], geometry.vertices[edge.i1 as usize][1], 1.05);
+			spawn_line(0, p0, p1, polylines, polyline_materials, commands);
 
-	// make connecting edges
-
-	// make side triangles off connecting edges
+			let backface_offset = vertices_cnt as u16;
+			// first triangle
+			geometry.indices.extend_from_slice(&[edge.i1, edge.i0, edge.i0 + backface_offset]);
+			// second triangle
+			geometry.indices.extend_from_slice(&[edge.i0 + backface_offset, edge.i1 + backface_offset, edge.i1]);
+		}
+	}
 
 	// for (i, v) in geometry.vertices.iter().enumerate() {
 	// 	spawn_sphere2(i, Vec3::new(v[0], v[1], 1.0), meshes, materials, commands);
