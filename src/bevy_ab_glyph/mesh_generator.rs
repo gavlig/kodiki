@@ -227,16 +227,17 @@ fn spawn_sphere(
 fn spawn_sphere2(
 	i: usize,
 	p: Vec3,
+	color: Color,
 	meshes: &mut Assets<Mesh>,
 	materials: &mut Assets<StandardMaterial>,
 	commands: &mut Commands
 ) {
 	commands.spawn_bundle(
 		PbrBundle {
-			mesh			: meshes.add(Mesh::from(render_shape::UVSphere{ radius: 0.001, ..default() })),
+			mesh			: meshes.add(Mesh::from(render_shape::UVSphere{ radius: 0.005, ..default() })),
 			material		: materials.add(
 			StandardMaterial {
-				base_color	: Color::LIME_GREEN.into(),
+				base_color	: color.into(),
 				// unlit		: true,
 				..default()
 			}),
@@ -297,6 +298,8 @@ pub fn ab_glyph_curve_debug_system(
 pub fn generate_glyph_mesh_dbg(
 	glyph_str: &String,
 	font: &FontVec,
+	depth: f32,
+
 	meshes: &mut Assets<Mesh>,
 	materials: &mut Assets<StandardMaterial>,
 	polylines: &mut Assets<Polyline>,
@@ -402,6 +405,10 @@ pub fn generate_glyph_mesh_dbg(
 		).unwrap();
 	}
 
+	let mut normals: Vec<[f32; 3]> = vec![[0.0, 0.0, 1.0]; geometry.vertices.len()];
+
+	//
+
 	#[derive(Debug, Clone, Copy)]
 	struct Edge {
 		pub i0 : u16,
@@ -444,6 +451,7 @@ pub fn generate_glyph_mesh_dbg(
 		}
 	}
 
+	let vertices_cnt = geometry.vertices.len();
 	let indices_cnt = geometry.indices.len();
 	let triangles_cnt = indices_cnt / 3;
 
@@ -508,11 +516,57 @@ pub fn generate_glyph_mesh_dbg(
 		}
 	}
 
+	// make back face with inverted winding and normals
+	let mut back_vertices = geometry.vertices.clone();
+	for v in back_vertices.iter_mut() {
+		// z coordinate gets negative offset of "depth"
+		v[2] -= depth;
+
+		spawn_sphere2(0, Vec3::new(v[0], v[1], v[2] + 1.0), Color::YELLOW, meshes, materials, commands);
+	}
+
+	// inverted winding + offset to index over back_vertices
+	let mut back_indices : Vec<u16> = Vec::with_capacity(indices_cnt);
+	for i in 0 .. triangles_cnt {
+		back_indices.push(geometry.indices[i * 3 + 0] + vertices_cnt as u16);
+		back_indices.push(geometry.indices[i * 3 + 2] + vertices_cnt as u16);
+		back_indices.push(geometry.indices[i * 3 + 1] + vertices_cnt as u16);
+	}
+
+	// inverted normals
+	let mut back_normals = normals.clone();
+	for n in back_normals.iter_mut() {
+		// z coordinate gets inverted since it's a backface
+		n[2] *= -1.0;
+	}
+
+	println!("vertices before: {} indices before: {} normals before: {}", geometry.vertices.len(), geometry.indices.len(), normals.len());
+
+	geometry.vertices.append(&mut back_vertices);
+	geometry.indices.append(&mut back_indices);
+	normals.append(&mut back_normals);
+
+	println!("vertices after: {} indices after: {} normals after: {}", geometry.vertices.len(), geometry.indices.len(), normals.len());
+
+	// println!("all vertices:");
+	// for (iter, v) in geometry.vertices.iter().enumerate() {
+	// 	println!("{} {:?}", iter, v);
+	// }
+
+	// println!("all indices:");
+	// for (iter, i) in geometry.indices.iter().enumerate() {
+	// 	println!("{} {}", iter, i);
+	// }
+
+	// make connecting edges
+
+	// make side triangles off connecting edges
+
 	// for (i, v) in geometry.vertices.iter().enumerate() {
 	// 	spawn_sphere2(i, Vec3::new(v[0], v[1], 1.0), meshes, materials, commands);
 	// }
 
-	let normals: Vec<[f32; 3]> = vec![[0.0, 0.0, 1.0]; geometry.vertices.len()];
+	
 
 	let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
 	mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, geometry.vertices);
