@@ -543,18 +543,61 @@ pub fn generate_glyph_mesh_dbg(
 			spawn_line(0, p0, p1, polylines, polyline_materials, commands);
 
 			let backface_offset = vertices_cnt as u16;
+
+			// add new vertices with same coords but different normals for better shading
+
 			// first triangle
-			geometry.indices.extend_from_slice(&[edge.i1, edge.i0, edge.i0 + backface_offset]);
+			let i0 = edge.i1;
+			let i1 = edge.i0;
+			let i2 = edge.i0 + backface_offset;
+
+			let p0 = geometry.vertices[i0 as usize].clone();
+			let p1 = geometry.vertices[i1 as usize].clone();
+			let p2 = geometry.vertices[i2 as usize].clone();
+
+			let last_geom_id = geometry.vertices.len() as u16;
+			geometry.vertices.extend_from_slice(&[p0, p1, p2]);
+			geometry.indices.extend_from_slice(&[last_geom_id, last_geom_id + 1, last_geom_id + 2]);
+
+			let vec0 = (Vec3::from_array(p1) - Vec3::from_array(p0)).normalize();
+			let vec1 = (Vec3::from_array(p2) - Vec3::from_array(p0)).normalize();
+			let normal = vec0.cross(vec1).normalize();
+			normals.extend_from_slice(&[normal.into(); 3]);
+
+			let pp = Vec3::from_array(p0) + Vec3::Z;
+			spawn_line(0, pp, pp + normal * 0.03, polylines, polyline_materials, commands);
+
+			// second triange
+			let i3 = edge.i0 + backface_offset;
+			let i4 = edge.i1 + backface_offset;
+			let i5 = edge.i1;
+
+			let p3 = geometry.vertices[i3 as usize].clone();
+			let p4 = geometry.vertices[i4 as usize].clone();
+			let p5 = geometry.vertices[i5 as usize].clone();
+
+			let last_geom_id = geometry.vertices.len() as u16;
+			geometry.vertices.extend_from_slice(&[p3, p4, p5]);
+			geometry.indices.extend_from_slice(&[last_geom_id, last_geom_id + 1, last_geom_id + 2]);
+
+			let vec0 = (Vec3::from_array(p4) - Vec3::from_array(p3)).normalize();
+			let vec1 = (Vec3::from_array(p5) - Vec3::from_array(p3)).normalize();
+			let normal = vec0.cross(vec1).normalize();
+			normals.extend_from_slice(&[normal.into(); 3]);
+
+			let pp = Vec3::from_array(p3) + Vec3::Z;
+			spawn_line(0, pp, pp + normal * 0.03, polylines, polyline_materials, commands);
+
+			// first triangle
+			// geometry.indices.extend_from_slice(&[edge.i1, edge.i0, edge.i0 + backface_offset]);
 			// second triangle
-			geometry.indices.extend_from_slice(&[edge.i0 + backface_offset, edge.i1 + backface_offset, edge.i1]);
+			// geometry.indices.extend_from_slice(&[edge.i0 + backface_offset, edge.i1 + backface_offset, edge.i1]);
 		}
 	}
 
 	// for (i, v) in geometry.vertices.iter().enumerate() {
 	// 	spawn_sphere2(i, Vec3::new(v[0], v[1], 1.0), meshes, materials, commands);
 	// }
-
-	
 
 	let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
 	mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, geometry.vertices);
