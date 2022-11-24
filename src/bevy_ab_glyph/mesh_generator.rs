@@ -21,8 +21,7 @@ use bevy::render::mesh::shape as render_shape;
 pub fn generate_glyph_mesh(
 	glyph_str: &String,
 	font: &FontVec,
-	meshes: &mut Assets<Mesh>,
-) -> Handle<Mesh> {
+) -> Mesh {
 	// println!("generate_glyph_mesh for {} called!", glyph_str);
 
 	let placeholder_glyph_id = font.glyph_id('?');
@@ -43,7 +42,7 @@ pub fn generate_glyph_mesh(
 
 	// handle first point
 	let first_curve = &outline.curves[0];
-	let (mut first_point, mut last_point) = match first_curve {
+	let (first_point, mut last_point) = match first_curve {
 		OutlineCurve::Line(p0, p1)			=> (p0, p1),
 		OutlineCurve::Quad(p0, _, p2)		=> (p0, p2),
 		OutlineCurve::Cubic(p0, _, _, p3)	=> (p0, p3),
@@ -103,23 +102,93 @@ pub fn generate_glyph_mesh(
 
 	let path = path_builder.build();
 
-	// Let's use our own custom vertex type instead of the default one.
 	#[derive(Copy, Clone, Debug)]
-	struct Vertex3D { position: [f32; 3] };
-
-	// Will contain the result of the tessellation.
+	struct Vertex3D { position: [f32; 3] }
 	let mut geometry: VertexBuffers<[f32; 3], u16> = VertexBuffers::new();
 	let mut tessellator = FillTessellator::new();
 
-	{
+	{ // tesselate glyph and get geometry of a front face
 		tessellator.tessellate_path(
 			&path,
-			&FillOptions::default(),
+			&FillOptions::tolerance(1.0),
 			&mut BuffersBuilder::new(&mut geometry, |vertex: FillVertex| {
 				let pos2d = vertex.position() / 500.;
 				[ pos2d.x, pos2d.y, 0.0 ]
 			}).with_inverted_winding(),
 		).unwrap();
+	}
+
+	// Now to "extrude" the said geometry to get a 3d glyph first we need to find the edges that are not adjacent with others. 
+	// Or in other words we need to find the contour edges
+
+	#[derive(Debug, Clone, Copy)]
+	struct Edge {
+		pub i0 : u16,
+		pub i1 : u16,
+		pub adjacent : bool,
+	}
+
+	impl Edge {
+		pub fn is_adjacent(&self, tri: &Triangle) -> bool {
+			for e in 0 .. 3 {
+				if (tri.edges[e].i0 == self.i0 && tri.edges[e].i1 == self.i1)
+				|| (tri.edges[e].i0 == self.i1 && tri.edges[e].i1 == self.i0)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+	}
+
+	#[derive(Debug, Clone, Copy)]
+	struct Triangle {
+		pub edges : [Edge; 3]
+	}
+
+	impl Triangle {
+		pub fn test_and_set_adjacent(&mut self, other_tri: &Triangle) {
+			for e in 0 .. 3 {
+				let mut edge = &mut self.edges[e];
+				if edge.is_adjacent(other_tri) {
+					edge.adjacent = true;
+				}
+			}
+		}
+	}
+
+	let indices_cnt = geometry.indices.len();
+	let triangles_cnt = indices_cnt / 3;
+
+	// collect geometry into triangles with 3 edges to find adjacent edges
+	let mut triangles : Vec<Triangle> = Vec::with_capacity(triangles_cnt);
+	for iter in 0 .. triangles_cnt {
+		let i0 = geometry.indices[(iter * 3) + 0];
+		let i1 = geometry.indices[(iter * 3) + 1];
+		let i2 = geometry.indices[(iter * 3) + 2];
+
+		let edge0 = Edge { i0: i0, i1: i1, adjacent: false };
+		let edge1 = Edge { i0: i1, i1: i2, adjacent: false };
+		let edge2 = Edge { i0: i2, i1: i0, adjacent: false };
+
+		let mut new_tri = Triangle { edges: [edge0, edge1, edge2] };
+
+		triangles.push(new_tri);
+	}
+
+	// Go over all triangles and compare their edges. Edges found in both triangles are going to be marked adjacent
+	for iter0 in 0 .. triangles_cnt {
+		for iter1 in 0 .. triangles_cnt {
+			if iter0 == iter1 {
+				continue;
+			}
+
+			let tri1 = triangles[iter1].clone();
+			let tri0 = &mut triangles[iter0];
+			
+			tri0.test_and_set_adjacent(&tri1);
+		}
 	}
 
 	let normals: Vec<[f32; 3]> = vec![[0.0, 0.0, 1.0]; geometry.vertices.len()];
@@ -129,7 +198,7 @@ pub fn generate_glyph_mesh(
 	mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
 	mesh.set_indices(Some(Indices::U16(geometry.indices)));
 
-	meshes.add(mesh)
+	mesh
 }
 
 fn spawn_sphere(
@@ -215,7 +284,7 @@ pub fn ab_glyph_curve_debug_system(
     if q_hover.is_empty() {
         return;
     }
-
+	
     for (hover, dbg) in q_hover.iter() {
         if !hover.hovered() {
 			continue;
@@ -333,6 +402,7 @@ pub fn generate_glyph_mesh_dbg(
 		).unwrap();
 	}
 
+	#[derive(Debug, Clone, Copy)]
 	struct Edge {
 		pub i0 : u16,
 		pub i1 : u16,
@@ -353,8 +423,25 @@ pub fn generate_glyph_mesh_dbg(
 		}
 	}
 
+	#[derive(Debug, Clone, Copy)]
 	struct Triangle {
 		pub edges : [Edge; 3]
+	}
+
+	impl Triangle {
+		pub fn test_and_set_adjacent(&mut self, other_tri: &Triangle) {
+			for e in 0 .. 3 {
+				let mut edge = &mut self.edges[e];
+				if edge.is_adjacent(other_tri) {
+					edge.adjacent = true;
+
+					// println!("tri {} found adjacent edge {} ", iter, e);
+					// let p0 = Vec3::new(geometry.vertices[edge.i0 as usize][0], geometry.vertices[edge.i0 as usize][1], 1.0);
+					// let p1 = Vec3::new(geometry.vertices[edge.i1 as usize][0], geometry.vertices[edge.i1 as usize][1], 1.0);
+					// spawn_line(0, p0, p1, polylines, polyline_materials, commands);
+				}
+			}
+		}
 	}
 
 	let indices_cnt = geometry.indices.len();
@@ -386,28 +473,34 @@ pub fn generate_glyph_mesh_dbg(
 		
 		let mut new_tri = Triangle { edges: [edge0, edge1, edge2] };
 
-		for iter_inner in 0 .. iter {
-			let tri = &triangles[iter_inner];
-			for e in 0 .. 3 {
-				let mut edge = &mut new_tri.edges[e];
-				if edge.is_adjacent(tri) {
-					edge.adjacent = true;
-
-					// let p0 = Vec3::new(geometry.vertices[edge.i0 as usize][0], geometry.vertices[edge.i0 as usize][1], 1.0);
-					// let p1 = Vec3::new(geometry.vertices[edge.i1 as usize][0], geometry.vertices[edge.i1 as usize][1], 1.0);
-					// spawn_line(0, p0, p1, polylines, polyline_materials, commands);
-				}
-			}
-		}
-
+		println!("pushing tri {} {:?}", iter, new_tri);
 		triangles.push(new_tri);
 	}
 
-	for tri in triangles.iter() {
+	for iter0 in 0 .. triangles_cnt {
+		for iter1 in 0 .. triangles_cnt {
+			if iter0 == iter1 {
+				continue;
+			}
+
+			let tri1 = triangles[iter1].clone();
+			let tri0 = &mut triangles[iter0];
+			
+			tri0.test_and_set_adjacent(&tri1);
+		}
+	}
+
+	println!("\n\n");
+
+	for (i, tri) in triangles.iter().enumerate() {
+		println!("{} tri", i);
+
 		for edge in tri.edges.iter() {
 			if edge.adjacent {
 				continue;
 			}
+
+			println!("	edge {:?}", edge);
 
 			let p0 = Vec3::new(geometry.vertices[edge.i0 as usize][0], geometry.vertices[edge.i0 as usize][1], 1.05);
 			let p1 = Vec3::new(geometry.vertices[edge.i1 as usize][0], geometry.vertices[edge.i1 as usize][1], 1.05);
