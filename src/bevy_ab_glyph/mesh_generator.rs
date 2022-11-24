@@ -20,6 +20,7 @@ use bevy::render::mesh::shape as render_shape;
 
 pub fn generate_glyph_mesh(
 	glyph_str: &String,
+	depth: f32,
 	font: &FontVec,
 ) -> Mesh {
 	// println!("generate_glyph_mesh for {} called!", glyph_str);
@@ -118,6 +119,8 @@ pub fn generate_glyph_mesh(
 		).unwrap();
 	}
 
+	let mut normals: Vec<[f32; 3]> = vec![[0.0, 0.0, 1.0]; geometry.vertices.len()];
+
 	// Now to "extrude" the said geometry to get a 3d glyph first we need to find the edges that are not adjacent with others. 
 	// Or in other words we need to find the contour edges
 
@@ -158,6 +161,7 @@ pub fn generate_glyph_mesh(
 		}
 	}
 
+	let vertices_cnt = geometry.vertices.len();
 	let indices_cnt = geometry.indices.len();
 	let triangles_cnt = indices_cnt / 3;
 
@@ -172,12 +176,9 @@ pub fn generate_glyph_mesh(
 		let edge1 = Edge { i0: i1, i1: i2, adjacent: false };
 		let edge2 = Edge { i0: i2, i1: i0, adjacent: false };
 
-		let mut new_tri = Triangle { edges: [edge0, edge1, edge2] };
-
-		triangles.push(new_tri);
+		triangles.push(Triangle { edges: [edge0, edge1, edge2] });
 	}
 
-	// Go over all triangles and compare their edges. Edges found in both triangles are going to be marked adjacent
 	for iter0 in 0 .. triangles_cnt {
 		for iter1 in 0 .. triangles_cnt {
 			if iter0 == iter1 {
@@ -191,7 +192,82 @@ pub fn generate_glyph_mesh(
 		}
 	}
 
-	let normals: Vec<[f32; 3]> = vec![[0.0, 0.0, 1.0]; geometry.vertices.len()];
+	// make back face with inverted winding and normals
+	let mut back_vertices = geometry.vertices.clone();
+	for v in back_vertices.iter_mut() {
+		// z coordinate gets negative offset of "depth"
+		v[2] -= depth;
+	}
+
+	// inverted winding + offset to index over back_vertices
+	let mut back_indices : Vec<u16> = Vec::with_capacity(indices_cnt);
+	for i in 0 .. triangles_cnt {
+		back_indices.push(geometry.indices[i * 3 + 0] + vertices_cnt as u16);
+		back_indices.push(geometry.indices[i * 3 + 2] + vertices_cnt as u16);
+		back_indices.push(geometry.indices[i * 3 + 1] + vertices_cnt as u16);
+	}
+
+	// inverted normals
+	let mut back_normals = normals.clone();
+	for n in back_normals.iter_mut() {
+		// z coordinate gets inverted since it's a backface
+		n[2] *= -1.0;
+	}
+
+	geometry.vertices.append(&mut back_vertices);
+	geometry.indices.append(&mut back_indices);
+	normals.append(&mut back_normals);
+
+	// make connecting quads
+	for (i, tri) in triangles.iter().enumerate() {
+		println!("{} tri", i);
+
+		for edge in tri.edges.iter() {
+			if edge.adjacent {
+				continue;
+			}
+
+			let backface_offset = vertices_cnt as u16;
+
+			// add new vertices with same coords but different normals for better shading
+
+			// first triangle
+			let i0 = edge.i1;
+			let i1 = edge.i0;
+			let i2 = edge.i0 + backface_offset;
+
+			let p0 = geometry.vertices[i0 as usize].clone();
+			let p1 = geometry.vertices[i1 as usize].clone();
+			let p2 = geometry.vertices[i2 as usize].clone();
+
+			let last_geom_id = geometry.vertices.len() as u16;
+			geometry.vertices.extend_from_slice(&[p0, p1, p2]);
+			geometry.indices.extend_from_slice(&[last_geom_id, last_geom_id + 1, last_geom_id + 2]);
+
+			let vec0 = (Vec3::from_array(p1) - Vec3::from_array(p0)).normalize();
+			let vec1 = (Vec3::from_array(p2) - Vec3::from_array(p0)).normalize();
+			let normal = vec0.cross(vec1).normalize();
+			normals.extend_from_slice(&[normal.into(); 3]);
+
+			// second triange
+			let i3 = edge.i0 + backface_offset;
+			let i4 = edge.i1 + backface_offset;
+			let i5 = edge.i1;
+
+			let p3 = geometry.vertices[i3 as usize].clone();
+			let p4 = geometry.vertices[i4 as usize].clone();
+			let p5 = geometry.vertices[i5 as usize].clone();
+
+			let last_geom_id = geometry.vertices.len() as u16;
+			geometry.vertices.extend_from_slice(&[p3, p4, p5]);
+			geometry.indices.extend_from_slice(&[last_geom_id, last_geom_id + 1, last_geom_id + 2]);
+
+			let vec0 = (Vec3::from_array(p4) - Vec3::from_array(p3)).normalize();
+			let vec1 = (Vec3::from_array(p5) - Vec3::from_array(p3)).normalize();
+			let normal = vec0.cross(vec1).normalize();
+			normals.extend_from_slice(&[normal.into(); 3]);
+		}
+	}
 
 	let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
 	mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, geometry.vertices);
@@ -584,7 +660,7 @@ pub fn generate_glyph_mesh_dbg(
 			let vec1 = (Vec3::from_array(p5) - Vec3::from_array(p3)).normalize();
 			let normal = vec0.cross(vec1).normalize();
 			normals.extend_from_slice(&[normal.into(); 3]);
-
+			
 			let pp = Vec3::from_array(p3) + Vec3::Z;
 			spawn_line(0, pp, pp + normal * 0.03, polylines, polyline_materials, commands);
 
