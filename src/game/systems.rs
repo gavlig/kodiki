@@ -5,18 +5,22 @@ use bevy_fly_camera	:: { * };
 use bevy_mod_picking:: { * };
 use iyes_loopless	:: { prelude :: * };
 use bevy_shadertoy_wgsl :: { * };
+
 use bevy_debug_text_overlay :: { screen_print };
+use bevy_polyline	:: prelude :: { * };
+
+use crate			:: bevy_ab_glyph :: ABGlyphFont;
+use crate			:: bevy_ab_glyph :: mesh_generator::{  generate_glyph_mesh_dbg, generate_glyph_mesh};
 
 use super			:: spawn :: WorldAxisDesc;
 use super           :: { * };
 use crate			:: { text };
-use crate			:: {  };
 use crate			:: { bevy_helix };
 use crate			:: { bevy_helix :: SurfacesMapBevy };
 use crate			:: { bevy_helix :: SurfaceBevy };
 use crate			:: { bevy_helix :: editor :: EditorViewBevy };
-use crate           :: { bevy_helix :: TextCache };
 use crate           :: { bevy_helix :: HelixColorsCache };
+use crate           :: { bevy_ab_glyph :: TextMeshesCache };
 
 use helix_term	:: compositor	:: SurfacesMap	as SurfacesMapHelix;
 use helix_tui   :: buffer 		:: Buffer		as SurfaceHelix;
@@ -24,14 +28,18 @@ use helix_tui   :: buffer 		:: Buffer		as SurfaceHelix;
 pub fn setup_world_system(
 	mut surfaces_helix	: ResMut<SurfacesMapHelix>,
 	mut surfaces_bevy	: ResMut<SurfacesMapBevy>,
-    mut mesh_cache  : ResMut<TextCache>,
+    mut mesh_cache  : ResMut<TextMeshesCache>,
     mut helix_colors_cache : ResMut<HelixColorsCache>,
-	mut	mesh_assets	: ResMut<Assets<Mesh>>,
-	mut	material_assets : ResMut<Assets<StandardMaterial>>,
 		font_handles: Res<FontAssetHandles>,
-	mut fonts		: ResMut<Assets<TextMeshFont>>,
+	mut fonts		: ResMut<Assets<ABGlyphFont>>,
 	mut camera_ids	: ResMut<CameraIDs>,
 		ass			: Res<AssetServer>,
+
+	mut	mesh_assets	: ResMut<Assets<Mesh>>,
+	mut	material_assets : ResMut<Assets<StandardMaterial>>,
+
+	mut	polylines	: ResMut<Assets<Polyline>>,
+	mut	polyline_materials: ResMut<Assets<PolylineMaterial>>,
 
 	mut commands	: Commands,
 ) {
@@ -41,15 +49,15 @@ pub fn setup_world_system(
 
 	spawn::fixed_sphere	(Transform::identity(), 0.02, Color::SEA_GREEN, &mut mesh_assets, &mut material_assets, &mut commands);
 
-	let font_handle = &font_handles.share_tech;
-
 	// without font we can't go further
+	let font_handle = &font_handles.ubuntu_mono;
 	let font		= fonts.get_mut(font_handle).unwrap();
 	
 	let mut pos		= Vec3::new(0.0, 0.0, 0.0);
 
 	for (layer_name, surface_helix) in surfaces_helix.iter() {
 		if surfaces_bevy.contains_key(layer_name) {
+			println!("setup_world_system: not creating surface {} because it already exists!", layer_name);
 			continue;
 		}
 
@@ -58,12 +66,16 @@ pub fn setup_world_system(
 		let layer_entity =
 		bevy_helix::spawn::surface(
 			layer_name,
+			pos,
+
 			&surface_helix,
 			&mut surface_bevy,
-			&mut font.ttf_font,
-			pos,
-            &mut mesh_cache.meshes,
-            &mut helix_colors_cache.materials,
+
+			&font,
+
+            &mut mesh_cache,
+            &mut helix_colors_cache,
+
             mesh_assets.as_mut(),
             material_assets.as_mut(),
 			&mut commands
@@ -88,7 +100,7 @@ pub fn setup_world_system(
 	// );
 
 	spawn::camera(
-		surface_bevy_editor.entity.unwrap(),
+		None,//surface_bevy_editor.entity,
 		&mut camera_ids,
 		&mut commands
 	);
@@ -123,6 +135,24 @@ pub fn setup_world_system(
 	// );
 
 	commands.insert_resource(NextState(AppMode::Main));
+
+
+	//
+	//
+	//
+
+	// // let glyph_mesh_handle = generate_glyph_mesh_dbg(&String::from("b"), &font2.f, 0.05, &mut mesh_assets, &mut material_assets, &mut polylines, &mut polyline_materials, &mut commands);
+	// let glyph_mesh = generate_glyph_mesh(&String::from("N"), 0.2, 0.01, 1.0, &font2.f);
+	// let glyph_mesh_handle = mesh_assets.add(glyph_mesh);
+
+	// commands
+	// 	.spawn			()
+	// 	.insert_bundle	(PbrBundle {
+	// 		mesh		: glyph_mesh_handle,
+	// 		material	: material_assets.add(Color::rgb(0.8, 0.8, 0.8).into()),
+	// 		transform	: Transform::from_xyz(-1.0, 0.0, 0.0),
+	// 		..default()
+	// 	});
 }
 
 pub fn setup_lighting_system(
@@ -289,9 +319,9 @@ pub fn input_system(
 		// 	camera.enabled_reader = toggle;
 		// }
 
-		camera.enabled_reader = !key.pressed(KeyCode::LAlt);
+		//camera.enabled_reader = !key.pressed(KeyCode::LAlt);
 
-		camera.enabled_rotation = true;
+		// camera.enabled_rotation = true;
 		camera.enabled_zoom = true;
 
 		if camera.enabled_reader {
@@ -318,6 +348,7 @@ pub fn input_system(
 
 		if key.just_released(KeyCode::Escape) {
 			camera.enabled_translation = !mouse_state.visible; // 
+			camera.enabled_rotation = !mouse_state.visible;
 		}
 	}
 }
@@ -368,7 +399,7 @@ pub fn load_assets(
 
 pub fn asset_loading_events(
 	mut font_handles	: ResMut<FontAssetHandles>,
-	mut ev_asset		: EventReader<AssetEvent<TextMeshFont>>,
+	mut ev_asset		: EventReader<AssetEvent<ABGlyphFont>>,
 	mut commands		: Commands
 ) {
 	for ev in ev_asset.iter() {
@@ -385,6 +416,10 @@ pub fn asset_loading_events(
 
 				if font_handles.source_code_pro == *handle {
 					println!("source_code_pro loaded!");
+				}
+
+				if font_handles.ubuntu_mono == *handle {
+					println!("ubuntu_mono loaded!");
 				}
             }
             AssetEvent::Modified { handle: _ } => {

@@ -9,7 +9,7 @@ use bevy::render::mesh::shape as render_shape;
 use super				:: { * };
 
 pub fn camera(
-	root_entity			: Entity,
+	root_entity			: Option<Entity>,
 	camera_ids			: &mut ResMut<CameraIDs>,
 	commands			: &mut Commands
 ) {
@@ -39,7 +39,7 @@ pub fn camera(
 				pitch			: 0.0,
 				enabled_follow	: false,
 				max_speed		: 0.07,
-				target			: Some(root_entity),
+				target			: root_entity,
 				..default()
 			}
 		)

@@ -4,9 +4,12 @@
 use bevy			::  prelude :: *;
 use bevy :: window 	:: { PresentMode, WindowMode };
 use bevy_fly_camera	:: { FlyCameraPlugin };
-use bevy_text_mesh	:: prelude :: { * };
 use bevy_shadertoy_wgsl	:: { * };
+use bevy_mod_picking :: { * };
+
 use bevy_debug_text_overlay	:: { OverlayPlugin, screen_print };
+use bevy_polyline	:: { * };
+
 
 // use bevy_infinite_grid :: { InfiniteGridPlugin };
 
@@ -37,9 +40,11 @@ fn main() {
         .add_plugin(BevyHelixPlugin)
 
 		.add_plugin(FlyCameraPlugin)
-		.add_plugin(TextMeshPlugin)
 		.add_plugin(ShadertoyPlugin)
+		.add_plugins(DefaultPickingPlugins)
+
 		.add_plugin(OverlayPlugin { font_size: 16.0, fallback_color: Color::rgb(0.8, 0.8, 0.8), ..default() })
+		.add_plugin(PolylinePlugin)
 
 		// .add_plugin(InfiniteGridPlugin)
 

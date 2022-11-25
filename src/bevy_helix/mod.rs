@@ -31,7 +31,7 @@ pub struct CursorBevy {
 // representation of helix_tui::buffer::Cell in Bevy
 #[derive(Debug, Clone, PartialEq)]
 pub struct CellBevy {
-    pub entity_symbol : Option<Entity>,
+    pub symbol_entity : Option<Entity>,
     pub entity_bg_quad : Option<Entity>,
     pub symbol  : String,
     pub fg      : helix_view::graphics::Color,
@@ -44,7 +44,7 @@ pub struct CellBevy {
 impl Default for CellBevy {
     fn default() -> Self {
         Self {
-            entity_symbol : None,
+            symbol_entity : None,
             entity_bg_quad : None,
             symbol  : " ".into(),
             fg      : helix_view::graphics::Color::Reset,
@@ -83,14 +83,7 @@ impl SurfaceBevy {
 
 pub type SurfacesMapBevy = HashMap<String, SurfaceBevy>;
 
-pub type MeshesMap = HashMap<String, Handle<Mesh>>;
-
 pub type MaterialsMap = HashMap<String, Handle<StandardMaterial>>;
-
-#[derive(Default)]
-pub struct TextCache {
-    pub meshes: MeshesMap,
-}
 
 #[derive(Default)]
 pub struct HelixColorsCache {
@@ -129,7 +122,6 @@ impl Plugin for BevyHelixPlugin {
 	fn build(&self, app: &mut App) {
         app
             .insert_resource(CursorBevy::default())
-            .insert_resource(TextCache::default())
             .insert_resource(HelixColorsCache::default())
             .insert_resource(SurfacesMapHelix::default())
 
@@ -138,7 +130,7 @@ impl Plugin for BevyHelixPlugin {
 				ConditionSet::new()
 				.run_in_state(AppMode::Main)
 				.with_system(systems::render)
-				.with_system(systems::input)
+				// .with_system(systems::input)
 				.into()
 			)
  			;

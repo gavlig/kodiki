@@ -16,6 +16,8 @@ pub type LyonPoint      = lyon :: math :: Point;
 
 use bevy::render::mesh::shape as render_shape;
 
+use super :: TextMeshesCache;
+
 fn generate_glyph_outline(
 	glyph_str: &String,
 	font: &FontVec
@@ -320,17 +322,16 @@ fn generate_connecting_quads(
 
 pub fn generate_glyph_mesh(
 	glyph_str	: &String,
-	size		: f32,
 	depth		: f32,
 	tolerance	: f32,
-	font		: &FontVec,
+	font		: &FontVec
 ) -> Mesh {
 	let glyph_outline		= generate_glyph_outline(glyph_str, font);
 	let path				= generate_path_from_outline(glyph_outline);
 
 	// geometry of a glyph's front face
-	let scale				= size / font.units_per_em().unwrap(); //font.pt_to_px_scale(pt_size).unwrap().x / font.height_unscaled(); // we use only uniform scale for now + dividing by height since resulting scale is relative to it
-	let mut vertex_buffer	= generate_vertex_buffer_from_path(path, scale, tolerance);
+	let unit_scale			= 1.0 / font.units_per_em().unwrap();
+	let mut vertex_buffer	= generate_vertex_buffer_from_path(path, unit_scale, tolerance);
 	let vertices_cnt		= vertex_buffer.vertices.len();
 	let mut normals: Vec<[f32; 3]> = vec![[0.0, 0.0, 1.0]; vertices_cnt];
 
@@ -355,6 +356,26 @@ pub fn generate_glyph_mesh(
 	mesh.set_indices(Some(Indices::U16(vertex_buffer.indices)));
 
 	mesh
+}
+
+pub fn generate_glyph_mesh_wcache(
+	glyph_str	: &String,
+	depth		: f32,
+	tolerance	: f32,
+	font		: &FontVec,
+	mesh_assets	: &mut Assets<Mesh>,
+	text_cache	: &mut TextMeshesCache
+) -> Handle<Mesh>
+{
+	let cache 	= text_cache.meshes.get(glyph_str);
+
+	return if let Some(cache) = cache {
+		cache.clone_weak()
+	} else {
+		mesh_assets.add(
+			generate_glyph_mesh(glyph_str, depth, tolerance, font)
+		)
+	}
 }
 
 fn spawn_sphere(

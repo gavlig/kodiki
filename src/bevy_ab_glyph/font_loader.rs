@@ -1,6 +1,6 @@
 use bevy :: asset :: { AssetLoader, BoxedFuture, LoadContext, LoadedAsset };
 
-use ab_glyph :: { FontVec, Font };
+use ab_glyph :: { FontVec };
 
 use super :: ABGlyphFont;
 
@@ -15,8 +15,13 @@ impl AssetLoader for FontLoader {
     ) -> BoxedFuture<'a, anyhow::Result<()>> {
         Box::pin(async move {
             let f = FontVec::try_from_vec(bytes.to_vec())?;
-            let font = ABGlyphFont { f };
-            
+            let font = ABGlyphFont {
+                f,
+                scale:      0.5,
+			    depth:      0.01,
+			    tolerance:  1.0,
+            };
+
             load_context.set_default_asset(LoadedAsset::new(font));
 
             Ok(())
@@ -24,6 +29,6 @@ impl AssetLoader for FontLoader {
     }
 
     fn extensions(&self) -> &[&str] {
-        &["otf"]
+        &["otf", "ttf"]
     }
 }

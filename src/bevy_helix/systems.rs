@@ -8,7 +8,6 @@ use bevy_debug_text_overlay :: screen_print;
 use super :: SurfaceBevy;
 use super :: SurfacesMapBevy;
 use super :: CursorBevy;
-use super :: TextCache;
 use super :: HelixColorsCache;
 use super :: application :: Application;
 use super :: render;
@@ -18,6 +17,7 @@ use crate :: game :: DespawnResource;
 use crate :: game :: FontAssetHandles;
 
 use crate :: bevy_ab_glyph :: ABGlyphFont;
+use crate :: bevy_ab_glyph :: TextMeshesCache;
 
 use helix_term  :: config		:: Config;
 use helix_term  :: args			:: Args;
@@ -117,17 +117,16 @@ async fn startup_impl(area: Rect) -> Result<Application, Error> {
 pub fn render(
 	mut surfaces_helix	: ResMut<SurfacesMapHelix>,
 	mut surfaces_bevy	: ResMut<SurfacesMapBevy>,
-	mut fonts           : ResMut<Assets<TextMeshFont>>,
-		fonts2			: Res<Assets<ABGlyphFont>>,
+		fonts			: Res<Assets<ABGlyphFont>>,
 		font_handles    : Res<FontAssetHandles>,
 	mut	cursor          : ResMut<CursorBevy>,
 	mut	q_cursor_transform : Query<&mut Transform>,
 		app             : Option<NonSendMut<Application>>,
 		time			: Res<Time>,
 
-	(mut ttf2_mesh_cache, mut mesh_cache, mut helix_colors_cache) 
+	(mut mesh_cache, mut helix_colors_cache) 
 	:
-	(ResMut<TTF2MeshCache>, ResMut<TextCache>, ResMut<HelixColorsCache>),
+	(ResMut<TextMeshesCache>, ResMut<HelixColorsCache>),
 
 	mut mesh_assets		: ResMut<Assets<Mesh>>,
 	mut material_assets	: ResMut<Assets<StandardMaterial>>,
@@ -138,6 +137,11 @@ pub fn render(
 		return;
 	}
 
+	// will make sure we run this function only once
+	// if surfaces_bevy.len() > 1 {
+	//  	return;
+	// }
+
 	let mut app = app.unwrap();
 
 	let editor_area = app.area;
@@ -147,7 +151,7 @@ pub fn render(
 		surface.reset();
 	}
 
-	let old_style = false;
+	let old_style = true;
 
 	// first let helix render into surface_helix
 	if old_style {
@@ -181,13 +185,10 @@ pub fn render(
 	}
 	screen_print!("\n{}", surface_names_str);
 
-	let font_handle = &font_handles.share_tech;
-	let font		= fonts.get_mut(font_handle).unwrap();
+	let font_handle = &font_handles.ubuntu_mono;
+	let font		= fonts.get(font_handle).unwrap();
 
-	let font_handle2 = &font_handles.ubuntu_mono;
-	let font2		= fonts2.get(font_handle2).unwrap();
-
-	let mut pos		= Vec3::new(0.0, 0.0, 0.5);
+	let pos			= Vec3::new(0.0, 0.0, 0.5);
 	
 	{ // clean up unused surfaces
 		let mut to_remove = Vec::<String>::default();
@@ -232,12 +233,16 @@ pub fn render(
 		let layer_entity =
 		super::spawn::surface(
 			layer_name,
+			pos,
+
 			&surface_helix,
 			&mut surface_bevy,
-			&mut font.ttf_font,
-			pos,
-			&mut mesh_cache.meshes,
-			&mut helix_colors_cache.materials,
+
+			&font,
+			
+			&mut mesh_cache,
+			&mut helix_colors_cache,
+			
 			mesh_assets.as_mut(),
 			material_assets.as_mut(),
 			&mut commands
@@ -249,25 +254,22 @@ pub fn render(
 		println!("new bevy surface created: {}", layer_name);
 	}
 	
-	pos.z = 0.0;
-
 	// render surfaces
 	for (layer_name, surface_helix) in surfaces_helix.iter_mut() {
 		let surface_bevy = surfaces_bevy.get_mut(layer_name).unwrap();
 
 		render::surface(
-			pos,
 			surface_helix,
 			surface_bevy,
 			cursor.as_ref(),
-			&mut font.ttf_font,
-			&font2,
-			&mut ttf2_mesh_cache,
-			&mut mesh_cache.meshes,
-			&mut helix_colors_cache.materials,
+
+			&font,
+
+			&mut mesh_cache,
+			&mut helix_colors_cache,
+
 			&mut mesh_assets,
 			&mut material_assets,
-			despawn.as_mut(),
 			&mut commands
 		);
 		
@@ -284,19 +286,19 @@ pub fn render(
 
 	{ // render cursor
 		let surface_bevy_editor = surfaces_bevy.get(&String::from(EditorViewBevy::ID)).unwrap();
-		render::cursor(
-			pos,
-			surface_bevy_editor,
-			&mut font.ttf_font,
-			cursor.as_mut(),
-			&mut q_cursor_transform,
-			&time,
-			&app.editor.theme,
-			&mut helix_colors_cache.materials,
-			&mut material_assets,
-			&mut mesh_assets,
-			&mut commands
-		);
+		// render::cursor(
+		// 	pos,
+		// 	surface_bevy_editor,
+		// 	&mut font.ttf_font,
+		// 	cursor.as_mut(),
+		// 	&mut q_cursor_transform,
+		// 	&time,
+		// 	&app.editor.theme,
+		// 	&mut helix_colors_cache.materials,
+		// 	&mut material_assets,
+		// 	&mut mesh_assets,
+		// 	&mut commands
+		// );
 	}
 }
 
@@ -322,75 +324,76 @@ pub async fn input(
 
 		let helix_keycode =
 		match e.key_code.unwrap() {
-			KeyCode::Back => KeyCodeHelix::Backspace,
-			KeyCode::Return => KeyCodeHelix::Enter,
-			KeyCode::Left => KeyCodeHelix::Left,
-			KeyCode::Right => KeyCodeHelix::Right,
-			KeyCode::Up => KeyCodeHelix::Up,
-			KeyCode::Down => KeyCodeHelix::Down,
-			KeyCode::Home => KeyCodeHelix::Home,
-			KeyCode::End => KeyCodeHelix::End,
-			KeyCode::PageUp => KeyCodeHelix::PageUp,
-			KeyCode::PageDown => KeyCodeHelix::PageDown,
-			KeyCode::Tab => KeyCodeHelix::Tab,
-			KeyCode::Delete => KeyCodeHelix::Delete,
-			KeyCode::Insert => KeyCodeHelix::Insert,
-			KeyCode::Escape => KeyCodeHelix::Esc,
+			KeyCode::Back		=> KeyCodeHelix::Backspace,
+			KeyCode::Return		=> KeyCodeHelix::Enter,
+			KeyCode::Left		=> KeyCodeHelix::Left,
+			KeyCode::Right		=> KeyCodeHelix::Right,
+			KeyCode::Up			=> KeyCodeHelix::Up,
+			KeyCode::Down		=> KeyCodeHelix::Down,
+			KeyCode::Home		=> KeyCodeHelix::Home,
+			KeyCode::End		=> KeyCodeHelix::End,
+			KeyCode::PageUp		=> KeyCodeHelix::PageUp,
+			KeyCode::PageDown	=> KeyCodeHelix::PageDown,
+			KeyCode::Tab		=> KeyCodeHelix::Tab,
+			KeyCode::Delete		=> KeyCodeHelix::Delete,
+			KeyCode::Insert		=> KeyCodeHelix::Insert,
+			KeyCode::Escape		=> KeyCodeHelix::Esc,
 
-			KeyCode::Space => KeyCodeHelix::Char(' '),
-			KeyCode::Underline => KeyCodeHelix::Char('_'),
+			KeyCode::Space		=> KeyCodeHelix::Char(' '),
+			KeyCode::Underline	=> KeyCodeHelix::Char('_'),
 
-			KeyCode::Key0 => KeyCodeHelix::Char('0'),
-			KeyCode::Key1 => KeyCodeHelix::Char('1'),
-			KeyCode::Key2 => KeyCodeHelix::Char('2'),
-			KeyCode::Key3 => KeyCodeHelix::Char('3'),
-			KeyCode::Key4 => KeyCodeHelix::Char('4'),
-			KeyCode::Key5 => KeyCodeHelix::Char('5'),
-			KeyCode::Key6 => KeyCodeHelix::Char('6'),
-			KeyCode::Key7 => KeyCodeHelix::Char('7'),
-			KeyCode::Key8 => KeyCodeHelix::Char('8'),
-			KeyCode::Key9 => KeyCodeHelix::Char('9'),
+			KeyCode::Key0		=> KeyCodeHelix::Char('0'),
+			KeyCode::Key1		=> KeyCodeHelix::Char('1'),
+			KeyCode::Key2		=> KeyCodeHelix::Char('2'),
+			KeyCode::Key3		=> KeyCodeHelix::Char('3'),
+			KeyCode::Key4		=> KeyCodeHelix::Char('4'),
+			KeyCode::Key5		=> KeyCodeHelix::Char('5'),
+			KeyCode::Key6		=> KeyCodeHelix::Char('6'),
+			KeyCode::Key7		=> KeyCodeHelix::Char('7'),
+			KeyCode::Key8		=> KeyCodeHelix::Char('8'),
+			KeyCode::Key9		=> KeyCodeHelix::Char('9'),
 
-			KeyCode::Q => KeyCodeHelix::Char('q'),
-			KeyCode::W => KeyCodeHelix::Char('w'),
-			KeyCode::E => KeyCodeHelix::Char('e'),
-			KeyCode::R => KeyCodeHelix::Char('r'),
-			KeyCode::T => KeyCodeHelix::Char('t'),
-			KeyCode::Y => KeyCodeHelix::Char('y'),
+			KeyCode::Q			=> KeyCodeHelix::Char('q'),
+			KeyCode::W			=> KeyCodeHelix::Char('w'),
+			KeyCode::E			=> KeyCodeHelix::Char('e'),
+			KeyCode::R			=> KeyCodeHelix::Char('r'),
+			KeyCode::T			=> KeyCodeHelix::Char('t'),
+			KeyCode::Y			=> KeyCodeHelix::Char('y'),
 
-			KeyCode::U => KeyCodeHelix::Char('u'),
-			KeyCode::I => KeyCodeHelix::Char('i'),
-			KeyCode::O => KeyCodeHelix::Char('o'),
-			KeyCode::P => KeyCodeHelix::Char('p'),
-			KeyCode::LBracket => KeyCodeHelix::Char('['),
-			KeyCode::RBracket => KeyCodeHelix::Char(']'),
-			KeyCode::Backslash => KeyCodeHelix::Char('\\'),
+			KeyCode::U			=> KeyCodeHelix::Char('u'),
+			KeyCode::I			=> KeyCodeHelix::Char('i'),
+			KeyCode::O			=> KeyCodeHelix::Char('o'),
+			KeyCode::P			=> KeyCodeHelix::Char('p'),
+			KeyCode::LBracket	=> KeyCodeHelix::Char('['),
+			KeyCode::RBracket	=> KeyCodeHelix::Char(']'),
+			KeyCode::Backslash	=> KeyCodeHelix::Char('\\'),
 
-			KeyCode::A => KeyCodeHelix::Char('a'),
-			KeyCode::S => KeyCodeHelix::Char('s'),
-			KeyCode::D => KeyCodeHelix::Char('d'),
-			KeyCode::F => KeyCodeHelix::Char('f'),
-			KeyCode::G => KeyCodeHelix::Char('g'),
+			KeyCode::A			=> KeyCodeHelix::Char('a'),
+			KeyCode::S			=> KeyCodeHelix::Char('s'),
+			KeyCode::D			=> KeyCodeHelix::Char('d'),
+			KeyCode::F			=> KeyCodeHelix::Char('f'),
+			KeyCode::G			=> KeyCodeHelix::Char('g'),
 
-			KeyCode::H => KeyCodeHelix::Char('h'),
-			KeyCode::J => KeyCodeHelix::Char('j'),
-			KeyCode::K => KeyCodeHelix::Char('k'),
-			KeyCode::L => KeyCodeHelix::Char('l'),
-			KeyCode::Semicolon => KeyCodeHelix::Char(';'),
-			KeyCode::Colon => KeyCodeHelix::Char(':'),
-			KeyCode::Apostrophe => KeyCodeHelix::Char('\''),
+			KeyCode::H			=> KeyCodeHelix::Char('h'),
+			KeyCode::J			=> KeyCodeHelix::Char('j'),
+			KeyCode::K			=> KeyCodeHelix::Char('k'),
+			KeyCode::L			=> KeyCodeHelix::Char('l'),
+			KeyCode::Semicolon	=> KeyCodeHelix::Char(';'),
+			KeyCode::Colon		=> KeyCodeHelix::Char(':'),
+			KeyCode::Apostrophe	=> KeyCodeHelix::Char('\''),
 
-			KeyCode::Z => KeyCodeHelix::Char('z'),
-			KeyCode::X => KeyCodeHelix::Char('x'),
-			KeyCode::C => KeyCodeHelix::Char('c'),
-			KeyCode::V => KeyCodeHelix::Char('v'),
-			KeyCode::B => KeyCodeHelix::Char('b'),
+			KeyCode::Z			=> KeyCodeHelix::Char('z'),
+			KeyCode::X			=> KeyCodeHelix::Char('x'),
+			KeyCode::C			=> KeyCodeHelix::Char('c'),
+			KeyCode::V			=> KeyCodeHelix::Char('v'),
+			KeyCode::B			=> KeyCodeHelix::Char('b'),
 
-			KeyCode::N => KeyCodeHelix::Char('n'),
-			KeyCode::M => KeyCodeHelix::Char('m'),
-			KeyCode::Comma => KeyCodeHelix::Char(','),
-			KeyCode::Convert => KeyCodeHelix::Char('.'),
-			KeyCode::Slash => KeyCodeHelix::Char('/'),
+			KeyCode::N			=> KeyCodeHelix::Char('n'),
+			KeyCode::M			=> KeyCodeHelix::Char('m'),
+			KeyCode::Comma		=> KeyCodeHelix::Char(','),
+			KeyCode::Convert	=> KeyCodeHelix::Char('.'),
+			KeyCode::Slash		=> KeyCodeHelix::Char('/'),
+
 			_ => { println!("skipping keycode {:?}", e.key_code); continue; }
 		};
 

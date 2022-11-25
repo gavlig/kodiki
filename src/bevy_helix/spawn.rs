@@ -5,16 +5,13 @@ use bevy_contrib_colors	:: { Tailwind };
 
 // use bevy_infinite_grid	:: { InfiniteGridBundle };
 
-use ttf2mesh 			:: { Glyph };
-
 use super				:: { * };
 
 use helix_tui 			:: { buffer :: Buffer as SurfaceHelix };
-use helix_view::graphics::Color as HelixColor;
+use helix_view :: graphics :: Color as HelixColor;
 
-fn calc_vertical_offset(row : f32) -> f32 {
-	row * -0.13
-}
+use crate :: bevy_ab_glyph :: ABGlyphFont;
+use crate :: bevy_ab_glyph :: TextMeshesCache;
 
 fn quad_old(
 	quad_pos_in		: Vec3,
@@ -110,12 +107,16 @@ fn color_from_helix(helix_color: HelixColor) -> Color {
 
 pub fn surface(
 	name			: &String,
+	world_position	: Vec3,
+
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
-	font			: &mut ttf2mesh::TTFFile,
-	world_position	: Vec3,
-	mesh_cache		: &mut MeshesMap,
-	helix_colors_cache : &mut MaterialsMap,
+
+	font			: &ABGlyphFont,
+
+	text_mesh_cache	: &mut TextMeshesCache,
+	helix_colors_cache : &mut HelixColorsCache,
+
 	mesh_assets		: &mut Assets<Mesh>,
 	material_assets : &mut Assets<StandardMaterial>,
 	commands		: &mut Commands
@@ -123,100 +124,89 @@ pub fn surface(
 {
 	surface_bevy.content.resize_with(surface_helix.content.len(), || { CellBevy::default() });
 
-	let font_size	= 9.;
-	let font_depth	= 0.1;
-	let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
-
-	let ybounds = {
-		let reference_glyph_y : Glyph = font.glyph_from_char('y').unwrap();
-		reference_glyph_y.inner.ybounds
-	};
-
-	let reference_glyph : Glyph = font.glyph_from_char('a').unwrap(); // and omega
-	let row_offset	= calc_vertical_offset(1.0);
-	let lbearing	= reference_glyph.inner.lbearing * font_size_scalar;
-	let glyph_width	= reference_glyph.inner.advance * font_size_scalar;
-	let glyph_height = row_offset.abs();
+	let v_advance	= font.vertical_advance(font.scale);
+	let h_advance	= font.scale; // the widest glyph is supposed to be 1.0 so just scale should be enough
 	
 	let mut children : Vec<Entity> = Vec::new();
 
-	let mut y		= 0.0;
-	let mut column	= 0 as u32;
-	let mut row		= 0 as u32;
+	// let mut y		= 0.0;
+	// let mut column	= 0 as u32;
+	// let mut row		= 0 as u32;
 	
 	let width		= surface_helix.area.width;
 	let height		= surface_helix.area.height;
-	let content_helix = &surface_helix.content;
-	let content_bevy = &mut surface_bevy.content;
+	// let content_helix = &surface_helix.content;
+	// let content_bevy = &mut surface_bevy.content;
 	
-	println!("spawn surface {} len {} w {} h {}", name, surface_helix.content.len(), width, height);
+	// println!("spawn surface {} len {} w {} h {}", name, surface_helix.content.len(), width, height);
 	
-	for y_cell in 0..height {
-		let y 		= calc_vertical_offset(y_cell as f32) + (glyph_height / 2.0) + (ybounds[0] * font_size_scalar);
+	// for y_cell in 0..height {
+	// 	let y 		= calc_vertical_offset(y_cell as f32) + (v_advance / 2.0) + (ybounds[0] * font_size_scalar);
 		
-		for x_cell in 0..width {
-			let content_index = (y_cell * width + x_cell) as usize;
-			let cell_helix	= &content_helix[content_index];
-			let cell_bevy	= &mut content_bevy[content_index];
-			let column_offset = (x_cell as f32) * glyph_width;
-			let x 			= column_offset + (glyph_width / 2.0) + lbearing;
-			let pos = Vec3::new(x, y, 0.0);
+	// 	for x_cell in 0..width {
+	// 		let content_index = (y_cell * width + x_cell) as usize;
+	// 		let cell_helix	= &content_helix[content_index];
+	// 		let cell_bevy	= &mut content_bevy[content_index];
+
+	// 		let column_offset = (x_cell as f32) * h_advance;
+	// 		let x 			= column_offset + (h_advance / 2.0) + lbearing;
+	// 		let pos = Vec3::new(x, y, 0.0);
 			
-			let quad_width	= glyph_width;
-			let quad_height	= glyph_height;
+	// 		let quad_width	= h_advance;
+	// 		let quad_height	= v_advance;
 			
-			//
-			//
-			// Background Quad
+	// 		//
+	// 		//
+	// 		// Background Quad
 			
-			// mesh handle
-			let quad_mesh_name = String::from("character-background-quad");
-			let quad_mesh_handle = match mesh_cache.get(&quad_mesh_name) {
-				Some(handle) => handle.clone(),
-				None => {
-					let handle = mesh_assets.add(
-						Mesh::from(
-							shape::Quad::new(
-								Vec2::new(
-									quad_width,
-									quad_height
-				    			)
-							)
-						)
-					);
+	// 		// mesh handle
+	// 		let quad_mesh_name = String::from("character-background-quad");
+	// 		let quad_mesh_handle = match text_mesh_cache.meshes.get(&quad_mesh_name) {
+	// 			Some(handle) => handle.clone(),
+	// 			None => {
+	// 				let handle = mesh_assets.add(
+	// 					Mesh::from(
+	// 						shape::Quad::new(
+	// 							Vec2::new(
+	// 								quad_width,
+	// 								quad_height
+	// 			    			)
+	// 						)
+	// 					)
+	// 				);
 					
-					mesh_cache.insert_unique_unchecked(quad_mesh_name.clone(), handle).1.clone()
-				}
-			};
+	// 				text_mesh_cache.meshes.insert_unique_unchecked(quad_mesh_name.clone(), handle).1.clone()
+	// 			}
+	// 		};
 			
-			let quad_pos		= Vec3::new(x, y, -0.25 / 72.);
-			let quad_entity_id	= 
-			quad(
-			 	quad_pos,
-			 	Vec2::new(quad_width, quad_height),
-			 	quad_mesh_handle,
-			 	commands
-			);
+	// 		let quad_pos		= Vec3::new(x, y, -0.25 / 72.);
+	// 		let quad_entity_id	= 
+	// 		quad(
+	// 		 	quad_pos,
+	// 		 	Vec2::new(quad_width, quad_height),
+	// 		 	quad_mesh_handle,
+	// 		 	commands
+	// 		);
 			
-			cell_bevy.entity_bg_quad = Some(quad_entity_id);
+	// 		cell_bevy.entity_bg_quad = Some(quad_entity_id);
 
-			commands.entity(quad_entity_id)
-			.insert(Row { 0: row })
-			.insert(Column { 0: column })
-			;
+	// 		commands.entity(quad_entity_id)
+	// 		.insert(Row { 0: row })
+	// 		.insert(Column { 0: column })
+	// 		;
 
-			children.push(quad_entity_id);
+	// 		children.push(quad_entity_id);
 
-			column 	+= 1;
-		}
+	// 		column 	+= 1;
+	// 	}
 
-		column		= 0;
-		row			+= 1;
-	}
+	// 	column		= 0;
+	// 	row			+= 1;
+	// }
 
-	//
-	//
-	//
+	// //
+	// //
+	// //
 
 	let root_entity =
 	commands.spawn_bundle(TransformBundle {
@@ -230,10 +220,10 @@ pub fn surface(
 	.id();
 
 	let text_descriptor = TextDescriptor {
-		rows: height as u32,
-		columns: width as u32,
-		glyph_width,
-		glyph_height
+		rows		: height as u32,
+		columns		: width as u32,
+		glyph_width	: h_advance,
+		glyph_height: v_advance
 	};
 
 	commands.entity(root_entity)

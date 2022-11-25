@@ -1,14 +1,12 @@
 use bevy				:: prelude :: { * };
-use bevy_debug_text_overlay::screen_print;
-use bevy_text_mesh		:: prelude :: { * };
 use bevy_mod_picking	:: { * };
 use bevy_fly_camera		:: { * };
 use bevy_contrib_colors	:: { Tailwind };
 
 // use bevy_infinite_grid	:: { InfiniteGridBundle };
 
-use crate				:: bevy_ab_glyph :: ABGlyphFont;
-use crate				:: bevy_ab_glyph :: mesh_generator :: generate_glyph_mesh;
+use crate				:: bevy_ab_glyph::{  ABGlyphFont, TextMeshesCache};
+use crate				:: bevy_ab_glyph :: mesh_generator :: generate_glyph_mesh_wcache;
 
 use ttf2mesh 			:: { Glyph };
 
@@ -84,50 +82,18 @@ fn color_from_helix(helix_color: HelixColor) -> Color {
 	}
 }
 
-const DEFAULT_FONT_SIZE  : f32 = 36.;
-const DEFAULT_FONT_WIDTH : f32 = DEFAULT_FONT_SIZE * 10.;
-const DEFAULT_FONT_HEIGHT: f32 = DEFAULT_FONT_SIZE * 5.;
-const DEFAULT_FONT_DEPTH : f32 = DEFAULT_FONT_SIZE * 0.10;
-
-fn mesh_from_symbol(
-	text_in				: &String,
-	font				: &mut TTFFile,
-	font_size			: SizeUnit,
-	font_depth			: f32,
-	ttf2_mesh_cache		: &mut TTF2MeshCache,
-	meshes				: &mut Assets<Mesh>,
-) -> Handle<Mesh> {
-	let text_mesh_desc	= TextMesh {
-		text			: text_in.clone(),
-		style			: TextMeshStyle {
-			font_size,
-			..default()
-		},
-		size: TextMeshSize {
-			depth	: Some(SizeUnit::NonStandard(DEFAULT_FONT_SIZE * font_depth)),
-			wrapping : false,
-			..default()
-		},
-		
-		..default()
-	};
-		
-	generate_text_mesh(&text_mesh_desc, font, meshes, Some(ttf2_mesh_cache))
-}
-
 pub fn surface(
-	offset			: Vec3,
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
 	cursor			: &CursorBevy,
-	font			: &mut ttf2mesh::TTFFile,
-	font2			: &ABGlyphFont,
-	ttf2_mesh_cache	: &mut TTF2MeshCache,
-	mesh_cache		: &mut MeshesMap,
-	helix_colors_cache : &mut MaterialsMap,
+
+	font			: &ABGlyphFont,
+
+	text_mesh_cache	: &mut TextMeshesCache,
+	helix_colors_cache : &mut HelixColorsCache,
+
 	mesh_assets		: &mut Assets<Mesh>,
 	material_assets	: &mut Assets<StandardMaterial>,
-	_despawn		: &mut DespawnResource,
 	commands		: &mut Commands
 )
 {
@@ -135,37 +101,27 @@ pub fn surface(
 
 	surface_bevy.content.resize_with(surface_helix.content.len(), || { CellBevy::default() });
 
-	let font_size	= 9.;
-	let font_depth	= 0.1;
-	let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
+	let v_advance = font.vertical_advance(font.scale);
 
-	let reference_glyph : Glyph = font.glyph_from_char('a').unwrap(); // and omega
-	let row_offset = calc_vertical_offset(1.0);
-	let glyph_width	= reference_glyph.inner.advance * font_size_scalar;
-	let glyph_height = row_offset.abs();
+	let mut surface_children : Vec<Entity> = Vec::new();
 
-	let mut children : Vec<Entity> = Vec::new();
-
+	let mut x		= 0.0;
 	let mut y		= 0.0;
 	let mut column	= 0 as u32;
 	let mut row		= 0 as u32;
 	
-	let width = surface_helix.area.width;
-	let height = surface_helix.area.height;
+	let width		= surface_helix.area.width;
+	let height		= surface_helix.area.height;
 	let content_helix = &surface_helix.content;
 	let content_bevy = &mut surface_bevy.content;
 
 	for y_cell in 0..height {
-		y = calc_vertical_offset(row as f32);
+		y = v_advance * row as f32;
 		
 		for x_cell in 0..width {
 			let content_index = (y_cell * width + x_cell) as usize;
 			let cell_helix = &content_helix[content_index];
 			let cell_bevy = &mut content_bevy[content_index];
-			
-			//
-			//
-			// Character
 			
 			// figure out colors first
 			let reversed = cell_helix.modifier == helix_view::graphics::Modifier::REVERSED;
@@ -187,8 +143,13 @@ pub fn surface(
 			}
 
 			// now spawn new mesh if needed
-			let x = (column as f32) * glyph_width;
-			let pos = offset + Vec3::new(x, y, 0.0);
+
+			if x_cell > 0 {
+				let cell_helix_prev = &content_helix[content_index - 1];
+				x += font.kerning(&cell_helix_prev.symbol, &cell_helix.symbol, font.scale);
+			}
+
+			let pos = Vec3::new(x, y, 0.0);
 
 			let wrong_symbol = cell_helix.symbol != cell_bevy.symbol;
 			if wrong_symbol {
@@ -199,12 +160,10 @@ pub fn surface(
 					cell_helix,
 					cell_bevy,
 					font,
-					font2,
-					font_size,
-					font_depth,
-					mesh_cache,
-					ttf2_mesh_cache,
-					&mut children,
+					font.depth,
+					font.tolerance,
+					text_mesh_cache,
+					&mut surface_children,
 					mesh_assets,
 					commands
 				);
@@ -219,8 +178,8 @@ pub fn surface(
 		row			+= 1;
 	}
 
-	if children.len() > 0 {
-		commands.entity(root_entity).push_children(children.as_slice());
+	if surface_children.len() > 0 {
+		commands.entity(root_entity).push_children(surface_children.as_slice());
 	}
 }
 
@@ -228,97 +187,152 @@ fn update_cell_mesh(
 	pos				: Vec3,
 	cell_helix		: &CellHelix,
 	cell_bevy		: &mut CellBevy,
-	font			: &mut TTFFile,
-	font2			: &ABGlyphFont,
-	font_size		: f32, 
+	font			: &ABGlyphFont,
 	font_depth		: f32,
-	mesh_cache		: &mut MeshesMap,
-	ttf2_mesh_cache	: &mut TTF2MeshCache,
-	children		: &mut Vec<Entity>,
+	font_tolerance	: f32,
+	text_mesh_cache	: &mut TextMeshesCache,
+	surface_children: &mut Vec<Entity>,
 	mesh_assets		: &mut Assets<Mesh>,
 	commands		: &mut Commands
 ) {
-    let cache = mesh_cache.get(&cell_helix.symbol);
-    let cache_found = cache.is_some();
-    let space_symbol = cell_helix.symbol == " ";
-    if !cache_found && !space_symbol {
-		// println!("cache not found for [{}]", cell_helix.symbol);
-
-		if cell_bevy.entity_symbol.is_none() {
-			// println!("spawning new entity for [{}] pos: {:?} ", cell_helix.symbol, pos);
-
-			cell_bevy.entity_symbol = Some(
-				commands.spawn_bundle(
-					PbrBundle {
-						transform : Transform::from_translation(pos),
-						..default()
-					}
-				)
-				.id()
-			);
-		}
-		let mesh_entity_id = cell_bevy.entity_symbol.unwrap();
-
-		let mesh_handle =
-
-		//generate_glyph_mesh(&cell_helix.symbol, &font2.f, mesh_assets);
-
-		mesh_from_symbol(
-			&cell_helix.symbol,
-			font,
-			SizeUnit::NonStandard(font_size),
-			font_depth,
-			ttf2_mesh_cache,
-			mesh_assets
-		);
-
-		// insert mesh
-		commands.entity(mesh_entity_id).insert(mesh_handle.clone_weak());
-
-		// insert material
-		commands.entity(mesh_entity_id).insert(
-			cell_bevy.fg_handle.as_ref().unwrap().clone_weak()
-		);
-
-		children.push(mesh_entity_id);
-		mesh_cache.insert(cell_helix.symbol.clone(), mesh_handle);
-
-		cell_bevy.entity_symbol = Some(mesh_entity_id);
-	} else if !cache_found && space_symbol {
+	// Special case - space character. Doesn't require mesh
+	let space_symbol = cell_helix.symbol == " ";
+	if space_symbol {
 		// println!("cache not found but we dont care it's space");
 
-		if let Some(entity) = cell_bevy.entity_symbol {
+		// remove a mesh if there was an entity
+		if let Some(entity) = cell_bevy.symbol_entity {
 			// remove mesh
 			commands.entity(entity).remove::<Handle<Mesh>>();
 		}
-	} else if let Some(cache) = cache {
-		// println!("cache found for [{}]", cell_helix.symbol);
-
-		if let Some(entity) = cell_bevy.entity_symbol {
-			// println!("replacing mesh handle for [{}]", cell_helix.symbol);
-
-			// replace previous mesh with new one
-			commands.entity(entity)
-				.remove::<Handle<Mesh>>()
-				.insert(cache.clone_weak())
-				;
-		} else {
-			// println!("spawning new entity with an existing mesh for [{}] pos: {:?}", cell_helix.symbol, pos);
-
-			// spawn new entity with an existing mesh
-			cell_bevy.entity_symbol = Some(
-				commands.spawn_bundle(PbrBundle {
-					mesh : cache.clone_weak(),
-					material : cell_bevy.fg_handle.as_ref().unwrap().clone_weak(),
-					transform : Transform::from_translation(pos),
-					..default()
-				})
-				.id()
-			);
-			children.push(cell_bevy.entity_symbol.unwrap());
-		}
+		cell_bevy.symbol = cell_helix.symbol.clone();
+		return;
 	}
-    cell_bevy.symbol = cell_helix.symbol.clone();
+
+	let mesh_handle = generate_glyph_mesh_wcache(
+		&cell_helix.symbol,
+		font_depth,			// depth -- how thick the mesh is.
+		font_tolerance,		// tolerance -- how detailed the mesh is. bigger number means less details
+		&font.f,
+		mesh_assets,
+		text_mesh_cache
+	);
+
+	if let Some(entity) = cell_bevy.symbol_entity {
+		// println!("replacing mesh handle for [{}]", cell_helix.symbol);
+
+		// replace previous mesh with new one
+		commands.entity(entity)
+			.remove::<Handle<Mesh>>()
+			.insert(mesh_handle)
+			;
+	} else {
+		// println!("spawning new entity with an existing mesh for [{}] pos: {:?}", cell_helix.symbol, pos);
+
+		// spawn new entity with an existing mesh
+		cell_bevy.symbol_entity = Some(
+			commands.spawn_bundle(PbrBundle {
+				mesh : mesh_handle,
+				material : cell_bevy.fg_handle.as_ref().unwrap().clone_weak(),
+				transform : Transform::from_translation(pos),
+				..default()
+			})
+			.id()
+		);
+
+		// insert material
+		commands.entity(cell_bevy.symbol_entity.unwrap()).insert(
+			cell_bevy.fg_handle.as_ref().unwrap().clone_weak()
+		);
+
+		cell_bevy.symbol = cell_helix.symbol.clone();
+
+		surface_children.push(cell_bevy.symbol_entity.unwrap());
+	}
+
+
+    // let cache = mesh_cache.get(&cell_helix.symbol);
+    // let cache_found = cache.is_some();
+    // let space_symbol = cell_helix.symbol == " ";
+
+    // if !cache_found && !space_symbol {
+	// 	// println!("cache not found for [{}]", cell_helix.symbol);
+
+	// 	if cell_bevy.symbol_entity.is_none() {
+	// 		// println!("spawning new entity for [{}] pos: {:?} ", cell_helix.symbol, pos);
+
+	// 		cell_bevy.symbol_entity = Some(
+	// 			commands.spawn_bundle(
+	// 				PbrBundle {
+	// 					transform : Transform::from_translation(pos),
+	// 					..default()
+	// 				}
+	// 			)
+	// 			.id()
+	// 		);
+	// 	}
+	// 	let mesh_entity_id = cell_bevy.symbol_entity.unwrap();
+
+	// 	let mesh_handle =
+
+	// 	//generate_glyph_mesh(&cell_helix.symbol, &font2.f, mesh_assets);
+
+	// 	mesh_from_symbol(
+	// 		&cell_helix.symbol,
+	// 		font,
+	// 		SizeUnit::NonStandard(font_size),
+	// 		font_depth,
+	// 		ttf2_mesh_cache,
+	// 		mesh_assets
+	// 	);
+
+	// 	// insert mesh
+	// 	commands.entity(mesh_entity_id).insert(mesh_handle.clone_weak());
+
+	// 	// insert material
+	// 	commands.entity(mesh_entity_id).insert(
+	// 		cell_bevy.fg_handle.as_ref().unwrap().clone_weak()
+	// 	);
+
+	// 	surface_children.push(mesh_entity_id);
+	// 	mesh_cache.insert(cell_helix.symbol.clone(), mesh_handle);
+
+	// 	cell_bevy.symbol_entity = Some(mesh_entity_id);
+	// } else if !cache_found && space_symbol {
+	// 	// println!("cache not found but we dont care it's space");
+
+	// 	if let Some(entity) = cell_bevy.symbol_entity {
+	// 		// remove mesh
+	// 		commands.entity(entity).remove::<Handle<Mesh>>();
+	// 	}
+	// } else if let Some(cache) = cache {
+	// 	// println!("cache found for [{}]", cell_helix.symbol);
+
+	// 	if let Some(entity) = cell_bevy.symbol_entity {
+	// 		// println!("replacing mesh handle for [{}]", cell_helix.symbol);
+
+	// 		// replace previous mesh with new one
+	// 		commands.entity(entity)
+	// 			.remove::<Handle<Mesh>>()
+	// 			.insert(cache.clone_weak())
+	// 			;
+	// 	} else {
+	// 		// println!("spawning new entity with an existing mesh for [{}] pos: {:?}", cell_helix.symbol, pos);
+
+	// 		// spawn new entity with an existing mesh
+	// 		cell_bevy.symbol_entity = Some(
+	// 			commands.spawn_bundle(PbrBundle {
+	// 				mesh : cache.clone_weak(),
+	// 				material : cell_bevy.fg_handle.as_ref().unwrap().clone_weak(),
+	// 				transform : Transform::from_translation(pos),
+	// 				..default()
+	// 			})
+	// 			.id()
+	// 		);
+	// 		surface_children.push(cell_bevy.symbol_entity.unwrap());
+	// 	}
+	// }
+    // cell_bevy.symbol = cell_helix.symbol.clone();
 }
 
 pub fn update_cell_materials(
@@ -326,7 +340,7 @@ pub fn update_cell_materials(
 	cell_helix: &CellHelix,
 	reversed: bool,
 	is_cursor_pos: bool,
-	helix_colors_cache: &mut MaterialsMap,
+	helix_colors_cache: &mut HelixColorsCache,
 	material_assets: &mut Assets<StandardMaterial>,
 	commands: &mut Commands
 ) {
@@ -346,11 +360,20 @@ pub fn update_cell_materials(
     let color_fg = color_from_helix(cell_bevy.fg);
     let color_bg = color_from_helix(cell_bevy.bg);
 
-    cell_bevy.fg_handle = Some(get_helix_color_material_handle(color_fg, helix_colors_cache, material_assets));
-    cell_bevy.bg_handle = Some(get_helix_color_material_handle(color_bg, helix_colors_cache, material_assets));
+    cell_bevy.fg_handle = Some(get_helix_color_material_handle(
+		color_fg,
+		&mut helix_colors_cache.materials,
+		material_assets
+	));
+
+    cell_bevy.bg_handle = Some(get_helix_color_material_handle(
+		color_bg,
+		&mut helix_colors_cache.materials,
+		material_assets
+	));
 
     // replace material to reflect changed color
-    if let Some(cell_bevy_entity_symbol) = cell_bevy.entity_symbol {
+    if let Some(cell_bevy_entity_symbol) = cell_bevy.symbol_entity {
 		commands.entity		(cell_bevy_entity_symbol)
 		.remove::<Handle<StandardMaterial>>()
 		.insert(cell_bevy.fg_handle.as_ref().unwrap().clone_weak())
@@ -365,88 +388,93 @@ pub fn update_cell_materials(
 	}
 }
 
-pub fn cursor(
-	offset			: Vec3,
-	surface_bevy	: &SurfaceBevy,
-	font			: &mut ttf2mesh::TTFFile,
-	cursor			: &mut CursorBevy,
-	q_cursor_transform : &mut Query<&mut Transform>,
-	time			: &Res<Time>,
-	theme			: &Theme,
-	helix_colors_cache : &mut MaterialsMap,
-	material_assets	: &mut Assets<StandardMaterial>,
-	meshes			: &mut ResMut<Assets<Mesh>>,
-	commands		: &mut Commands
-)
-{
-	let root_entity = surface_bevy.entity.unwrap();
+// pub fn cursor(
+// 	offset			: Vec3,
+// 	surface_bevy	: &SurfaceBevy,
+// 	font			: &mut ttf2mesh::TTFFile,
+// 	cursor			: &mut CursorBevy,
+// 	q_cursor_transform : &mut Query<&mut Transform>,
+// 	time			: &Res<Time>,
+// 	theme			: &Theme,
+// 	helix_colors_cache : &mut MaterialsMap,
+// 	material_assets	: &mut Assets<StandardMaterial>,
+// 	meshes			: &mut ResMut<Assets<Mesh>>,
+// 	commands		: &mut Commands
+// )
+// {
+// 	let cursor_theme = theme.get("ui.cursor");
+// 	if cursor_theme.bg.is_none() {
+// 		return;
+// 	}
 
-	let font_size	= 9.;
-	let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
+// 	let root_entity = surface_bevy.entity.unwrap();
 
-	let ybounds = {
-		let reference_glyph_y : Glyph = font.glyph_from_char('y').unwrap();
-		reference_glyph_y.inner.ybounds
-	};
+// 	let font_size	= 9.;
+// 	let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
 
-	let reference_glyph : Glyph = font.glyph_from_char('a').unwrap(); // and omega
+// 	let ybounds = {
+// 		let reference_glyph_y : Glyph = font.glyph_from_char('y').unwrap();
+// 		reference_glyph_y.inner.ybounds
+// 	};
+
+// 	let reference_glyph : Glyph = font.glyph_from_char('a').unwrap(); // and omega
 	
-	let row_offset			= calc_vertical_offset(1.0);
-	let lbearing			= reference_glyph.inner.lbearing * font_size_scalar;
-	let glyph_width			= reference_glyph.inner.advance * font_size_scalar;
-	let glyph_height		= row_offset.abs();
-	let cursor_z			= -0.1 / 72.;
+// 	let row_offset			= calc_vertical_offset(1.0);
+// 	let lbearing			= reference_glyph.inner.lbearing * font_size_scalar;
+// 	let glyph_width			= reference_glyph.inner.advance * font_size_scalar;
+// 	let glyph_height		= row_offset.abs();
+// 	let cursor_z			= -0.1 / 72.;
 
-	let mut children : Vec<Entity> = Vec::new();
+// 	let mut children : Vec<Entity> = Vec::new();
 
-	// move background quad
-	if cursor.entity.is_some() && cursor.easing_accum < 1.0 {
-		let cursor_entity 	= cursor.entity.unwrap();
-		let column_offset 	= (cursor.x as f32) * glyph_width;
-		let target_x 		= column_offset + (glyph_width / 2.0) + lbearing;
-		let target_y 		= calc_vertical_offset(cursor.y as f32) + (glyph_height / 2.0) + (ybounds[0] * font_size_scalar);
+// 	// move background quad
+// 	if cursor.entity.is_some() && cursor.easing_accum < 1.0 {
+// 		let cursor_entity 	= cursor.entity.unwrap();
+// 		let column_offset 	= (cursor.x as f32) * glyph_width;
+// 		let target_x 		= column_offset + (glyph_width / 2.0) + lbearing;
+// 		let target_y 		= calc_vertical_offset(cursor.y as f32) + (glyph_height / 2.0) + (ybounds[0] * font_size_scalar);
 
-		let target_pos		= offset + Vec3::new(target_x, target_y, cursor_z);
+// 		let target_pos		= offset + Vec3::new(target_x, target_y, cursor_z);
 
-		let delta_seconds	= time.delta_seconds();
-		let delta_accum		= delta_seconds / /*cursor_easing_seconds*/0.05;
+// 		let delta_seconds	= time.delta_seconds();
+// 		let delta_accum		= delta_seconds / /*cursor_easing_seconds*/0.05;
 
-		cursor.easing_accum = (cursor.easing_accum + delta_accum).min(1.0);
-		let mut cursor_transform = q_cursor_transform.get_mut(cursor_entity).unwrap();
-		cursor_transform.translation = cursor_transform.translation.lerp(target_pos, cursor.easing_accum);
-	}
+// 		cursor.easing_accum = (cursor.easing_accum + delta_accum).min(1.0);
+// 		let mut cursor_transform = q_cursor_transform.get_mut(cursor_entity).unwrap();
+// 		cursor_transform.translation = cursor_transform.translation.lerp(target_pos, cursor.easing_accum);
+// 	}
 	
-	let cursor_color_fg		= color_from_helix(theme.get("ui.cursor").bg.unwrap());
-	let material_handle		= get_helix_color_material_handle(cursor_color_fg, helix_colors_cache, material_assets);
+// 	let cursor_color_fg		= color_from_helix(theme.get("ui.cursor").bg.unwrap());
+// 	let material_handle		= get_helix_color_material_handle(cursor_color_fg, helix_colors_cache, material_assets);
 	
-	// spawn background quad for cursor
-	if cursor.entity == None {
-		let quad_width		= glyph_width;
-		let quad_height		= (ybounds[1] - ybounds[0]) * font_size_scalar * 1.7; // ybounds contain offset for letter 'y'
-		let quad_pos		= Vec3::new(0., 0., cursor_z);
+// 	// spawn background quad for cursor
+// 	if cursor.entity == None {
+// 		let quad_width		= glyph_width;
+// 		let quad_height		= (ybounds[1] - ybounds[0]) * font_size_scalar * 1.7; // ybounds contain offset for letter 'y'
+// 		let quad_pos		= Vec3::new(0., 0., cursor_z);
 
-		let quad_entity_id	= 
-		quad(
-			quad_pos,
-			Vec2::new		(quad_width, quad_height),
-			meshes,
-			&material_handle,
-			commands
-		);
+// 		let quad_entity_id	= 
+// 		quad(
+// 			quad_pos,
+// 			Vec2::new		(quad_width, quad_height),
+// 			meshes,
+// 			&material_handle,
+// 			commands
+// 		);
 
-		children.push		(quad_entity_id);
+// 		children.push		(quad_entity_id);
 
-		cursor.entity 		= Some(quad_entity_id);
-		cursor.color		= cursor_color_fg;
-	} else if cursor.color != cursor_color_fg {
-		commands.entity		(cursor.entity.unwrap())
-		.remove::<Handle<StandardMaterial>>()
-		.insert(material_handle.clone_weak())
-		;
-		cursor.color		= cursor_color_fg;
-	}
+// 		cursor.entity 		= Some(quad_entity_id);
+// 		cursor.color		= cursor_color_fg;
+// 	} else if cursor.color != cursor_color_fg {
+// 		commands.entity		(cursor.entity.unwrap())
+// 		.remove::<Handle<StandardMaterial>>()
+// 		.insert(material_handle.clone_weak())
+// 		;
+// 		cursor.color		= cursor_color_fg;
+// 	}
 
-	if children.len() > 0 {
-		commands.entity(root_entity).push_children(children.as_slice());
-	}
-}
+// 	if children.len() > 0 {
+// 		commands.entity(root_entity).push_children(children.as_slice());
+// 	}
+// }

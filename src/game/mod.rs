@@ -1,17 +1,12 @@
-use bevy				:: { prelude :: *, window :: PresentMode };
+use bevy				:: { prelude :: * };
 use bevy_mod_picking	:: { * };
 use iyes_loopless		:: { prelude :: * };
-use bevy_text_mesh		:: { prelude :: * };
 use bevy_shadertoy_wgsl :: { * };
-
-use std					:: { path::PathBuf };
-use serde				:: { Deserialize, Serialize };
 
 pub mod spawn;
 mod systems;
 use systems				:: *;
 mod utils;
-use utils				:: *;
 
 use crate				:: text;
 
@@ -63,11 +58,11 @@ pub struct MouseCursorState {
 
 #[derive(Default)]
 pub struct FontAssetHandles {
-	pub droid_sans_mono: Handle<TextMeshFont>,
-	pub open_dyslexic: Handle<TextMeshFont>,
-	pub source_code_pro: Handle<TextMeshFont>,
-	pub B612: Handle<TextMeshFont>,
-	pub share_tech: Handle<TextMeshFont>,
+	pub droid_sans_mono: Handle<ABGlyphFont>,
+	pub open_dyslexic: Handle<ABGlyphFont>,
+	pub source_code_pro: Handle<ABGlyphFont>,
+	pub B612: Handle<ABGlyphFont>,
+	pub share_tech: Handle<ABGlyphFont>,
 
 	pub ubuntu_mono: Handle<ABGlyphFont>,
 
