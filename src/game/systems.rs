@@ -429,7 +429,7 @@ pub fn asset_loading_events(
         }
     }
 
-	if font_handles.loaded_cnt == 5 {
+	if font_handles.loaded_cnt == 6 {
 		commands.insert_resource(NextState(AppMode::AssetsLoaded));
 		println!("assets loaded!");
 	}
