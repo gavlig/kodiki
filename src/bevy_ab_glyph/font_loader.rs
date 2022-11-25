@@ -17,8 +17,8 @@ impl AssetLoader for FontLoader {
             let f = FontVec::try_from_vec(bytes.to_vec())?;
             let font = ABGlyphFont {
                 f,
-                scale:      0.5,
-			    depth:      0.01,
+                scale:      0.1,
+			    depth:      0.05,
 			    tolerance:  1.0,
             };
 

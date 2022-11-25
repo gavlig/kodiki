@@ -10,8 +10,8 @@ pub struct ABGlyphFont {
 	pub f			: FontVec,
 
 	pub scale		: f32,
-	pub depth		: f32,
-	pub tolerance	: f32,
+	pub depth		: f32, // how thick the mesh is.
+	pub tolerance	: f32, // how detailed the mesh is. bigger number means less details
 }
 
 impl ABGlyphFont {
@@ -19,23 +19,33 @@ impl ABGlyphFont {
 		self.f.glyph_id(glyph_str.chars().next().unwrap())
 	}
 
-	pub fn vertical_advance(&self, scale: f32) -> f32 {
+	pub fn vertical_advance(&self) -> f32 {
 		let unit_scale = self.f.units_per_em().unwrap();
 
 		let advance_unscaled = (self.f.height_unscaled() + self.f.line_gap_unscaled()) / unit_scale;
-		let advance = advance_unscaled * scale;
+		let advance = advance_unscaled * self.scale;
 
 		advance
 	}
 
-	pub fn kerning(&self, glyph_str0: &String, glyph_str1: &String, scale: f32) -> f32 {
+	pub fn horizontal_advance(&self, glyph_str: &String) -> f32 {
+		let unit_scale = self.f.units_per_em().unwrap();
+
+		let glyph_id = self.glyph_id(glyph_str);
+		let advance_unscaled = self.f.h_advance_unscaled(glyph_id) / unit_scale;
+		let advance = advance_unscaled * self.scale;
+
+		advance
+	}
+
+	pub fn kerning(&self, glyph_str0: &String, glyph_str1: &String) -> f32 {
 		let unit_scale = self.f.units_per_em().unwrap();
 
 		let glyph_id0 = self.glyph_id(glyph_str0);
 		let glyph_id1 = self.glyph_id(glyph_str1);
 
 		let kern_unscale = self.f.kern_unscaled(glyph_id0, glyph_id1) / unit_scale;
-		let kern = kern_unscale * scale;
+		let kern = kern_unscale * self.scale;
 
 		kern
 	}

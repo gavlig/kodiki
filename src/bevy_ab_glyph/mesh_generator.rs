@@ -16,7 +16,7 @@ pub type LyonPoint      = lyon :: math :: Point;
 
 use bevy::render::mesh::shape as render_shape;
 
-use super :: TextMeshesCache;
+use super :: { TextMeshesCache, ABGlyphFont };
 
 fn generate_glyph_outline(
 	glyph_str: &String,
@@ -322,16 +322,14 @@ fn generate_connecting_quads(
 
 pub fn generate_glyph_mesh(
 	glyph_str	: &String,
-	depth		: f32,
-	tolerance	: f32,
-	font		: &FontVec
+	font		: &ABGlyphFont,
 ) -> Mesh {
-	let glyph_outline		= generate_glyph_outline(glyph_str, font);
+	let glyph_outline		= generate_glyph_outline(glyph_str, &font.f);
 	let path				= generate_path_from_outline(glyph_outline);
 
 	// geometry of a glyph's front face
-	let unit_scale			= 1.0 / font.units_per_em().unwrap();
-	let mut vertex_buffer	= generate_vertex_buffer_from_path(path, unit_scale, tolerance);
+	let unit_scale			= 1.0 / font.f.units_per_em().unwrap();
+	let mut vertex_buffer	= generate_vertex_buffer_from_path(path, unit_scale, font.tolerance);
 	let vertices_cnt		= vertex_buffer.vertices.len();
 	let mut normals: Vec<[f32; 3]> = vec![[0.0, 0.0, 1.0]; vertices_cnt];
 
@@ -345,7 +343,7 @@ pub fn generate_glyph_mesh(
 	run_triangle_adjacency_tests(&mut triangles);
 
 	// make back face with inverted winding and normals
-	generate_glyph_back_face(depth, &mut vertex_buffer, &mut normals);
+	generate_glyph_back_face(font.depth, &mut vertex_buffer, &mut normals);
 
 	// make connecting quads
 	generate_connecting_quads(&triangles, &mut vertex_buffer, &mut normals);
@@ -360,9 +358,7 @@ pub fn generate_glyph_mesh(
 
 pub fn generate_glyph_mesh_wcache(
 	glyph_str	: &String,
-	depth		: f32,
-	tolerance	: f32,
-	font		: &FontVec,
+	font		: &ABGlyphFont,
 	mesh_assets	: &mut Assets<Mesh>,
 	text_cache	: &mut TextMeshesCache
 ) -> Handle<Mesh>
@@ -373,7 +369,7 @@ pub fn generate_glyph_mesh_wcache(
 		cache.clone_weak()
 	} else {
 		mesh_assets.add(
-			generate_glyph_mesh(glyph_str, depth, tolerance, font)
+			generate_glyph_mesh(glyph_str, font)
 		)
 	}
 }

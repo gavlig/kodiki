@@ -101,7 +101,7 @@ pub fn surface(
 
 	surface_bevy.content.resize_with(surface_helix.content.len(), || { CellBevy::default() });
 
-	let v_advance = font.vertical_advance(font.scale);
+	let v_advance	= -font.vertical_advance();
 
 	let mut surface_children : Vec<Entity> = Vec::new();
 
@@ -146,22 +146,25 @@ pub fn surface(
 
 			if x_cell > 0 {
 				let cell_helix_prev = &content_helix[content_index - 1];
-				x += font.kerning(&cell_helix_prev.symbol, &cell_helix.symbol, font.scale);
+				x += font.kerning(&cell_helix_prev.symbol, &cell_helix.symbol);
 			}
 
 			let pos = Vec3::new(x, y, 0.0);
 
 			let wrong_symbol = cell_helix.symbol != cell_bevy.symbol;
 			if wrong_symbol {
-				// println!("[{} {}] wrong symbol [{}] <= [{}]", x_cell, y_cell, cell_helix.symbol, cell_bevy.symbol);
+				// println!("[{} {}] [{} {}] wrong symbol [{}] <= [{}]", x_cell, y_cell, x, y, cell_helix.symbol, cell_bevy.symbol);
+				// if x_cell > 0 {
+				// 	let cell_helix_prev = &content_helix[content_index - 1];
+				// 	println!("kern: {} adv: {}", font.kerning(&cell_helix_prev.symbol, &cell_helix.symbol), font.horizontal_advance(&cell_helix.symbol));
+
+				// }
 
 				update_cell_mesh(
 					pos,
 					cell_helix,
 					cell_bevy,
 					font,
-					font.depth,
-					font.tolerance,
 					text_mesh_cache,
 					&mut surface_children,
 					mesh_assets,
@@ -171,8 +174,12 @@ pub fn surface(
 				// print!("\n");
 			}
 
+			x += font.horizontal_advance(&cell_helix.symbol);
+
 			column += 1;
 		}
+
+		x			= 0.0;
 
 		column		= 0;
 		row			+= 1;
@@ -188,8 +195,6 @@ fn update_cell_mesh(
 	cell_helix		: &CellHelix,
 	cell_bevy		: &mut CellBevy,
 	font			: &ABGlyphFont,
-	font_depth		: f32,
-	font_tolerance	: f32,
 	text_mesh_cache	: &mut TextMeshesCache,
 	surface_children: &mut Vec<Entity>,
 	mesh_assets		: &mut Assets<Mesh>,
@@ -211,9 +216,7 @@ fn update_cell_mesh(
 
 	let mesh_handle = generate_glyph_mesh_wcache(
 		&cell_helix.symbol,
-		font_depth,			// depth -- how thick the mesh is.
-		font_tolerance,		// tolerance -- how detailed the mesh is. bigger number means less details
-		&font.f,
+		&font,
 		mesh_assets,
 		text_mesh_cache
 	);
@@ -234,7 +237,11 @@ fn update_cell_mesh(
 			commands.spawn_bundle(PbrBundle {
 				mesh : mesh_handle,
 				material : cell_bevy.fg_handle.as_ref().unwrap().clone_weak(),
-				transform : Transform::from_translation(pos),
+				transform : Transform {
+					translation	: pos,
+					scale		: [font.scale; 3].into(),
+					..default()
+				},
 				..default()
 			})
 			.id()
@@ -249,90 +256,6 @@ fn update_cell_mesh(
 
 		surface_children.push(cell_bevy.symbol_entity.unwrap());
 	}
-
-
-    // let cache = mesh_cache.get(&cell_helix.symbol);
-    // let cache_found = cache.is_some();
-    // let space_symbol = cell_helix.symbol == " ";
-
-    // if !cache_found && !space_symbol {
-	// 	// println!("cache not found for [{}]", cell_helix.symbol);
-
-	// 	if cell_bevy.symbol_entity.is_none() {
-	// 		// println!("spawning new entity for [{}] pos: {:?} ", cell_helix.symbol, pos);
-
-	// 		cell_bevy.symbol_entity = Some(
-	// 			commands.spawn_bundle(
-	// 				PbrBundle {
-	// 					transform : Transform::from_translation(pos),
-	// 					..default()
-	// 				}
-	// 			)
-	// 			.id()
-	// 		);
-	// 	}
-	// 	let mesh_entity_id = cell_bevy.symbol_entity.unwrap();
-
-	// 	let mesh_handle =
-
-	// 	//generate_glyph_mesh(&cell_helix.symbol, &font2.f, mesh_assets);
-
-	// 	mesh_from_symbol(
-	// 		&cell_helix.symbol,
-	// 		font,
-	// 		SizeUnit::NonStandard(font_size),
-	// 		font_depth,
-	// 		ttf2_mesh_cache,
-	// 		mesh_assets
-	// 	);
-
-	// 	// insert mesh
-	// 	commands.entity(mesh_entity_id).insert(mesh_handle.clone_weak());
-
-	// 	// insert material
-	// 	commands.entity(mesh_entity_id).insert(
-	// 		cell_bevy.fg_handle.as_ref().unwrap().clone_weak()
-	// 	);
-
-	// 	surface_children.push(mesh_entity_id);
-	// 	mesh_cache.insert(cell_helix.symbol.clone(), mesh_handle);
-
-	// 	cell_bevy.symbol_entity = Some(mesh_entity_id);
-	// } else if !cache_found && space_symbol {
-	// 	// println!("cache not found but we dont care it's space");
-
-	// 	if let Some(entity) = cell_bevy.symbol_entity {
-	// 		// remove mesh
-	// 		commands.entity(entity).remove::<Handle<Mesh>>();
-	// 	}
-	// } else if let Some(cache) = cache {
-	// 	// println!("cache found for [{}]", cell_helix.symbol);
-
-	// 	if let Some(entity) = cell_bevy.symbol_entity {
-	// 		// println!("replacing mesh handle for [{}]", cell_helix.symbol);
-
-	// 		// replace previous mesh with new one
-	// 		commands.entity(entity)
-	// 			.remove::<Handle<Mesh>>()
-	// 			.insert(cache.clone_weak())
-	// 			;
-	// 	} else {
-	// 		// println!("spawning new entity with an existing mesh for [{}] pos: {:?}", cell_helix.symbol, pos);
-
-	// 		// spawn new entity with an existing mesh
-	// 		cell_bevy.symbol_entity = Some(
-	// 			commands.spawn_bundle(PbrBundle {
-	// 				mesh : cache.clone_weak(),
-	// 				material : cell_bevy.fg_handle.as_ref().unwrap().clone_weak(),
-	// 				transform : Transform::from_translation(pos),
-	// 				..default()
-	// 			})
-	// 			.id()
-	// 		);
-	// 		surface_children.push(cell_bevy.symbol_entity.unwrap());
-	// 	}
-	// }
-    // cell_bevy.symbol = cell_helix.symbol.clone();
 }
 
 pub fn update_cell_materials(

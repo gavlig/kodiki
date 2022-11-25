@@ -124,7 +124,7 @@ pub fn surface(
 {
 	surface_bevy.content.resize_with(surface_helix.content.len(), || { CellBevy::default() });
 
-	let v_advance	= font.vertical_advance(font.scale);
+	let v_advance	= -font.vertical_advance();
 	let h_advance	= font.scale; // the widest glyph is supposed to be 1.0 so just scale should be enough
 	
 	let mut children : Vec<Entity> = Vec::new();
