@@ -28,12 +28,12 @@ fn generate_glyph_outline(
 	let mut outline = font.outline(glyph_id);
 	// couldn't find outline for requested character, use placeholder instead
 	if outline.is_none() {
-		// println!("glyph id for {} not found!", glyph_str);
+		println!("glyph id for {} not found!", glyph_str);
 		outline = font.outline(placeholder_glyph_id);
 	}
 
 	let outline = outline.unwrap();
-	// println!("got outline with {} curves!", outline.curves.len());
+
 	outline
 }
 
@@ -108,6 +108,7 @@ fn generate_path_from_outline(
 
 fn generate_vertex_buffer_from_path(
 	path: Path,
+	scale: f32,
 	tolerance: f32
 ) -> VertexBuffers<[f32; 3], u16>
 {
@@ -121,7 +122,7 @@ fn generate_vertex_buffer_from_path(
 			&path,
 			&FillOptions::tolerance(tolerance),
 			&mut BuffersBuilder::new(&mut geometry, |vertex: FillVertex| {
-				let pos2d = vertex.position() / 500.;
+				let pos2d = vertex.position() * scale;
 				[ pos2d.x, pos2d.y, 0.0 ]
 			}).with_inverted_winding(),
 		).unwrap();
@@ -276,6 +277,7 @@ fn generate_connecting_quads(
 			}
 
 			// add new vertices with same coords but different normals for better shading
+			// one connecting quad between two non ajdacent edges == two triangles:
 
 			// first triangle
 			let i0 = edge.i1;
@@ -317,19 +319,18 @@ fn generate_connecting_quads(
 }
 
 pub fn generate_glyph_mesh(
-	glyph_str: &String,
-	depth: f32,
-	font: &FontVec,
+	glyph_str	: &String,
+	size		: f32,
+	depth		: f32,
+	tolerance	: f32,
+	font		: &FontVec,
 ) -> Mesh {
-	// println!("generate_glyph_mesh for {} called!", glyph_str);
-
 	let glyph_outline		= generate_glyph_outline(glyph_str, font);
-
 	let path				= generate_path_from_outline(glyph_outline);
 
 	// geometry of a glyph's front face
-	let mut vertex_buffer	= generate_vertex_buffer_from_path(path, 1.0);
-
+	let scale				= size / font.units_per_em().unwrap(); //font.pt_to_px_scale(pt_size).unwrap().x / font.height_unscaled(); // we use only uniform scale for now + dividing by height since resulting scale is relative to it
+	let mut vertex_buffer	= generate_vertex_buffer_from_path(path, scale, tolerance);
 	let vertices_cnt		= vertex_buffer.vertices.len();
 	let mut normals: Vec<[f32; 3]> = vec![[0.0, 0.0, 1.0]; vertices_cnt];
 
@@ -339,6 +340,7 @@ pub fn generate_glyph_mesh(
 	// collect vertices into triangles with 3 edges to find adjacent edges
 	let mut triangles = collect_triangles_from_vertex_buffer(&vertex_buffer);
 
+	// find adjacent edges and mark them in "triangles"
 	run_triangle_adjacency_tests(&mut triangles);
 
 	// make back face with inverted winding and normals
