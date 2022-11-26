@@ -109,14 +109,13 @@ pub fn surface(
 
 			let wrong_symbol = cell_helix.symbol != cell_bevy.symbol;
 			if wrong_symbol {
-				// println!("[{} {}] [{} {}] wrong symbol [{}] <= [{}]", x_cell, y_cell, x, y, cell_helix.symbol, cell_bevy.symbol);
-				// if x_cell > 0 && !cell_helix.symbol.chars().next().unwrap().is_whitespace() {
-				// 	let cell_helix_prev = &content_helix[content_index - 1];
-				// 	println!("{} kern: {} adv: {}", cell_helix.symbol, font.kerning(&cell_helix_prev.symbol, &cell_helix.symbol), font.horizontal_advance(&cell_helix.symbol));
-				// }
+				if y_cell == 0 {
+					println!("[{} {}] [{} {}] wrong symbol [{}] <= [{}]", x_cell, y_cell, x, y, cell_helix.symbol, cell_bevy.symbol);
+				}
 
 				update_cell_mesh(
 					pos,
+					y_cell,
 					cell_helix,
 					cell_bevy,
 					font,
@@ -147,6 +146,7 @@ pub fn surface(
 
 fn update_cell_mesh(
 	pos				: Vec3,
+	y_cell			: u16,
 	cell_helix		: &CellHelix,
 	cell_bevy		: &mut CellBevy,
 	font			: &ABGlyphFont,
@@ -158,12 +158,13 @@ fn update_cell_mesh(
 	// Special case - space character. Doesn't require mesh
 	let space_symbol = cell_helix.symbol == " ";
 	if space_symbol {
-		// println!("cache not found but we dont care it's space");
-
 		// remove a mesh if there was an entity
 		if let Some(entity) = cell_bevy.symbol_entity {
 			// remove mesh
 			commands.entity(entity).remove::<Handle<Mesh>>();
+			if y_cell == 0 {
+				println!("removing mesh because new symbol is space! was {}", cell_bevy.symbol);
+			}
 		}
 		cell_bevy.symbol = cell_helix.symbol.clone();
 		return;
@@ -177,7 +178,9 @@ fn update_cell_mesh(
 	);
 
 	if let Some(entity) = cell_bevy.symbol_entity {
-		// println!("replacing mesh handle for [{}]", cell_helix.symbol);
+		if y_cell == 0 {
+			println!("replacing mesh handle for [{}]", cell_helix.symbol);
+		}
 
 		// replace previous mesh with new one
 		commands.entity(entity)
@@ -185,7 +188,9 @@ fn update_cell_mesh(
 			.insert(mesh_handle)
 			;
 	} else {
-		// println!("spawning new entity with an existing mesh for [{}] pos: {:?}", cell_helix.symbol, pos);
+		if y_cell == 0 {
+			println!("spawning new entity with an existing mesh for [{}] pos: {:?}", cell_helix.symbol, pos);
+		}
 
 		// spawn new entity with an existing mesh
 		cell_bevy.symbol_entity = Some(
