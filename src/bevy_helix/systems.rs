@@ -9,12 +9,14 @@ use super :: SurfacesMapBevy;
 use super :: CursorBevy;
 use super :: HelixColorsCache;
 use super :: application :: Application;
+use super :: spawn;
 use super :: render;
+use super :: animate;
 use super :: editor :: EditorViewBevy;
 
 use crate :: game :: DespawnResource;
 use crate :: game :: FontAssetHandles;
-use crate :: bevy_helix :: animate;
+
 
 use crate :: bevy_ab_glyph :: ABGlyphFont;
 use crate :: bevy_ab_glyph :: TextMeshesCache;
@@ -239,7 +241,7 @@ fn screen_print_active_layers(
 	surface_names_str.push_str(format!("{} helix layers:\n", surfaces_helix.len()).as_str());
 	for (name, surface) in surfaces_helix.iter() {
 		surface_names_str.push_str(" - ");
-		surface_names_str.push_str(format!("{} len: {}", name, surface.content.len()).as_str());
+		surface_names_str.push_str(format!("{} len: {} w: {} h: {}", name, surface.content.len(), surface.area.width, surface.area.height).as_str());
 		surface_names_str.push('\n');
 	}
 	screen_print!("\n{}", surface_names_str);
@@ -296,16 +298,16 @@ fn create_bevy_surfaces(
 {
 	let pos			= Vec3::new(0.0, 0.0, 0.5);
 
-	for (layer_name, surface_helix) in surfaces_helix.iter() {
-		if surfaces_bevy.contains_key(layer_name) {
+	for (surface_name, surface_helix) in surfaces_helix.iter() {
+		if surfaces_bevy.contains_key(surface_name) {
 			continue;
 		}
 
 		let mut surface_bevy = SurfaceBevy::default();
 
-		let layer_entity =
-		super::spawn::surface(
-			layer_name,
+		let surface_entity =
+		spawn::surface(
+			surface_name,
 			pos,
 
 			&surface_helix,
@@ -319,10 +321,10 @@ fn create_bevy_surfaces(
 			&mut commands
 		);
 
-		surface_bevy.entity = Some(layer_entity);
-		surfaces_bevy.insert(layer_name.clone(), surface_bevy);
+		surface_bevy.entity = Some(surface_entity);
+		surfaces_bevy.insert(surface_name.clone(), surface_bevy);
 
-		println!("new bevy surface created: {}", layer_name);
+		println!("new bevy surface created: {}", surface_name);
 	}
 }
 
