@@ -28,7 +28,6 @@ bevy_fly_camera		= { git = "https://github.com/gavlig/bevy_fly_camera.git", bran
 bevy_mod_picking	= { version = "0.8.2" } # https://github.com/aevyrie/bevy_mod_picking.git
 iyes_loopless		= { version = "0.7.0" }
 # bevy_infinite_grid	= { path = "../bevy_infinite_grid" } # { git = "https://github.com/gavlig/bevy_infinite_grid"}
-ttf2mesh			= { git = "https://github.com/gavlig/ttf2mesh-rs.git" }
 bevy_shadertoy_wgsl	= { git = "https://github.com/gavlig/bevy_shadertoy_wgsl.git" } # { path = "../bevy_shadertoy_wgsl" }
 bevy_contrib_colors = { git = "https://github.com/gavlig/bevy_contrib_colors.git" }
 

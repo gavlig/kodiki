@@ -10,36 +10,27 @@ use bevy_debug_text_overlay :: { screen_print };
 use bevy_polyline	:: prelude :: { * };
 
 use crate			:: bevy_ab_glyph :: ABGlyphFont;
-use crate			:: bevy_ab_glyph :: mesh_generator::{  generate_glyph_mesh_dbg, generate_glyph_mesh};
 
 use super			:: spawn :: WorldAxisDesc;
 use super           :: { * };
-use crate			:: { text };
 use crate			:: { bevy_helix };
 use crate			:: { bevy_helix :: SurfacesMapBevy };
 use crate			:: { bevy_helix :: SurfaceBevy };
 use crate			:: { bevy_helix :: editor :: EditorViewBevy };
-use crate           :: { bevy_helix :: HelixColorsCache };
 use crate           :: { bevy_ab_glyph :: TextMeshesCache };
 
 use helix_term	:: compositor	:: SurfacesMap	as SurfacesMapHelix;
-use helix_tui   :: buffer 		:: Buffer		as SurfaceHelix;
 
 pub fn setup_world_system(
-	mut surfaces_helix	: ResMut<SurfacesMapHelix>,
+		surfaces_helix	: ResMut<SurfacesMapHelix>,
 	mut surfaces_bevy	: ResMut<SurfacesMapBevy>,
     mut mesh_cache  : ResMut<TextMeshesCache>,
-    mut helix_colors_cache : ResMut<HelixColorsCache>,
 		font_handles: Res<FontAssetHandles>,
 	mut fonts		: ResMut<Assets<ABGlyphFont>>,
 	mut camera_ids	: ResMut<CameraIDs>,
-		ass			: Res<AssetServer>,
 
 	mut	mesh_assets	: ResMut<Assets<Mesh>>,
 	mut	material_assets : ResMut<Assets<StandardMaterial>>,
-
-	mut	polylines	: ResMut<Assets<Polyline>>,
-	mut	polyline_materials: ResMut<Assets<PolylineMaterial>>,
 
 	mut commands	: Commands,
 ) {
@@ -85,72 +76,13 @@ pub fn setup_world_system(
 
 	let surface_bevy_editor = surfaces_bevy.get(&String::from(EditorViewBevy::ID)).unwrap();
 
-	
-	// let (file_entity, text_descriptor) =
-	// text::spawn::file(
-	// 	"playground/herringbone_spawn.rs", // "playground/rustc_ast.rs",
-	// 	font_handle,
-	// 	&mut font.ttf_font,
-	// 	pos,
-	// 	&mut meshes,
-	// 	&mut materials,
-	// 	&mut commands
-	// );
-
 	spawn::camera(
 		None,//surface_bevy_editor.entity,
 		&mut camera_ids,
 		&mut commands
 	);
 
-	// text::spawn::caret(file_entity, &text_descriptor, &mut meshes, &mut materials, &mut commands);
-
-	// pos.x				+= 10.0;
-	// spawn::file_text	(
-	// 	"playground/rapier_parallel_solver_constraints.rs",
-	// 	&font_handles.droid_sans_mono,
-	// 	&mut font.ttf_font,
-	// 	pos,
-	// 	&mut commands
-	// );
-
-	// pos.x				+= 10.0;
-	// spawn::file_text	(
-	// 	"playground/rustc_ast.rs",
-	// 	&font_handles.droid_sans_mono,
-	// 	&mut font.ttf_font,
-	// 	pos,
-	// 	&mut commands
-	// );
-
-	// pos.x				+= 10.0;
-	// spawn::file_text	(
-	// 	"playground/salva_dfsph_solver.rs",
-	// 	&font_handles.droid_sans_mono,
-	// 	&mut font.ttf_font,
-	// 	pos,
-	// 	&mut commands
-	// );
-
 	commands.insert_resource(NextState(AppMode::Main));
-
-
-	//
-	//
-	//
-
-	// // let glyph_mesh_handle = generate_glyph_mesh_dbg(&String::from("b"), &font2.f, 0.05, &mut mesh_assets, &mut material_assets, &mut polylines, &mut polyline_materials, &mut commands);
-	// let glyph_mesh = generate_glyph_mesh(&String::from("N"), 0.2, 0.01, 1.0, &font2.f);
-	// let glyph_mesh_handle = mesh_assets.add(glyph_mesh);
-
-	// commands
-	// 	.spawn			()
-	// 	.insert_bundle	(PbrBundle {
-	// 		mesh		: glyph_mesh_handle,
-	// 		material	: material_assets.add(Color::rgb(0.8, 0.8, 0.8).into()),
-	// 		transform	: Transform::from_xyz(-1.0, 0.0, 0.0),
-	// 		..default()
-	// 	});
 }
 
 pub fn setup_lighting_system(
