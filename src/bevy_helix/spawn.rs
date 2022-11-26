@@ -141,6 +141,8 @@ pub fn surface(
 		let mut y 	= -v_advance * y_cell as f32;
 		// + v_advance because we need to cover row 0 with background quads too
 		y 			+= v_advance;
+		// add offset downwards to cover glyphs with vertical advance (y, g, _ etc)
+		y			-= v_advance / 4.5;
 		
 		for x_cell in 0 .. width {
 			let content_index = (y_cell * width + x_cell) as usize;
