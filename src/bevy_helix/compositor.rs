@@ -5,10 +5,9 @@ use helix_view :: graphics :: { CursorKind, Rect };
 
 use helix_tui :: buffer :: Buffer as Surface;
 
-use helix_term :: compositor :: { Compositor, Component, Context, EventResult, Callback, SurfacesMap };
+use helix_term :: compositor :: { Compositor, Component, Context, EventResult, SurfacesMap };
 
 // Cursive-inspired
-use helix_term::job::Jobs;
 use helix_view::Editor;
 
 pub use helix_view::input::Event;
