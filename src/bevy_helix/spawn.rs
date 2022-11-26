@@ -168,11 +168,11 @@ pub fn surface(
 
 	let root_entity =
 	commands.spawn_bundle(TransformBundle {
-		local			: Transform::from_translation(world_position),
+		local		: Transform::from_translation(world_position),
 		..default()
 	})
 	.insert_bundle(VisibilityBundle {
-		visibility		: Visibility { is_visible: true },
+		visibility	: Visibility { is_visible: true },
 		..default()
 	})
 	.id();
@@ -192,6 +192,9 @@ pub fn surface(
 	if children.len() > 0 {
 		commands.entity(root_entity).push_children(children.as_slice());
 	}
+
+	surface_bevy.entity = Some(root_entity);
+	surface_bevy.area = surface_helix.area;
 
 	root_entity
 }

@@ -139,6 +139,9 @@ pub fn render(
 		return;
 	}
 
+	let font_handle = &font_handles.ubuntu_mono;
+	let font		= fonts.get(font_handle).unwrap();
+
 	// will make sure we run this function only once
 	// if surfaces_bevy.len() > 1 {
 	//  	return;
@@ -166,10 +169,8 @@ pub fn render(
 	// show currently active helix layers with screen_print!
 	screen_print_active_layers(&surfaces_helix);
 
-	let font_handle = &font_handles.ubuntu_mono;
-	let font		= fonts.get(font_handle).unwrap();
-
 	cleanup_unused_surfaces(&mut surfaces_helix, &mut surfaces_bevy, &mut despawn);
+	cleanup_stale_surfaces(&mut surfaces_helix, &mut surfaces_bevy, &mut despawn);
 
 	// create bevy surfaces for every helix surface
 	create_bevy_surfaces(
@@ -256,6 +257,7 @@ fn cleanup_unused_surfaces(
 
 	// surfaces helix
     for (layer_name, surface_helix) in surfaces_helix.iter_mut() {
+		// if "dirty" is false it means that during render surface wasn't modified/filled up, meaning it's not longer used
 		if surface_helix.dirty {
 			continue;
 		}
@@ -267,8 +269,6 @@ fn cleanup_unused_surfaces(
 		surfaces_helix.remove(layer);
 	}
 
-	to_remove.clear();
-
 	// surfaces bevy
     for (layer_name, surface_bevy) in surfaces_bevy.iter_mut() {
 		if surfaces_helix.contains_key(layer_name) {
@@ -279,6 +279,31 @@ fn cleanup_unused_surfaces(
 	
 		to_remove.push(layer_name.clone());
 		println!("unused bevy surface removed: {}", layer_name);
+	}
+    for layer in to_remove {
+		surfaces_bevy.remove(&layer);
+	}
+}
+
+// "stale" bevy surface is the one that has a size different from its helix counterpart
+fn cleanup_stale_surfaces(
+	surfaces_helix	: &mut SurfacesMapHelix,
+	surfaces_bevy	: &mut SurfacesMapBevy,
+	despawn			: &mut DespawnResource
+) {
+    let mut to_remove = Vec::<String>::default();
+
+    for (layer_name, surface_bevy) in surfaces_bevy.iter_mut() {
+		if !surfaces_helix.contains_key(layer_name) {
+			continue;
+		}
+
+		let surface_helix = surfaces_helix.get(layer_name).unwrap();
+		if surface_helix.area != surface_bevy.area {
+			despawn.entities.push(surface_bevy.entity.unwrap());
+			to_remove.push(layer_name.clone());
+			println!("stale bevy surface removed: {} helix.area: {:?} bevy.area: {:?}", layer_name, surface_helix.area, surface_bevy.area);
+		}
 	}
     for layer in to_remove {
 		surfaces_bevy.remove(&layer);
@@ -305,7 +330,6 @@ fn create_bevy_surfaces(
 
 		let mut surface_bevy = SurfaceBevy::default();
 
-		let surface_entity =
 		spawn::surface(
 			surface_name,
 			pos,
@@ -321,7 +345,6 @@ fn create_bevy_surfaces(
 			&mut commands
 		);
 
-		surface_bevy.entity = Some(surface_entity);
 		surfaces_bevy.insert(surface_name.clone(), surface_bevy);
 
 		println!("new bevy surface created: {}", surface_name);

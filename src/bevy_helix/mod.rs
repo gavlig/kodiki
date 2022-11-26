@@ -62,6 +62,7 @@ impl Default for CellBevy {
 pub struct SurfaceBevy {
 	pub entity  : Option<Entity>,
 	pub content : Vec<CellBevy>,
+	pub area	: helix_view::graphics::Rect,
 }
 
 impl SurfaceBevy {
