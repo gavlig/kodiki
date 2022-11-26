@@ -146,7 +146,7 @@ pub fn surface(
 			 	commands
 			);
 			
-			cell_bevy.entity_bg_quad = Some(quad_entity_id);
+			cell_bevy.bg_quad_entity = Some(quad_entity_id);
 
 			commands.entity(quad_entity_id)
 			.insert(Row { 0: row })
@@ -194,4 +194,53 @@ pub fn surface(
 	}
 
 	root_entity
+}
+
+pub fn cursor(
+	cursor			: &mut CursorBevy,
+	
+	surface_bevy	: &mut SurfaceBevy,
+	font			: &ABGlyphFont,
+
+	text_meshes_cache : &mut TextMeshesCache,
+	helix_colors_cache : &mut HelixColorsCache,
+
+	material_assets	: &mut Assets<StandardMaterial>,
+	mesh_assets		: &mut ResMut<Assets<Mesh>>,
+	commands		: &mut Commands
+)
+{
+	let cursor_color_fg	= color_from_helix(HelixColor::Magenta);
+	let material_handle	= get_helix_color_material_handle(cursor_color_fg, helix_colors_cache, material_assets);
+	
+	// spawn dedicated quad for cursor
+	let root_entity 	= surface_bevy.entity.unwrap();
+
+	let v_advance		= font.vertical_advance();
+	let h_advance		= font.horizontal_advance(&String::from("a")); // in monospace font every letter should be of the same width so we pick 'a'
+
+	let glyph_width		= h_advance;
+	let glyph_height	= v_advance;
+
+	let cursor_z		= -font.depth_scaled() + (font.depth_scaled() / 4.0);
+
+	let quad_width		= glyph_width;
+	let quad_height		= glyph_height;
+	let quad_pos		= Vec3::new(0., 0., cursor_z);
+
+	let quad_entity_id	= 
+	quad(
+		quad_pos,
+		Vec2::new(quad_width, quad_height),
+		text_meshes_cache,
+		mesh_assets,
+		commands
+	);
+
+	commands.entity(quad_entity_id).insert(material_handle.clone_weak());
+
+	commands.entity(root_entity).add_child(quad_entity_id);
+
+	cursor.entity 		= Some(quad_entity_id);
+	cursor.color		= cursor_color_fg;
 }

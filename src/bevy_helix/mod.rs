@@ -8,6 +8,7 @@ use crate :: game :: AppMode;
 
 pub mod spawn;
 mod render;
+mod animate;
 pub mod application;
 pub use application :: *;
 mod compositor;
@@ -31,27 +32,27 @@ pub struct CursorBevy {
 // representation of helix_tui::buffer::Cell in Bevy
 #[derive(Debug, Clone, PartialEq)]
 pub struct CellBevy {
-	pub symbol_entity : Option<Entity>,
-	pub entity_bg_quad : Option<Entity>,
-	pub symbol  : String,
-	pub fg      : helix_view::graphics::Color,
-	pub bg      : helix_view::graphics::Color,
+	pub symbol_entity		: Option<Entity>,
+	pub bg_quad_entity		: Option<Entity>,
+	pub symbol				: String,
+	pub fg					: helix_view::graphics::Color,
+	pub bg					: helix_view::graphics::Color,
 
-	pub fg_handle : Option<Handle<StandardMaterial>>,
-	pub bg_handle : Option<Handle<StandardMaterial>>,
+	pub fg_handle			: Option<Handle<StandardMaterial>>,
+	pub bg_handle			: Option<Handle<StandardMaterial>>,
 }
 
 impl Default for CellBevy {
 	fn default() -> Self {
 		Self {
-			symbol_entity : None,
-			entity_bg_quad : None,
-			symbol  : " ".into(),
-			fg      : helix_view::graphics::Color::Reset,
-			bg      : helix_view::graphics::Color::Reset,
+			symbol_entity	: None,
+			bg_quad_entity	: None,
+			symbol  		: " ".into(),
+			fg      		: helix_view::graphics::Color::Reset,
+			bg      		: helix_view::graphics::Color::Reset,
 
-			fg_handle : None,
-			bg_handle : None,
+			fg_handle 		: None,
+			bg_handle 		: None,
 		}
 	}
 }
@@ -92,7 +93,7 @@ pub struct HelixColorsCache {
 
 pub fn get_helix_color_material_handle(
 	color_bevy			: Color,
-	helix_colors_cache	: &mut MaterialsMap,
+	helix_colors_cache	: &mut HelixColorsCache,
 	material_assets		: &mut Assets<StandardMaterial>
 ) -> Handle<StandardMaterial> {
 	let mut color_u8 : [u8; 3] = [0; 3];
@@ -100,7 +101,7 @@ pub fn get_helix_color_material_handle(
 	color_u8[1] = (color_bevy.g() * 255.) as u8;
 	color_u8[2] = (color_bevy.b() * 255.) as u8;
 	let color_string = hex::encode(color_u8);
-	match helix_colors_cache.get(&color_string) {
+	match helix_colors_cache.materials.get(&color_string) {
 		Some(handle) => handle.clone_weak(),
 		None => {
 			let handle = material_assets.add(
@@ -111,7 +112,7 @@ pub fn get_helix_color_material_handle(
 				}
 			);
 
-			helix_colors_cache.insert_unique_unchecked(color_string, handle).1.clone_weak()
+			helix_colors_cache.materials.insert_unique_unchecked(color_string, handle).1.clone_weak()
 		}
 	}
 }

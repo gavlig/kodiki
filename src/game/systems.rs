@@ -16,6 +16,8 @@ use super           :: { * };
 use crate			:: { bevy_helix };
 use crate			:: { bevy_helix :: SurfacesMapBevy };
 use crate			:: { bevy_helix :: SurfaceBevy };
+use crate			:: { bevy_helix :: CursorBevy };
+use crate			:: { bevy_helix :: HelixColorsCache };
 use crate			:: { bevy_helix :: editor :: EditorViewBevy };
 use crate           :: { bevy_ab_glyph :: TextMeshesCache };
 
@@ -24,15 +26,21 @@ use helix_term	:: compositor	:: SurfacesMap	as SurfacesMapHelix;
 pub fn setup_world_system(
 		surfaces_helix	: ResMut<SurfacesMapHelix>,
 	mut surfaces_bevy	: ResMut<SurfacesMapBevy>,
-	mut mesh_cache  : ResMut<TextMeshesCache>,
-		font_handles: Res<FontAssetHandles>,
-	mut fonts		: ResMut<Assets<ABGlyphFont>>,
-	mut camera_ids	: ResMut<CameraIDs>,
+	mut	cursor          : ResMut<CursorBevy>,
 
-	mut	mesh_assets	: ResMut<Assets<Mesh>>,
+		font_handles	: Res<FontAssetHandles>,
+	mut fonts			: ResMut<Assets<ABGlyphFont>>,
+
+	mut camera_ids		: ResMut<CameraIDs>,
+
+	(mut text_meshes_cache, mut helix_colors_cache) 
+	:
+	(ResMut<TextMeshesCache>, ResMut<HelixColorsCache>),
+
+	mut	mesh_assets		: ResMut<Assets<Mesh>>,
 	mut	material_assets : ResMut<Assets<StandardMaterial>>,
 
-	mut commands	: Commands,
+	mut commands		: Commands,
 ) {
 	// spawn::infinite_grid(&mut commands);
 
@@ -64,7 +72,7 @@ pub fn setup_world_system(
 
 			&font,
 
-			&mut mesh_cache,
+			&mut text_meshes_cache,
 
 			mesh_assets.as_mut(),
 			&mut commands
@@ -74,10 +82,21 @@ pub fn setup_world_system(
 		surfaces_bevy.insert(layer_name.clone(), surface_bevy);
 	}
 
-	let surface_bevy_editor = surfaces_bevy.get(&String::from(EditorViewBevy::ID)).unwrap();
+	let surface_bevy_editor = surfaces_bevy.get_mut(&String::from(EditorViewBevy::ID)).unwrap();
+
+	bevy_helix::spawn::cursor(
+		&mut cursor,
+		surface_bevy_editor,
+		font,
+		&mut text_meshes_cache,
+		&mut helix_colors_cache,
+		&mut material_assets,
+		&mut mesh_assets,
+		&mut commands
+	);
 
 	spawn::camera(
-		None,//surface_bevy_editor.entity,
+		surface_bevy_editor.entity,
 		&mut camera_ids,
 		&mut commands
 	);
@@ -249,7 +268,7 @@ pub fn input_system(
 		// 	camera.enabled_reader = toggle;
 		// }
 
-		//camera.enabled_reader = !key.pressed(KeyCode::LAlt);
+		camera.enabled_reader = !key.pressed(KeyCode::LAlt);
 
 		// camera.enabled_rotation = true;
 		camera.enabled_zoom = true;

@@ -3,7 +3,6 @@ use bevy :: input :: *;
 use bevy :: input :: keyboard :: *;
 
 use bevy_debug_text_overlay :: screen_print;
-use bevy_prototype_debug_lines :: DebugLines;
 
 use super :: SurfaceBevy;
 use super :: SurfacesMapBevy;
@@ -15,6 +14,7 @@ use super :: editor :: EditorViewBevy;
 
 use crate :: game :: DespawnResource;
 use crate :: game :: FontAssetHandles;
+use crate :: bevy_helix :: animate;
 
 use crate :: bevy_ab_glyph :: ABGlyphFont;
 use crate :: bevy_ab_glyph :: TextMeshesCache;
@@ -132,8 +132,6 @@ pub fn render(
 	mut material_assets	: ResMut<Assets<StandardMaterial>>,
 	mut despawn         : ResMut<DespawnResource>,
 	mut commands        : Commands,
-
-	mut debug_lines		: ResMut<DebugLines>
 ) {
 	if app.is_none() {
 		return;
@@ -153,7 +151,7 @@ pub fn render(
 		surface.reset();
 	}
 
-	let old_style = true;
+	let old_style = false;
 
 	// first let helix render into surface_helix
 	if old_style {
@@ -161,20 +159,6 @@ pub fn render(
 		app.render(surface_helix_editor);
 	} else {
 		app.render_ext(editor_area, surfaces_helix.as_mut());
-	}
-
-	let (cursor_pos, cursor_kind) = app.cursor(editor_area);
-	if let Some(cursor_pos) = cursor_pos {
-		// cursor position changed so we reset easing timer
-		if cursor.x != cursor_pos.0
-		|| cursor.y != cursor_pos.1
-		{
-			cursor.easing_accum = 0.0;
-		}
-
-		cursor.x = cursor_pos.0;
-		cursor.y = cursor_pos.1;
-		cursor.kind = cursor_kind;
 	}
 
 	// show currently active helix layers with screen_print!
@@ -261,7 +245,6 @@ pub fn render(
 		render::surface(
 			surface_helix,
 			surface_bevy,
-			&cursor,
 
 			&font,
 
@@ -270,8 +253,7 @@ pub fn render(
 
 			&mut mesh_assets,
 			&mut material_assets,
-			&mut commands,
-			&mut debug_lines
+			&mut commands
 		);
 		
 		// println!("rendering surface {} len {}", layer_name, surface_bevy.content.len());
@@ -286,18 +268,23 @@ pub fn render(
 	}
 
 	{ // render cursor
-		let surface_bevy_editor = surfaces_bevy.get(&String::from(EditorViewBevy::ID)).unwrap();
-		render::cursor(
-			surface_bevy_editor,
-			&font,
+		let mut surface_bevy_editor = surfaces_bevy.get_mut(&String::from(EditorViewBevy::ID)).unwrap();
+		let surface_helix_editor = surfaces_helix.get(&String::from(EditorViewBevy::ID)).unwrap();
+		animate::cursor(
 			&mut cursor,
 			&mut q_cursor_transform,
+			font,
 			&time,
+			&mut app
+		);
+
+		render::cursor(
+			&mut cursor,
+			&mut surface_bevy_editor,
+			surface_helix_editor,
 			&app.editor.theme,
-			&mut text_meshes_cache,
-			&mut helix_colors_cache.materials,
+			&mut helix_colors_cache,
 			&mut material_assets,
-			&mut mesh_assets,
 			&mut commands
 		);
 	}
