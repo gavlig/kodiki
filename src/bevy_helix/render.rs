@@ -212,10 +212,10 @@ fn update_cell_mesh(
 			cell_bevy.fg_handle.as_ref().unwrap().clone_weak()
 		);
 
-		cell_bevy.symbol = cell_helix.symbol.clone();
-
 		surface_children.push(cell_bevy.symbol_entity.unwrap());
 	}
+
+	cell_bevy.symbol = cell_helix.symbol.clone();
 }
 
 pub fn update_cell_materials(
