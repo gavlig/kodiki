@@ -158,85 +158,26 @@ pub fn render(
 		let surface_helix_editor = surfaces_helix.get_mut(&String::from(EditorViewBevy::ID)).unwrap();
 		app.render(surface_helix_editor);
 	} else {
-		app.render_ext(editor_area, surfaces_helix.as_mut());
+		app.render_ext(editor_area, &mut surfaces_helix);
 	}
 
 	// show currently active helix layers with screen_print!
-	let mut surface_names_str = String::default();
-	surface_names_str.push_str(format!("{} helix layers:\n", surfaces_helix.len()).as_str());
-	for (name, surface) in surfaces_helix.iter() {
-		surface_names_str.push_str(" - ");
-		surface_names_str.push_str(format!("{} len: {}", name, surface.content.len()).as_str());
-		surface_names_str.push('\n');
-	}
-	screen_print!("\n{}", surface_names_str);
+	screen_print_active_layers(&surfaces_helix);
 
 	let font_handle = &font_handles.ubuntu_mono;
 	let font		= fonts.get(font_handle).unwrap();
 
-	let pos			= Vec3::new(0.0, 0.0, 0.5);
-	
-	{ // clean up unused surfaces
-		let mut to_remove = Vec::<String>::default();
-		
-		for (layer_name, surface_helix) in surfaces_helix.iter_mut() {
-			if surface_helix.dirty {
-				continue;
-			}
-					
-			to_remove.push(layer_name.clone());
-			println!("unused helix surface removed: {}", layer_name);
-		}
-	
-		for layer in to_remove.iter() {
-			surfaces_helix.remove(layer);
-		}
-		
-		for (layer_name, surface_bevy) in surfaces_bevy.iter_mut() {
-			if surfaces_helix.contains_key(layer_name) {
-				continue;
-			}
-			
-			despawn.entities.push(surface_bevy.entity.unwrap());
-		
-			to_remove.push(layer_name.clone());
-			println!("unused bevy surface removed: {}", layer_name);
-		}
-	
-		for layer in to_remove {
-			surfaces_bevy.remove(&layer);
-		}
-	}
+	cleanup_unused_surfaces(&mut surfaces_helix, &mut surfaces_bevy, &mut despawn);
 
 	// create bevy surfaces for every helix surface
-	for (layer_name, surface_helix) in surfaces_helix.iter() {
-		if surfaces_bevy.contains_key(layer_name) {
-			continue;
-		}
-
-		let mut surface_bevy = SurfaceBevy::default();
-
-		let layer_entity =
-		super::spawn::surface(
-			layer_name,
-			pos,
-
-			&surface_helix,
-			&mut surface_bevy,
-
-			&font,
-			
-			&mut text_meshes_cache,
-			
-			mesh_assets.as_mut(),
-			&mut commands
-		);
-
-		surface_bevy.entity = Some(layer_entity);
-		surfaces_bevy.insert(layer_name.clone(), surface_bevy);
-
-		println!("new bevy surface created: {}", layer_name);
-	}
+	create_bevy_surfaces(
+		&mut surfaces_helix,
+		&mut surfaces_bevy,
+		&font,
+		&mut text_meshes_cache,
+		&mut mesh_assets,
+		&mut commands
+	);
 	
 	// render surfaces
 	for (layer_name, surface_helix) in surfaces_helix.iter_mut() {
@@ -287,6 +228,101 @@ pub fn render(
 			&mut material_assets,
 			&mut commands
 		);
+	}
+}
+
+fn screen_print_active_layers(
+	surfaces_helix : &SurfacesMapHelix,
+)
+{
+	let mut surface_names_str = String::default();
+	surface_names_str.push_str(format!("{} helix layers:\n", surfaces_helix.len()).as_str());
+	for (name, surface) in surfaces_helix.iter() {
+		surface_names_str.push_str(" - ");
+		surface_names_str.push_str(format!("{} len: {}", name, surface.content.len()).as_str());
+		surface_names_str.push('\n');
+	}
+	screen_print!("\n{}", surface_names_str);
+}
+
+fn cleanup_unused_surfaces(
+	surfaces_helix	: &mut SurfacesMapHelix,
+	surfaces_bevy	: &mut SurfacesMapBevy,
+	despawn			: &mut DespawnResource
+) {
+    let mut to_remove = Vec::<String>::default();
+
+	// surfaces helix
+    for (layer_name, surface_helix) in surfaces_helix.iter_mut() {
+		if surface_helix.dirty {
+			continue;
+		}
+				
+		to_remove.push(layer_name.clone());
+		println!("unused helix surface removed: {}", layer_name);
+	}
+    for layer in to_remove.iter() {
+		surfaces_helix.remove(layer);
+	}
+
+	to_remove.clear();
+
+	// surfaces bevy
+    for (layer_name, surface_bevy) in surfaces_bevy.iter_mut() {
+		if surfaces_helix.contains_key(layer_name) {
+			continue;
+		}
+		
+		despawn.entities.push(surface_bevy.entity.unwrap());
+	
+		to_remove.push(layer_name.clone());
+		println!("unused bevy surface removed: {}", layer_name);
+	}
+    for layer in to_remove {
+		surfaces_bevy.remove(&layer);
+	}
+}
+
+fn create_bevy_surfaces(
+	surfaces_helix		: &mut SurfacesMapHelix,
+	surfaces_bevy		: &mut SurfacesMapBevy,
+
+	font				: &ABGlyphFont,
+	mut text_meshes_cache : &mut TextMeshesCache,
+
+	mut mesh_assets		: &mut Assets<Mesh>,
+	mut commands		: &mut Commands,
+)
+{
+	let pos			= Vec3::new(0.0, 0.0, 0.5);
+
+	for (layer_name, surface_helix) in surfaces_helix.iter() {
+		if surfaces_bevy.contains_key(layer_name) {
+			continue;
+		}
+
+		let mut surface_bevy = SurfaceBevy::default();
+
+		let layer_entity =
+		super::spawn::surface(
+			layer_name,
+			pos,
+
+			&surface_helix,
+			&mut surface_bevy,
+
+			&font,
+			
+			&mut text_meshes_cache,
+			
+			&mut mesh_assets,
+			&mut commands
+		);
+
+		surface_bevy.entity = Some(layer_entity);
+		surfaces_bevy.insert(layer_name.clone(), surface_bevy);
+
+		println!("new bevy surface created: {}", layer_name);
 	}
 }
 

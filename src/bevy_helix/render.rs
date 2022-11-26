@@ -48,7 +48,7 @@ pub fn surface(
 
 	font			: &ABGlyphFont,
 
-	text_mesh_cache	: &mut TextMeshesCache,
+	text_meshes_cache : &mut TextMeshesCache,
 	helix_colors_cache : &mut HelixColorsCache,
 
 	mesh_assets		: &mut Assets<Mesh>,
@@ -98,7 +98,7 @@ pub fn surface(
 				cell_helix,
 				cell_bevy,
 				font,
-				text_mesh_cache,
+				text_meshes_cache,
 				&mut surface_children,
 				mesh_assets,
 				commands
