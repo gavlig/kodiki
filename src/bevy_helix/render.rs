@@ -109,13 +109,8 @@ pub fn surface(
 
 			let wrong_symbol = cell_helix.symbol != cell_bevy.symbol;
 			if wrong_symbol {
-				if y_cell == 0 {
-					println!("[{} {}] [{} {}] wrong symbol [{}] <= [{}]", x_cell, y_cell, x, y, cell_helix.symbol, cell_bevy.symbol);
-				}
-
 				update_cell_mesh(
 					pos,
-					y_cell,
 					cell_helix,
 					cell_bevy,
 					font,
@@ -124,8 +119,6 @@ pub fn surface(
 					mesh_assets,
 					commands
 				);
-
-				// print!("\n");
 			}
 
 			x += font.horizontal_advance(&cell_helix.symbol);
@@ -146,7 +139,6 @@ pub fn surface(
 
 fn update_cell_mesh(
 	pos				: Vec3,
-	y_cell			: u16,
 	cell_helix		: &CellHelix,
 	cell_bevy		: &mut CellBevy,
 	font			: &ABGlyphFont,
@@ -162,9 +154,6 @@ fn update_cell_mesh(
 		if let Some(entity) = cell_bevy.symbol_entity {
 			// remove mesh
 			commands.entity(entity).remove::<Handle<Mesh>>();
-			if y_cell == 0 {
-				println!("removing mesh because new symbol is space! was {}", cell_bevy.symbol);
-			}
 		}
 		cell_bevy.symbol = cell_helix.symbol.clone();
 		return;
@@ -178,20 +167,12 @@ fn update_cell_mesh(
 	);
 
 	if let Some(entity) = cell_bevy.symbol_entity {
-		if y_cell == 0 {
-			println!("replacing mesh handle for [{}]", cell_helix.symbol);
-		}
-
 		// replace previous mesh with new one
 		commands.entity(entity)
 			.remove::<Handle<Mesh>>()
 			.insert(mesh_handle)
 			;
 	} else {
-		if y_cell == 0 {
-			println!("spawning new entity with an existing mesh for [{}] pos: {:?}", cell_helix.symbol, pos);
-		}
-
 		// spawn new entity with an existing mesh
 		cell_bevy.symbol_entity = Some(
 			commands.spawn_bundle(PbrBundle {
