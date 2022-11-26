@@ -360,17 +360,18 @@ pub fn generate_glyph_mesh_wcache(
 	glyph_str	: &String,
 	font		: &ABGlyphFont,
 	mesh_assets	: &mut Assets<Mesh>,
-	text_cache	: &mut TextMeshesCache
+	text_meshes_cache : &mut TextMeshesCache
 ) -> Handle<Mesh>
 {
-	let cache 	= text_cache.meshes.get(glyph_str);
-
-	return if let Some(cache) = cache {
-		cache.clone_weak()
-	} else {
-		mesh_assets.add(
-			generate_glyph_mesh(glyph_str, font)
-		)
+	match text_meshes_cache.meshes.get(glyph_str) {
+		Some(handle) => handle.clone_weak(),
+		None => {
+			let handle = mesh_assets.add(
+				generate_glyph_mesh(glyph_str, font)
+			);
+			
+			text_meshes_cache.meshes.insert_unique_unchecked(glyph_str.clone(), handle).1.clone()
+		}
 	}
 }
 
