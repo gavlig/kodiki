@@ -124,7 +124,7 @@ pub fn render(
 		app             : Option<NonSendMut<Application>>,
 		time			: Res<Time>,
 
-	(mut text_mesh_cache, mut helix_colors_cache) 
+	(mut text_meshes_cache, mut helix_colors_cache) 
 	:
 	(ResMut<TextMeshesCache>, ResMut<HelixColorsCache>),
 
@@ -242,7 +242,7 @@ pub fn render(
 
 			&font,
 			
-			&mut text_mesh_cache,
+			&mut text_meshes_cache,
 			
 			mesh_assets.as_mut(),
 			&mut commands
@@ -261,11 +261,11 @@ pub fn render(
 		render::surface(
 			surface_helix,
 			surface_bevy,
-			cursor.as_ref(),
+			&cursor,
 
 			&font,
 
-			&mut text_mesh_cache,
+			&mut text_meshes_cache,
 			&mut helix_colors_cache,
 
 			&mut mesh_assets,
@@ -287,19 +287,19 @@ pub fn render(
 
 	{ // render cursor
 		let surface_bevy_editor = surfaces_bevy.get(&String::from(EditorViewBevy::ID)).unwrap();
-		// render::cursor(
-		// 	pos,
-		// 	surface_bevy_editor,
-		// 	&mut font.ttf_font,
-		// 	cursor.as_mut(),
-		// 	&mut q_cursor_transform,
-		// 	&time,
-		// 	&app.editor.theme,
-		// 	&mut helix_colors_cache.materials,
-		// 	&mut material_assets,
-		// 	&mut mesh_assets,
-		// 	&mut commands
-		// );
+		render::cursor(
+			surface_bevy_editor,
+			&font,
+			&mut cursor,
+			&mut q_cursor_transform,
+			&time,
+			&app.editor.theme,
+			&mut text_meshes_cache,
+			&mut helix_colors_cache.materials,
+			&mut material_assets,
+			&mut mesh_assets,
+			&mut commands
+		);
 	}
 }
 

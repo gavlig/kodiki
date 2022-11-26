@@ -53,6 +53,10 @@ impl ABGlyphFont {
 	pub fn depth_scaled(&self) -> f32 {
 		self.depth * self.scale
 	}
+
+	pub fn vertical_down_offset(&self) -> f32 {
+		self.vertical_advance() / 4.5
+	}
 }
 
 unsafe impl Sync for ABGlyphFont {}

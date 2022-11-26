@@ -14,42 +14,8 @@ use super				:: { * };
 use helix_tui 			:: { buffer :: Buffer as SurfaceHelix };
 use helix_tui			:: { buffer :: Cell as CellHelix };
 
+use helix_view			:: { Theme };
 use helix_view::graphics::Color as HelixColor;
-
-fn quad(
-	quad_pos_in		: Vec3,
-	quad_size		: Vec2,
-	meshes			: &mut ResMut<Assets<Mesh>>,
-	material_handle	: &Handle<StandardMaterial>,
-	commands		: &mut Commands
-) -> Entity {
-	let quad_width		= quad_size.x;
-	let quad_height		= quad_size.y;
-
-	let quad_handle		= meshes.add(
-		Mesh::from(
-			shape::Quad::new(
-				Vec2::new(
-					quad_width,
-					quad_height
-				)
-			)
-		)
-	);
-	let quad_pos		= quad_pos_in + Vec3::new(quad_width / 2.0, 0., 0.);//-quad_height / 2.0, 0.0);
-
-	commands.spawn_bundle(PbrBundle {
-		mesh			: quad_handle,
-		material		: material_handle.clone_weak(),
-		transform		: Transform {
-			translation	: quad_pos,
-			// rotation	: Quat::from_rotation_y(std::f32::consts::PI), // winding ccw something something
-			..default()
-		},
-		..default()
-	})
-	.id()
-}
 
 fn color_from_helix(helix_color: HelixColor) -> Color {
 	match helix_color {
@@ -205,7 +171,7 @@ fn update_cell_mesh(
 	cell_helix		: &CellHelix,
 	cell_bevy		: &mut CellBevy,
 	font			: &ABGlyphFont,
-	text_mesh_cache	: &mut TextMeshesCache,
+	text_meshes_cache : &mut TextMeshesCache,
 	surface_children: &mut Vec<Entity>,
 	mesh_assets		: &mut Assets<Mesh>,
 	commands		: &mut Commands
@@ -228,7 +194,7 @@ fn update_cell_mesh(
 		&cell_helix.symbol,
 		&font,
 		mesh_assets,
-		text_mesh_cache
+		text_meshes_cache
 	);
 
 	if let Some(entity) = cell_bevy.symbol_entity {
@@ -321,93 +287,85 @@ pub fn update_cell_materials(
 	}
 }
 
-// pub fn cursor(
-// 	offset			: Vec3,
-// 	surface_bevy	: &SurfaceBevy,
-// 	font			: &mut ttf2mesh::TTFFile,
-// 	cursor			: &mut CursorBevy,
-// 	q_cursor_transform : &mut Query<&mut Transform>,
-// 	time			: &Res<Time>,
-// 	theme			: &Theme,
-// 	helix_colors_cache : &mut MaterialsMap,
-// 	material_assets	: &mut Assets<StandardMaterial>,
-// 	meshes			: &mut ResMut<Assets<Mesh>>,
-// 	commands		: &mut Commands
-// )
-// {
-// 	let cursor_theme = theme.get("ui.cursor");
-// 	if cursor_theme.bg.is_none() {
-// 		return;
-// 	}
+pub fn cursor(
+	surface_bevy	: &SurfaceBevy,
+	font			: &ABGlyphFont,
+	cursor			: &mut CursorBevy,
+	q_cursor_transform : &mut Query<&mut Transform>,
+	time			: &Res<Time>,
+	theme			: &Theme,
+	text_meshes_cache : &mut TextMeshesCache,
+	helix_colors_cache : &mut MaterialsMap,
+	material_assets	: &mut Assets<StandardMaterial>,
+	mesh_assets		: &mut ResMut<Assets<Mesh>>,
+	commands		: &mut Commands
+)
+{
+	let cursor_theme = theme.get("ui.cursor");
+	if cursor_theme.bg.is_none() {
+		return;
+	}
 
-// 	let root_entity = surface_bevy.entity.unwrap();
+	let root_entity 		= surface_bevy.entity.unwrap();
 
-// 	let font_size	= 9.;
-// 	let font_size_scalar = font_size / 72.; // see SizeUnit::as_scalar5
+	let v_advance			= font.vertical_advance();
+	let h_advance			= font.horizontal_advance(&String::from("a")); // in monospace font every letter should be of the same width so we pick 'a'
+	let v_down_offset		= font.vertical_down_offset();
 
-// 	let ybounds = {
-// 		let reference_glyph_y : Glyph = font.glyph_from_char('y').unwrap();
-// 		reference_glyph_y.inner.ybounds
-// 	};
+	let glyph_width			= h_advance;
+	let glyph_height		= v_advance;
 
-// 	let reference_glyph : Glyph = font.glyph_from_char('a').unwrap(); // and omega
+	let cursor_z			= -font.depth_scaled() + (font.depth_scaled() / 4.0);
+
+	// move background quad
+	if cursor.entity.is_some() && cursor.easing_accum < 1.0 {
+		let column_offset 	= (cursor.x as f32) * h_advance;
+		let row_offset		= (cursor.y as f32) * -v_advance + v_advance; 
+
+		let target_x 		= column_offset	+ (glyph_width / 2.0);
+		let target_y 		= row_offset	- (glyph_height / 2.0) - v_down_offset;
+
+		let target_pos		= Vec3::new(target_x, target_y, cursor_z);
+
+		let delta_seconds	= time.delta_seconds();
+		let delta_accum		= delta_seconds / /*cursor_easing_seconds*/0.05;
+
+		let cursor_entity 	= cursor.entity.unwrap();
+		let mut cursor_transform = q_cursor_transform.get_mut(cursor_entity).unwrap();
+
+		cursor.easing_accum = (cursor.easing_accum + delta_accum).min(1.0);
+		cursor_transform.translation = cursor_transform.translation.lerp(target_pos, cursor.easing_accum);
+	}
 	
-// 	let row_offset			= calc_vertical_offset(1.0);
-// 	let lbearing			= reference_glyph.inner.lbearing * font_size_scalar;
-// 	let glyph_width			= reference_glyph.inner.advance * font_size_scalar;
-// 	let glyph_height		= row_offset.abs();
-// 	let cursor_z			= -0.1 / 72.;
-
-// 	let mut children : Vec<Entity> = Vec::new();
-
-// 	// move background quad
-// 	if cursor.entity.is_some() && cursor.easing_accum < 1.0 {
-// 		let cursor_entity 	= cursor.entity.unwrap();
-// 		let column_offset 	= (cursor.x as f32) * glyph_width;
-// 		let target_x 		= column_offset + (glyph_width / 2.0) + lbearing;
-// 		let target_y 		= calc_vertical_offset(cursor.y as f32) + (glyph_height / 2.0) + (ybounds[0] * font_size_scalar);
-
-// 		let target_pos		= offset + Vec3::new(target_x, target_y, cursor_z);
-
-// 		let delta_seconds	= time.delta_seconds();
-// 		let delta_accum		= delta_seconds / /*cursor_easing_seconds*/0.05;
-
-// 		cursor.easing_accum = (cursor.easing_accum + delta_accum).min(1.0);
-// 		let mut cursor_transform = q_cursor_transform.get_mut(cursor_entity).unwrap();
-// 		cursor_transform.translation = cursor_transform.translation.lerp(target_pos, cursor.easing_accum);
-// 	}
+	let cursor_color_fg		= color_from_helix(theme.get("ui.cursor").bg.unwrap());
+	let material_handle		= get_helix_color_material_handle(cursor_color_fg, helix_colors_cache, material_assets);
 	
-// 	let cursor_color_fg		= color_from_helix(theme.get("ui.cursor").bg.unwrap());
-// 	let material_handle		= get_helix_color_material_handle(cursor_color_fg, helix_colors_cache, material_assets);
-	
-// 	// spawn background quad for cursor
-// 	if cursor.entity == None {
-// 		let quad_width		= glyph_width;
-// 		let quad_height		= (ybounds[1] - ybounds[0]) * font_size_scalar * 1.7; // ybounds contain offset for letter 'y'
-// 		let quad_pos		= Vec3::new(0., 0., cursor_z);
+	// spawn background quad for cursor
+	if cursor.entity == None {
+		let quad_width		= glyph_width;
+		let quad_height		= glyph_height;
+		let quad_pos		= Vec3::new(0., 0., cursor_z);
 
-// 		let quad_entity_id	= 
-// 		quad(
-// 			quad_pos,
-// 			Vec2::new		(quad_width, quad_height),
-// 			meshes,
-// 			&material_handle,
-// 			commands
-// 		);
+		let quad_entity_id	= 
+		super::spawn::quad(
+			quad_pos,
+			Vec2::new(quad_width, quad_height),
+			text_meshes_cache,
+			mesh_assets,
+			commands
+		);
 
-// 		children.push		(quad_entity_id);
+		commands.entity(quad_entity_id).insert(material_handle.clone_weak());
 
-// 		cursor.entity 		= Some(quad_entity_id);
-// 		cursor.color		= cursor_color_fg;
-// 	} else if cursor.color != cursor_color_fg {
-// 		commands.entity		(cursor.entity.unwrap())
-// 		.remove::<Handle<StandardMaterial>>()
-// 		.insert(material_handle.clone_weak())
-// 		;
-// 		cursor.color		= cursor_color_fg;
-// 	}
+		commands.entity(root_entity).add_child(quad_entity_id);
 
-// 	if children.len() > 0 {
-// 		commands.entity(root_entity).push_children(children.as_slice());
-// 	}
-// }
+		cursor.entity 		= Some(quad_entity_id);
+		cursor.color		= cursor_color_fg;
+	} else if cursor.color != cursor_color_fg {
+		commands.entity		(cursor.entity.unwrap())
+		.remove::<Handle<StandardMaterial>>()
+		.insert(material_handle.clone_weak())
+		;
+		cursor.color		= cursor_color_fg;
+	}
+}

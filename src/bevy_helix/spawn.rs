@@ -13,58 +13,34 @@ use helix_view :: graphics :: Color as HelixColor;
 use crate :: bevy_ab_glyph :: ABGlyphFont;
 use crate :: bevy_ab_glyph :: TextMeshesCache;
 
-fn quad_old(
+pub fn quad(
 	quad_pos_in		: Vec3,
 	quad_size		: Vec2,
-	meshes			: &mut ResMut<Assets<Mesh>>,
-	materials		: &mut ResMut<Assets<StandardMaterial>>,
+	text_mesh_cache	: &mut TextMeshesCache,
+	mesh_assets		: &mut Assets<Mesh>,
 	commands		: &mut Commands
 ) -> Entity {
+	let quad_mesh_name	= String::from("glyph-background-quad");
 	let quad_width		= quad_size.x;
 	let quad_height		= quad_size.y;
 
-	let quad_handle		= meshes.add(
-		Mesh::from(
-			shape::Quad::new(
-				Vec2::new(
-					quad_width,
-					quad_height
+	let quad_mesh_handle = match text_mesh_cache.meshes.get(&quad_mesh_name) {
+		Some(handle) => handle.clone(),
+		None => {
+			let handle = mesh_assets.add(
+				Mesh::from(
+					shape::Quad::new(
+						Vec2::new(
+							quad_width,
+							quad_height
+						)
+					)
 				)
-			)
-		)
-	);
-	let quad_pos		= quad_pos_in + Vec3::new(quad_width / 2.0, 0., 0.);//-quad_height / 2.0, 0.0);
-
-	let blue_material_handle = materials.add(StandardMaterial {
-		base_color		: Color::hex("282c34").unwrap(),
-		// alpha_mode	: AlphaMode::Opaque,
-		unlit			: true,
-		// double_sided	: true,
-		..default()
-	});
-
-	commands.spawn_bundle(PbrBundle {
-		mesh			: quad_handle,
-		material		: blue_material_handle,
-		transform		: Transform {
-			translation	: quad_pos,
-			// rotation	: Quat::from_rotation_y(std::f32::consts::PI), // winding ccw something something
-			..default()
-		},
-		..default()
-	})
-	.insert(PickableMesh::default())
-	.id()
-}
-
-fn quad(
-	quad_pos_in		: Vec3,
-	quad_size		: Vec2,
-	quad_mesh_handle: Handle<Mesh>,
-	commands		: &mut Commands
-) -> Entity {
-	let quad_width		= quad_size.x;
-	let quad_height		= quad_size.y;
+			);
+			
+			text_mesh_cache.meshes.insert_unique_unchecked(quad_mesh_name.clone(), handle).1.clone()
+		}
+	};
 
 	let quad_pos		= quad_pos_in + Vec3::new(quad_width / 2.0, -quad_height / 2.0, 0.0);
 
@@ -114,7 +90,7 @@ pub fn surface(
 
 	font			: &ABGlyphFont,
 
-	text_mesh_cache	: &mut TextMeshesCache,
+	text_meshes_cache : &mut TextMeshesCache,
 
 	mesh_assets		: &mut Assets<Mesh>,
 	commands		: &mut Commands
@@ -124,6 +100,7 @@ pub fn surface(
 
 	let v_advance	= font.vertical_advance();
 	let h_advance	= font.horizontal_advance(&String::from("a")); // in monospace font every letter should be of the same width so we pick 'a'
+	let v_down_offset = font.vertical_down_offset();
 	
 	let mut children : Vec<Entity> = Vec::new();
 
@@ -142,7 +119,7 @@ pub fn surface(
 		// + v_advance because we need to cover row 0 with background quads too
 		y 			+= v_advance;
 		// add offset downwards to cover glyphs with vertical advance (y, g, _ etc)
-		y			-= v_advance / 4.5;
+		y			-= v_down_offset;
 		
 		for x_cell in 0 .. width {
 			let content_index = (y_cell * width + x_cell) as usize;
@@ -159,32 +136,13 @@ pub fn surface(
 			//
 			// Background Quad
 			
-			// mesh handle
-			let quad_mesh_name = String::from("glyph-background-quad");
-			let quad_mesh_handle = match text_mesh_cache.meshes.get(&quad_mesh_name) {
-				Some(handle) => handle.clone(),
-				None => {
-					let handle = mesh_assets.add(
-						Mesh::from(
-							shape::Quad::new(
-								Vec2::new(
-									quad_width,
-									quad_height
-								)
-							)
-						)
-					);
-					
-					text_mesh_cache.meshes.insert_unique_unchecked(quad_mesh_name.clone(), handle).1.clone()
-				}
-			};
-			
 			let quad_pos		= Vec3::new(x, y, -font.depth_scaled());
 			let quad_entity_id	= 
 			quad(
 			 	quad_pos,
 			 	Vec2::new(quad_width, quad_height),
-			 	quad_mesh_handle,
+			 	text_meshes_cache,
+				mesh_assets,
 			 	commands
 			);
 			

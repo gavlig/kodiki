@@ -91,9 +91,9 @@ pub struct HelixColorsCache {
 }
 
 pub fn get_helix_color_material_handle(
-	color_bevy: Color,
-	helix_colors_cache: &mut MaterialsMap,
-	material_assets: &mut Assets<StandardMaterial>
+	color_bevy			: Color,
+	helix_colors_cache	: &mut MaterialsMap,
+	material_assets		: &mut Assets<StandardMaterial>
 ) -> Handle<StandardMaterial> {
 	let mut color_u8 : [u8; 3] = [0; 3];
 	color_u8[0] = (color_bevy.r() * 255.) as u8;
@@ -130,7 +130,7 @@ impl Plugin for BevyHelixPlugin {
 				ConditionSet::new()
 				.run_in_state(AppMode::Main)
 				.with_system(systems::render)
-				// .with_system(systems::input)
+				.with_system(systems::input)
 				.into()
 			)
 			.add_system_set(
