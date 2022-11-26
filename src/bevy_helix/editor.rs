@@ -203,9 +203,17 @@ impl Component for EditorViewBevy {
 		if config.auto_info {
 			if let Some(mut info) = cx.editor.autoinfo.take() {
 				let auto_info_component_name = String::from("auto-info-component");
-				let area = info.area();
-				let auto_info_surface = surface_by_id_mut(&auto_info_component_name, area, surfaces); 
-				info.render(area, auto_info_surface, cx);
+
+				let auto_info_area = info.area();
+				let auto_info_surface = surface_by_id_mut(&auto_info_component_name, auto_info_area, surfaces); 
+
+				let surface_area = auto_info_surface.area.clone();
+				if surface_area != auto_info_area {
+					auto_info_surface.resize(auto_info_area);
+					auto_info_surface.reset();
+				}
+				
+				info.render(auto_info_area, auto_info_surface, cx);
 				cx.editor.autoinfo = Some(info)
 			}
 		}
