@@ -25,7 +25,7 @@ pub fn quad(
 	let quad_height		= quad_size.y;
 
 	let quad_mesh_handle = match text_mesh_cache.meshes.get(&quad_mesh_name) {
-		Some(handle) => handle.clone(),
+		Some(handle) => handle.clone_weak(),
 		None => {
 			let handle = mesh_assets.add(
 				Mesh::from(
