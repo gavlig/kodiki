@@ -1,1 +1,1 @@
-RUST_BACKTRACE=full HELIX_RUNTIME=/var/lib/helix/runtime/ cargo run -r -- /home/gavlig/workspace/project_kodiki/kodiki/src/bevy_helix/render.rs
+RUST_BACKTRACE=1 HELIX_RUNTIME=/var/lib/helix/runtime/ cargo run -r -- /home/gavlig/Workspace/project_kodiki/kodiki/src/bevy_helix/render.rs
