@@ -104,14 +104,6 @@ pub fn surface(
 				);
 			}
 
-			let x_cache = x;
-
-			// kerning is not supposed to be there for monospace font, but we'll consider it just in case
-			if x_cell > 0 {
-				let cell_helix_prev = &content_helix[content_index - 1];
-				x += font.kerning(&cell_helix_prev.symbol, &cell_helix.symbol);
-			}
-
 			// now spawn new mesh if needed
 			let pos = Vec3::new(x, y, 0.0);
 
@@ -140,19 +132,6 @@ pub fn surface(
 			x += font.horizontal_advance(&cell_helix.symbol);
 
 			column += 1;
-
-			// { // debug draw the cell bounds for each glyph. Supposed to be looking like excel spreadsheet
-			// 	let y_next = -v_advance * (row + 1) as f32;
-
-			// 	let dbg_pt0 = Vec3::new(x_cache, y, 0.01);
-			// 	let dbg_pt1 = Vec3::new(x_cache, y_next, 0.01);
-
-			// 	let dbg_pt2 = Vec3::new(x_cache, y, 0.01);
-			// 	let dbg_pt3 = Vec3::new(x, y, 0.01);
-
-			// 	debug_lines.line(dbg_pt0, dbg_pt1, 0.0);
-			// 	debug_lines.line(dbg_pt2, dbg_pt3, 0.0);
-			// }
 		}
 
 		x			= 0.0;
