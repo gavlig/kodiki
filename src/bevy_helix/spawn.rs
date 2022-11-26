@@ -66,7 +66,7 @@ fn quad(
 	let quad_width		= quad_size.x;
 	let quad_height		= quad_size.y;
 
-	let quad_pos		= quad_pos_in + Vec3::new(quad_width / 2.0, 0., 0.);//-quad_height / 2.0, 0.0);
+	let quad_pos		= quad_pos_in + Vec3::new(quad_width / 2.0, -quad_height / 2.0, 0.0);
 
 	commands.spawn_bundle(PbrBundle {
 		mesh			: quad_mesh_handle.clone_weak(),
@@ -115,98 +115,96 @@ pub fn surface(
 	font			: &ABGlyphFont,
 
 	text_mesh_cache	: &mut TextMeshesCache,
-	helix_colors_cache : &mut HelixColorsCache,
 
 	mesh_assets		: &mut Assets<Mesh>,
-	material_assets : &mut Assets<StandardMaterial>,
 	commands		: &mut Commands
 ) -> Entity
 {
 	surface_bevy.content.resize_with(surface_helix.content.len(), || { CellBevy::default() });
 
-	let v_advance	= -font.vertical_advance();
-	let h_advance	= font.scale; // the widest glyph is supposed to be 1.0 so just scale should be enough
+	let v_advance	= font.vertical_advance();
+	let h_advance	= font.horizontal_advance(&String::from("a")); // in monospace font every letter should be of the same width so we pick 'a'
 	
 	let mut children : Vec<Entity> = Vec::new();
 
-	// let mut y		= 0.0;
-	// let mut column	= 0 as u32;
-	// let mut row		= 0 as u32;
+	let mut column	= 0 as u32;
+	let mut row		= 0 as u32;
 	
 	let width		= surface_helix.area.width;
 	let height		= surface_helix.area.height;
-	// let content_helix = &surface_helix.content;
-	// let content_bevy = &mut surface_bevy.content;
+	let content_bevy = &mut surface_bevy.content;
 	
-	// println!("spawn surface {} len {} w {} h {}", name, surface_helix.content.len(), width, height);
+	println!("spawn surface {} len {} w {} h {}", name, surface_helix.content.len(), width, height);
 	
-	// for y_cell in 0..height {
-	// 	let y 		= calc_vertical_offset(y_cell as f32) + (v_advance / 2.0) + (ybounds[0] * font_size_scalar);
+	for y_cell in 0 .. height {
+		// -v_advance because we move down with every row
+		let mut y 	= -v_advance * y_cell as f32;
+		// + v_advance because we need to cover row 0 with background quads too
+		y 			+= v_advance;
 		
-	// 	for x_cell in 0..width {
-	// 		let content_index = (y_cell * width + x_cell) as usize;
-	// 		let cell_helix	= &content_helix[content_index];
-	// 		let cell_bevy	= &mut content_bevy[content_index];
+		for x_cell in 0 .. width {
+			let content_index = (y_cell * width + x_cell) as usize;
 
-	// 		let column_offset = (x_cell as f32) * h_advance;
-	// 		let x 			= column_offset + (h_advance / 2.0) + lbearing;
-	// 		let pos = Vec3::new(x, y, 0.0);
+			let cell_bevy	= &mut content_bevy[content_index];
+
+			let column_offset = h_advance * x_cell as f32;
+			let x 			= column_offset;
 			
-	// 		let quad_width	= h_advance;
-	// 		let quad_height	= v_advance;
+			let quad_width	= h_advance;
+			let quad_height	= v_advance.abs();
 			
-	// 		//
-	// 		//
-	// 		// Background Quad
+			//
+			//
+			// Background Quad
 			
-	// 		// mesh handle
-	// 		let quad_mesh_name = String::from("character-background-quad");
-	// 		let quad_mesh_handle = match text_mesh_cache.meshes.get(&quad_mesh_name) {
-	// 			Some(handle) => handle.clone(),
-	// 			None => {
-	// 				let handle = mesh_assets.add(
-	// 					Mesh::from(
-	// 						shape::Quad::new(
-	// 							Vec2::new(
-	// 								quad_width,
-	// 								quad_height
-	// 			    			)
-	// 						)
-	// 					)
-	// 				);
+			// mesh handle
+			let quad_mesh_name = String::from("glyph-background-quad");
+			let quad_mesh_handle = match text_mesh_cache.meshes.get(&quad_mesh_name) {
+				Some(handle) => handle.clone(),
+				None => {
+					let handle = mesh_assets.add(
+						Mesh::from(
+							shape::Quad::new(
+								Vec2::new(
+									quad_width,
+									quad_height
+				    			)
+							)
+						)
+					);
 					
-	// 				text_mesh_cache.meshes.insert_unique_unchecked(quad_mesh_name.clone(), handle).1.clone()
-	// 			}
-	// 		};
+					text_mesh_cache.meshes.insert_unique_unchecked(quad_mesh_name.clone(), handle).1.clone()
+				}
+			};
 			
-	// 		let quad_pos		= Vec3::new(x, y, -0.25 / 72.);
-	// 		let quad_entity_id	= 
-	// 		quad(
-	// 		 	quad_pos,
-	// 		 	Vec2::new(quad_width, quad_height),
-	// 		 	quad_mesh_handle,
-	// 		 	commands
-	// 		);
+			let quad_pos		= Vec3::new(x, y, -font.depth_scaled());
+			let quad_entity_id	= 
+			quad(
+			 	quad_pos,
+			 	Vec2::new(quad_width, quad_height),
+			 	quad_mesh_handle,
+			 	commands
+			);
 			
-	// 		cell_bevy.entity_bg_quad = Some(quad_entity_id);
+			cell_bevy.entity_bg_quad = Some(quad_entity_id);
 
-	// 		commands.entity(quad_entity_id)
-	// 		.insert(Row { 0: row })
-	// 		.insert(Column { 0: column })
-	// 		;
+			commands.entity(quad_entity_id)
+			.insert(Row { 0: row })
+			.insert(Column { 0: column })
+			;
 
-	// 		children.push(quad_entity_id);
+			children.push(quad_entity_id);
 
-	// 		column 	+= 1;
-	// 	}
+			column 	+= 1;
+		}
 
-	// 	column		= 0;
-	// 	row			+= 1;
-	// }
+		column		= 0;
+		row			+= 1;
+	}
 
-	// //
-	// //
-	// //
+	//
+	//
+	//
 
 	let root_entity =
 	commands.spawn_bundle(TransformBundle {

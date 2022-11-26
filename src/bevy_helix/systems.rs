@@ -1,9 +1,9 @@
 use bevy :: prelude :: *;
 use bevy :: input :: *;
 use bevy :: input :: keyboard :: *;
-use bevy_text_mesh :: prelude :: * ;
 
 use bevy_debug_text_overlay :: screen_print;
+use bevy_prototype_debug_lines :: DebugLines;
 
 use super :: SurfaceBevy;
 use super :: SurfacesMapBevy;
@@ -124,7 +124,7 @@ pub fn render(
 		app             : Option<NonSendMut<Application>>,
 		time			: Res<Time>,
 
-	(mut mesh_cache, mut helix_colors_cache) 
+	(mut text_mesh_cache, mut helix_colors_cache) 
 	:
 	(ResMut<TextMeshesCache>, ResMut<HelixColorsCache>),
 
@@ -132,6 +132,8 @@ pub fn render(
 	mut material_assets	: ResMut<Assets<StandardMaterial>>,
 	mut despawn         : ResMut<DespawnResource>,
 	mut commands        : Commands,
+
+	mut debug_lines		: ResMut<DebugLines>
 ) {
 	if app.is_none() {
 		return;
@@ -240,11 +242,9 @@ pub fn render(
 
 			&font,
 			
-			&mut mesh_cache,
-			&mut helix_colors_cache,
+			&mut text_mesh_cache,
 			
 			mesh_assets.as_mut(),
-			material_assets.as_mut(),
 			&mut commands
 		);
 
@@ -265,12 +265,13 @@ pub fn render(
 
 			&font,
 
-			&mut mesh_cache,
+			&mut text_mesh_cache,
 			&mut helix_colors_cache,
 
 			&mut mesh_assets,
 			&mut material_assets,
-			&mut commands
+			&mut commands,
+			&mut debug_lines
 		);
 		
 		// println!("rendering surface {} len {}", layer_name, surface_bevy.content.len());

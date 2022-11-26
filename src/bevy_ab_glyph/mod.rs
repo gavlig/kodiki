@@ -49,6 +49,10 @@ impl ABGlyphFont {
 
 		kern
 	}
+
+	pub fn depth_scaled(&self) -> f32 {
+		self.depth * self.scale
+	}
 }
 
 unsafe impl Sync for ABGlyphFont {}

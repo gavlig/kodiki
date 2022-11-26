@@ -73,11 +73,9 @@ pub fn setup_world_system(
 
 			&font,
 
-            &mut mesh_cache,
-            &mut helix_colors_cache,
+			&mut mesh_cache,
 
-            mesh_assets.as_mut(),
-            material_assets.as_mut(),
+			mesh_assets.as_mut(),
 			&mut commands
 		);
 

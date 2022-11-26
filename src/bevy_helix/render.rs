@@ -1,26 +1,20 @@
 use bevy				:: prelude :: { * };
 use bevy_mod_picking	:: { * };
-use bevy_fly_camera		:: { * };
 use bevy_contrib_colors	:: { Tailwind };
+
+use bevy_prototype_debug_lines :: { * };
 
 // use bevy_infinite_grid	:: { InfiniteGridBundle };
 
-use crate				:: bevy_ab_glyph::{  ABGlyphFont, TextMeshesCache};
+use crate				:: bevy_ab_glyph::{ ABGlyphFont, TextMeshesCache };
 use crate				:: bevy_ab_glyph :: mesh_generator :: generate_glyph_mesh_wcache;
 
-use ttf2mesh 			:: { Glyph };
-
 use super				:: { * };
-use crate				:: game :: DespawnResource;
 
 use helix_tui 			:: { buffer :: Buffer as SurfaceHelix };
 use helix_tui			:: { buffer :: Cell as CellHelix };
-use helix_view			:: Theme;
-use helix_view::graphics::Color as HelixColor;
 
-fn calc_vertical_offset(row : f32) -> f32 {
-	row * -0.13 // (reference_glyph.inner.ybounds[0] - reference_glyph.inner.ybounds[1]) / 72.
-}
+use helix_view::graphics::Color as HelixColor;
 
 fn quad(
 	quad_pos_in		: Vec3,
@@ -94,14 +88,16 @@ pub fn surface(
 
 	mesh_assets		: &mut Assets<Mesh>,
 	material_assets	: &mut Assets<StandardMaterial>,
-	commands		: &mut Commands
+	commands		: &mut Commands,
+
+	mut debug_lines	: &mut DebugLines
 )
 {
 	let root_entity = surface_bevy.entity.unwrap();
 
 	surface_bevy.content.resize_with(surface_helix.content.len(), || { CellBevy::default() });
 
-	let v_advance	= -font.vertical_advance();
+	let v_advance	= font.vertical_advance();
 
 	let mut surface_children : Vec<Entity> = Vec::new();
 
@@ -116,7 +112,7 @@ pub fn surface(
 	let content_bevy = &mut surface_bevy.content;
 
 	for y_cell in 0..height {
-		y = v_advance * row as f32;
+		y = -v_advance * row as f32;
 		
 		for x_cell in 0..width {
 			let content_index = (y_cell * width + x_cell) as usize;
@@ -142,22 +138,23 @@ pub fn surface(
 				);
 			}
 
-			// now spawn new mesh if needed
+			let x_cache = x;
 
+			// kerning is not supposed to be there for monospace font, but we'll consider it just in case
 			if x_cell > 0 {
 				let cell_helix_prev = &content_helix[content_index - 1];
 				x += font.kerning(&cell_helix_prev.symbol, &cell_helix.symbol);
 			}
 
+			// now spawn new mesh if needed
 			let pos = Vec3::new(x, y, 0.0);
 
 			let wrong_symbol = cell_helix.symbol != cell_bevy.symbol;
 			if wrong_symbol {
 				// println!("[{} {}] [{} {}] wrong symbol [{}] <= [{}]", x_cell, y_cell, x, y, cell_helix.symbol, cell_bevy.symbol);
-				// if x_cell > 0 {
+				// if x_cell > 0 && !cell_helix.symbol.chars().next().unwrap().is_whitespace() {
 				// 	let cell_helix_prev = &content_helix[content_index - 1];
-				// 	println!("kern: {} adv: {}", font.kerning(&cell_helix_prev.symbol, &cell_helix.symbol), font.horizontal_advance(&cell_helix.symbol));
-
+				// 	println!("{} kern: {} adv: {}", cell_helix.symbol, font.kerning(&cell_helix_prev.symbol, &cell_helix.symbol), font.horizontal_advance(&cell_helix.symbol));
 				// }
 
 				update_cell_mesh(
@@ -177,6 +174,19 @@ pub fn surface(
 			x += font.horizontal_advance(&cell_helix.symbol);
 
 			column += 1;
+
+			// { // debug draw the cell bounds for each glyph. Supposed to be looking like excel spreadsheet
+			// 	let y_next = -v_advance * (row + 1) as f32;
+
+			// 	let dbg_pt0 = Vec3::new(x_cache, y, 0.01);
+			// 	let dbg_pt1 = Vec3::new(x_cache, y_next, 0.01);
+
+			// 	let dbg_pt2 = Vec3::new(x_cache, y, 0.01);
+			// 	let dbg_pt3 = Vec3::new(x, y, 0.01);
+
+			// 	debug_lines.line(dbg_pt0, dbg_pt1, 0.0);
+			// 	debug_lines.line(dbg_pt2, dbg_pt3, 0.0);
+			// }
 		}
 
 		x			= 0.0;

@@ -9,7 +9,7 @@ use bevy_mod_picking :: { * };
 
 use bevy_debug_text_overlay	:: { OverlayPlugin, screen_print };
 use bevy_polyline	:: { * };
-
+use bevy_prototype_debug_lines :: { * };
 
 // use bevy_infinite_grid :: { InfiniteGridPlugin };
 
@@ -29,7 +29,7 @@ fn main() {
 			present_mode : PresentMode::Mailbox,
 			scale_factor_override : Some(1.0),
 			// decorations: false,
-			// mode: WindowMode::SizedFullscreen,
+			mode: WindowMode::Windowed,
 			..default()
 		})
 
@@ -45,6 +45,7 @@ fn main() {
 
 		.add_plugin(OverlayPlugin { font_size: 16.0, fallback_color: Color::rgb(0.8, 0.8, 0.8), ..default() })
 		.add_plugin(PolylinePlugin)
+		.add_plugin(DebugLinesPlugin::default())
 
 		// .add_plugin(InfiniteGridPlugin)
 
