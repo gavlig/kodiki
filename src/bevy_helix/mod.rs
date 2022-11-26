@@ -133,6 +133,13 @@ impl Plugin for BevyHelixPlugin {
 				// .with_system(systems::input)
 				.into()
 			)
+			.add_system_set(
+				ConditionSet::new()
+				.run_in_state(AppMode::Editor)
+				.with_system(systems::render)
+				// .with_system(systems::input)
+				.into()
+			)
  			;
 	}
 }
