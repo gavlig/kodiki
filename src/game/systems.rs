@@ -24,7 +24,7 @@ use helix_term	:: compositor	:: SurfacesMap	as SurfacesMapHelix;
 pub fn setup_world_system(
 		surfaces_helix	: ResMut<SurfacesMapHelix>,
 	mut surfaces_bevy	: ResMut<SurfacesMapBevy>,
-    mut mesh_cache  : ResMut<TextMeshesCache>,
+	mut mesh_cache  : ResMut<TextMeshesCache>,
 		font_handles: Res<FontAssetHandles>,
 	mut fonts		: ResMut<Assets<ABGlyphFont>>,
 	mut camera_ids	: ResMut<CameraIDs>,
@@ -333,8 +333,8 @@ pub fn asset_loading_events(
 	mut commands		: Commands
 ) {
 	for ev in ev_asset.iter() {
-        match ev {
-            AssetEvent::Created { handle } => {
+		match ev {
+			AssetEvent::Created { handle } => {
 				font_handles.loaded_cnt += 1;
 				if font_handles.droid_sans_mono == *handle {
 					println!("droid sans loaded!");
@@ -351,13 +351,13 @@ pub fn asset_loading_events(
 				if font_handles.ubuntu_mono == *handle {
 					println!("ubuntu_mono loaded!");
 				}
-            }
-            AssetEvent::Modified { handle: _ } => {
-            }
-            AssetEvent::Removed { handle: _ } => {
-            }
-        }
-    }
+			}
+			AssetEvent::Modified { handle: _ } => {
+			}
+			AssetEvent::Removed { handle: _ } => {
+			}
+		}
+	}
 
 	if font_handles.loaded_cnt == 6 {
 		commands.insert_resource(NextState(AppMode::AssetsLoaded));

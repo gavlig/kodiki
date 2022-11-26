@@ -26,13 +26,13 @@ fn quad(
 	let quad_width		= quad_size.x;
 	let quad_height		= quad_size.y;
 
-    let quad_handle		= meshes.add(
+	let quad_handle		= meshes.add(
 		Mesh::from(
 			shape::Quad::new(
 				Vec2::new(
 					quad_width,
 					quad_height
-    			)
+				)
 			)
 		)
 	);
@@ -278,7 +278,7 @@ pub fn update_cell_materials(
 	commands: &mut Commands
 ) {
 	// first take care of reversed colors: if reversed foreground becomes background
-    (cell_bevy.fg, cell_bevy.bg) =
+	(cell_bevy.fg, cell_bevy.bg) =
 	if !reversed {
 		(cell_helix.fg, cell_helix.bg)
 	} else {
@@ -290,23 +290,23 @@ pub fn update_cell_materials(
 		cell_bevy.fg = cell_helix.bg;
 	}
 
-    let color_fg = color_from_helix(cell_bevy.fg);
-    let color_bg = color_from_helix(cell_bevy.bg);
+	let color_fg = color_from_helix(cell_bevy.fg);
+	let color_bg = color_from_helix(cell_bevy.bg);
 
-    cell_bevy.fg_handle = Some(get_helix_color_material_handle(
+	cell_bevy.fg_handle = Some(get_helix_color_material_handle(
 		color_fg,
 		&mut helix_colors_cache.materials,
 		material_assets
 	));
 
-    cell_bevy.bg_handle = Some(get_helix_color_material_handle(
+	cell_bevy.bg_handle = Some(get_helix_color_material_handle(
 		color_bg,
 		&mut helix_colors_cache.materials,
 		material_assets
 	));
 
-    // replace material to reflect changed color
-    if let Some(cell_bevy_entity_symbol) = cell_bevy.symbol_entity {
+	// replace material to reflect changed color
+	if let Some(cell_bevy_entity_symbol) = cell_bevy.symbol_entity {
 		commands.entity		(cell_bevy_entity_symbol)
 		.remove::<Handle<StandardMaterial>>()
 		.insert(cell_bevy.fg_handle.as_ref().unwrap().clone_weak())

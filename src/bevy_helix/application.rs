@@ -231,9 +231,9 @@ impl Application {
 		let compositor = &mut self.compositor;
 
 		let mut cx = helix_term::compositor::Context {
-		     editor: &mut self.editor,
-		     jobs: &mut self.jobs,
-		     scroll: None,
+			 editor: &mut self.editor,
+			 jobs: &mut self.jobs,
+			 scroll: None,
 		};
 
 		compositor.render(Some(surface), &mut cx);
@@ -243,9 +243,9 @@ impl Application {
 		let compositor = &mut self.compositor;
 
 		let mut cx = helix_term::compositor::Context {
-		     editor: &mut self.editor,
-		     jobs: &mut self.jobs,
-		     scroll: None,
+			 editor: &mut self.editor,
+			 jobs: &mut self.jobs,
+			 scroll: None,
 		};
 
 		compositor.render_ext(area, surfaces, &mut cx);
@@ -253,14 +253,14 @@ impl Application {
 
 	pub fn handle_event(&mut self, event : &helix_view::input::Event) {
 		let mut cx = helix_term::compositor::Context {
-            editor: &mut self.editor,
-            jobs: &mut self.jobs,
-            scroll: None,
-        };
+			editor: &mut self.editor,
+			jobs: &mut self.jobs,
+			scroll: None,
+		};
 
 		let compositor_bevy = &mut self.compositor;
-        let compositor_helix = compositor_bevy as &mut dyn helix_term::compositor::Compositor;
-        compositor_helix.handle_event(event, &mut cx);
+		let compositor_helix = compositor_bevy as &mut dyn helix_term::compositor::Compositor;
+		compositor_helix.handle_event(event, &mut cx);
 	}
 
 	pub fn cursor(&mut self, area : helix_view::graphics::Rect) -> (Option<(u16, u16)>, helix_view::graphics::CursorKind) {

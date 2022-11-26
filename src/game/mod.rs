@@ -48,7 +48,7 @@ pub enum AppMode {
 	AssetLoading,
 	AssetsLoaded,
 	Main,
-    Editor,
+	Editor,
 }
 
 #[derive(Default)]
@@ -84,7 +84,7 @@ impl Plugin for AppPlugin {
 		let w = 1280;
     	let h = 720;
 
-        app
+		app
 			.add_plugin		(PickingPlugin)
 			.add_plugin		(InteractablePickingPlugin)
 			.add_plugins	(HighlightablePickingPlugins)

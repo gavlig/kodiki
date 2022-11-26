@@ -447,25 +447,25 @@ fn spawn_line(
 
 #[derive(Component, Debug, Clone, Copy, Default)]
 pub struct ABGlyphCurveDebug {
-    pub i: usize,
-    pub p0: ABGlyphPoint,
+	pub i: usize,
+	pub p0: ABGlyphPoint,
 	pub p1: Vec3
 }
 
 pub fn ab_glyph_curve_debug_system(
-    q_hover : Query<(&Hover, &ABGlyphCurveDebug)>,
+	q_hover : Query<(&Hover, &ABGlyphCurveDebug)>,
 ) {
-    if q_hover.is_empty() {
-        return;
-    }
+	if q_hover.is_empty() {
+		return;
+	}
 	
-    for (hover, dbg) in q_hover.iter() {
-        if !hover.hovered() {
+	for (hover, dbg) in q_hover.iter() {
+		if !hover.hovered() {
 			continue;
 		}
 
-        screen_print!("hovered over {} {:?}", dbg.i, dbg.p1);
-    }
+		screen_print!("hovered over {} {:?}", dbg.i, dbg.p1);
+	}
 }
 
 pub fn generate_glyph_mesh_dbg(

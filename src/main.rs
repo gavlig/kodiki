@@ -37,7 +37,7 @@ fn main() {
 
 		.add_plugin(AppPlugin)
 		.add_plugin(ABGlyphPlugin)
-        .add_plugin(BevyHelixPlugin)
+		.add_plugin(BevyHelixPlugin)
 
 		.add_plugin(FlyCameraPlugin)
 		.add_plugin(ShadertoyPlugin)
@@ -56,9 +56,9 @@ fn main() {
 
 fn show_fps(time: Res<Time>) {
 	let current_time = time.seconds_since_startup();
-    let at_interval = |t: f64| current_time % t < time.delta_seconds_f64();
-    if at_interval(0.1) {
-        let last_fps = 1.0 / time.delta_seconds();
-        screen_print!("fps: {last_fps:.0}");
-    }
+	let at_interval = |t: f64| current_time % t < time.delta_seconds_f64();
+	if at_interval(0.1) {
+		let last_fps = 1.0 / time.delta_seconds();
+		screen_print!("fps: {last_fps:.0}");
+	}
 }

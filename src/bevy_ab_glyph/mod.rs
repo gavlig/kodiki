@@ -62,7 +62,7 @@ pub type TextMeshesMap = HashMap<String, Handle<Mesh>>;
 
 #[derive(Default)]
 pub struct TextMeshesCache {
-    pub meshes: TextMeshesMap,
+	pub meshes: TextMeshesMap,
 }
 
 mod font_loader;

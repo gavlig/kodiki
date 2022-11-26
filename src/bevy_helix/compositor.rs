@@ -123,14 +123,14 @@ impl Compositor for CompositorBevy {
 
 		screen_print!("layers: {}", self.layers.len());
 		for layer in &mut self.layers {
-		    layer.render(area, surface, cx);
+			layer.render(area, surface, cx);
 		}
 	}
 
 	fn render_ext(&mut self, area: Rect, surfaces: &mut SurfacesMap, cx: &mut Context) {
 		screen_print!("layers: {}", self.layers.len());
 		for layer in &mut self.layers {
-		    layer.render_ext(area, surfaces, cx);
+			layer.render_ext(area, surfaces, cx);
 		}
 	}
 
@@ -150,24 +150,24 @@ impl Compositor for CompositorBevy {
 	}
 
 	fn find(&mut self, type_name: &str) -> Option<&mut dyn Any>  {
-        self.layers
-            .iter_mut()
-            .find(|component| component.type_name() == type_name)
-            .and_then(|component| Some(component.as_any_mut()))
-    }
+		self.layers
+			.iter_mut()
+			.find(|component| component.type_name() == type_name)
+			.and_then(|component| Some(component.as_any_mut()))
+	}
 
-    fn find_id(&mut self, id: &'static str) -> Option<&mut dyn Any> {
-        self.layers
-            .iter_mut()
-            .find(|component| component.id() == Some(id))
-            .and_then(|component| Some(component.as_any_mut()))
-    }
+	fn find_id(&mut self, id: &'static str) -> Option<&mut dyn Any> {
+		self.layers
+			.iter_mut()
+			.find(|component| component.id() == Some(id))
+			.and_then(|component| Some(component.as_any_mut()))
+	}
 
 	fn set_last_picker(&mut self, last_picker: Option<Box<dyn Component>>) {
-        self.last_picker = last_picker;
-    }
+		self.last_picker = last_picker;
+	}
 
-    fn get_last_picker(&mut self) -> &mut Option<Box<dyn Component>> {
-        &mut self.last_picker
-    }
+	fn get_last_picker(&mut self) -> &mut Option<Box<dyn Component>> {
+		&mut self.last_picker
+	}
 }

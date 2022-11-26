@@ -23,25 +23,25 @@ fn quad_old(
 	let quad_width		= quad_size.x;
 	let quad_height		= quad_size.y;
 
-    let quad_handle		= meshes.add(
+	let quad_handle		= meshes.add(
 		Mesh::from(
 			shape::Quad::new(
 				Vec2::new(
 					quad_width,
 					quad_height
-    			)
+				)
 			)
 		)
 	);
 	let quad_pos		= quad_pos_in + Vec3::new(quad_width / 2.0, 0., 0.);//-quad_height / 2.0, 0.0);
 
-    let blue_material_handle = materials.add(StandardMaterial {
-        base_color		: Color::hex("282c34").unwrap(),
-        // alpha_mode	: AlphaMode::Opaque,
-        unlit			: true,
-        // double_sided	: true,
-        ..default()
-    });
+	let blue_material_handle = materials.add(StandardMaterial {
+		base_color		: Color::hex("282c34").unwrap(),
+		// alpha_mode	: AlphaMode::Opaque,
+		unlit			: true,
+		// double_sided	: true,
+		..default()
+	});
 
 	commands.spawn_bundle(PbrBundle {
 		mesh			: quad_handle,
@@ -170,7 +170,7 @@ pub fn surface(
 								Vec2::new(
 									quad_width,
 									quad_height
-				    			)
+								)
 							)
 						)
 					);
