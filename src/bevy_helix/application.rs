@@ -6,14 +6,15 @@ use arc_swap        :: { access::Map, ArcSwap };
 use futures_util    :: { Stream };
 use helix_core      :: {
 	config          :: { default_syntax_loader, user_syntax_loader },
-	diagnostic      :: { NumberOrString },
+	diagnostic      :: { NumberOrString, DiagnosticTag },
 	pos_at_coords, syntax, Selection,
 };
 use helix_lsp       :: { lsp, util :: lsp_pos_to_pos, LspProgressMap };
 use helix_view      :: { align_view, editor :: ConfigEvent, theme, tree :: Layout, Align, Editor, graphics :: Rect };
-use helix_term      :: { config::Config, job :: Jobs, args::Args, keymap::Keymaps, compositor::Compositor, compositor::SurfacesMap };
+use helix_term      :: { config::Config, job :: Jobs, args::Args, keymap::Keymaps, compositor::Compositor, compositor::SurfacesMap, ui::EditorView, ui::Prompt };
 use helix_tui 		:: { buffer :: Buffer as Surface };
 use serde_json      :: { json };
+use helix_term		:: { commands :: apply_workspace_edit };
 
 use std             :: {
 	io              :: { stdin, stdout, Write },
@@ -273,4 +274,412 @@ impl Application {
 		compositor_helix.handle_event(event, &mut cx);
 	}
 
+	pub async fn handle_tokio_events(&mut self) {
+		use futures_util::StreamExt;
+
+		tokio::select! {
+			biased;
+
+			Some(_signal) = self.signals.next() => {
+				println!("PLACEHOLDER handle_signals");
+				// self.handle_signals(signal).await;
+			}
+			Some((id, call)) = self.editor.language_servers.incoming.next() => {
+				println!("handle_language_server_message called!!!");
+				self.handle_language_server_message(call, id).await;
+			}
+			Some(payload) = self.editor.debugger_events.next() => {
+				let needs_render = self.editor.handle_debugger_message(payload).await;
+			}
+			Some(_config_event) = self.editor.config_events.1.recv() => {
+				println!("PLACEHOLDER handle_config_events");
+				// self.handle_config_events(config_event);
+			}
+			Some(callback) = self.jobs.futures.next() => {
+				self.jobs.handle_callback(&mut self.editor, &mut self.compositor, callback);
+			}
+			Some(callback) = self.jobs.wait_futures.next() => {
+				self.jobs.handle_callback(&mut self.editor, &mut self.compositor, callback);
+			}
+			_ = &mut self.editor.idle_timer => {
+				println!("PLACEHOLDER idle_timer");
+			}
+		}
+	}
+
+	pub async fn handle_language_server_message(
+		&mut self,
+		call: helix_lsp::Call,
+		server_id: usize,
+	) {
+		use helix_lsp::{Call, MethodCall, Notification};
+
+		match call {
+			Call::Notification(helix_lsp::jsonrpc::Notification { method, params, .. }) => {
+				let notification = match Notification::parse(&method, params) {
+					Ok(notification) => notification,
+					Err(err) => {
+						log::error!(
+							"received malformed notification from Language Server: {}",
+							err
+						);
+						return;
+					}
+				};
+
+				match notification {
+					Notification::Initialized => {
+						let language_server =
+							match self.editor.language_servers.get_by_id(server_id) {
+								Some(language_server) => language_server,
+								None => {
+									warn!("can't find language server with id `{}`", server_id);
+									return;
+								}
+							};
+
+						// Trigger a workspace/didChangeConfiguration notification after initialization.
+						// This might not be required by the spec but Neovim does this as well, so it's
+						// probably a good idea for compatibility.
+						if let Some(config) = language_server.config() {
+							tokio::spawn(language_server.did_change_configuration(config.clone()));
+						}
+
+						let docs = self.editor.documents().filter(|doc| {
+							doc.language_server().map(|server| server.id()) == Some(server_id)
+						});
+
+						// trigger textDocument/didOpen for docs that are already open
+						for doc in docs {
+							let language_id =
+								doc.language_id().map(ToOwned::to_owned).unwrap_or_default();
+
+							let url = match doc.url() {
+								Some(url) => url,
+								None => continue, // skip documents with no path
+							};
+
+							tokio::spawn(language_server.text_document_did_open(
+								url,
+								doc.version(),
+								doc.text(),
+								language_id,
+							));
+						}
+					}
+					Notification::PublishDiagnostics(mut params) => {
+						let path = params.uri.to_file_path().unwrap();
+						let doc = self.editor.document_by_path_mut(&path);
+
+						if let Some(doc) = doc {
+							let lang_conf = doc.language_config();
+							let text = doc.text();
+
+							let diagnostics = params
+								.diagnostics
+								.iter()
+								.filter_map(|diagnostic| {
+									use helix_core::diagnostic::{Diagnostic, Range, Severity::*};
+									use lsp::DiagnosticSeverity;
+
+									let language_server = if let Some(language_server) = doc.language_server() {
+										language_server
+									} else {
+										log::warn!("Discarding diagnostic because language server is not initialized: {:?}", diagnostic);
+										return None;
+									};
+
+									// TODO: convert inside server
+									let start = if let Some(start) = lsp_pos_to_pos(
+										text,
+										diagnostic.range.start,
+										language_server.offset_encoding(),
+									) {
+										start
+									} else {
+										log::warn!("lsp position out of bounds - {:?}", diagnostic);
+										return None;
+									};
+
+									let end = if let Some(end) = lsp_pos_to_pos(
+										text,
+										diagnostic.range.end,
+										language_server.offset_encoding(),
+									) {
+										end
+									} else {
+										log::warn!("lsp position out of bounds - {:?}", diagnostic);
+										return None;
+									};
+
+									let severity =
+										diagnostic.severity.map(|severity| match severity {
+											DiagnosticSeverity::ERROR => Error,
+											DiagnosticSeverity::WARNING => Warning,
+											DiagnosticSeverity::INFORMATION => Info,
+											DiagnosticSeverity::HINT => Hint,
+											severity => unreachable!(
+												"unrecognized diagnostic severity: {:?}",
+												severity
+											),
+										});
+
+									if let Some(lang_conf) = lang_conf {
+										if let Some(severity) = severity {
+											if severity < lang_conf.diagnostic_severity {
+												return None;
+											}
+										}
+									};
+
+									let code = match diagnostic.code.clone() {
+										Some(x) => match x {
+											lsp::NumberOrString::Number(x) => {
+												Some(NumberOrString::Number(x))
+											}
+											lsp::NumberOrString::String(x) => {
+												Some(NumberOrString::String(x))
+											}
+										},
+										None => None,
+									};
+
+									let tags = if let Some(ref tags) = diagnostic.tags {
+										let new_tags = tags.iter().filter_map(|tag| {
+											match *tag {
+												lsp::DiagnosticTag::DEPRECATED => Some(DiagnosticTag::Deprecated),
+												lsp::DiagnosticTag::UNNECESSARY => Some(DiagnosticTag::Unnecessary),
+												_ => None
+											}
+										}).collect();
+
+										new_tags
+									} else {
+										Vec::new()
+									};
+
+									Some(Diagnostic {
+										range: Range { start, end },
+										line: diagnostic.range.start.line as usize,
+										message: diagnostic.message.clone(),
+										severity,
+										code,
+										tags,
+										source: diagnostic.source.clone()
+									})
+								})
+								.collect();
+
+							doc.set_diagnostics(diagnostics);
+						}
+
+						// Sort diagnostics first by severity and then by line numbers.
+						// Note: The `lsp::DiagnosticSeverity` enum is already defined in decreasing order
+						params
+							.diagnostics
+							.sort_unstable_by_key(|d| (d.severity, d.range.start));
+
+						// Insert the original lsp::Diagnostics here because we may have no open document
+						// for diagnosic message and so we can't calculate the exact position.
+						// When using them later in the diagnostics picker, we calculate them on-demand.
+						self.editor
+							.diagnostics
+							.insert(params.uri, params.diagnostics);
+					}
+					Notification::ShowMessage(params) => {
+						log::warn!("unhandled window/showMessage: {:?}", params);
+					}
+					Notification::LogMessage(params) => {
+						log::info!("window/logMessage: {:?}", params);
+					}
+					Notification::ProgressMessage(params)
+						if !self
+							.compositor
+							.has_component(std::any::type_name::<Prompt>()) =>
+					{
+						let type_name = std::any::type_name::<EditorView>();
+						let editor_view : &mut EditorView = self
+							.compositor
+							.find(type_name)
+							.expect("expected at least one EditorView")
+							.downcast_mut()
+							.unwrap();
+						let lsp::ProgressParams { token, value } = params;
+
+						let lsp::ProgressParamsValue::WorkDone(work) = value;
+						let parts = match &work {
+							lsp::WorkDoneProgress::Begin(lsp::WorkDoneProgressBegin {
+								title,
+								message,
+								percentage,
+								..
+							}) => (Some(title), message, percentage),
+							lsp::WorkDoneProgress::Report(lsp::WorkDoneProgressReport {
+								message,
+								percentage,
+								..
+							}) => (None, message, percentage),
+							lsp::WorkDoneProgress::End(lsp::WorkDoneProgressEnd { message }) => {
+								if message.is_some() {
+									(None, message, &None)
+								} else {
+									self.lsp_progress.end_progress(server_id, &token);
+									if !self.lsp_progress.is_progressing(server_id) {
+										editor_view.spinners_mut().get_or_create(server_id).stop();
+									}
+									self.editor.clear_status();
+
+									// we want to render to clear any leftover spinners or messages
+									return;
+								}
+							}
+						};
+
+						let token_d: &dyn std::fmt::Display = match &token {
+							lsp::NumberOrString::Number(n) => n,
+							lsp::NumberOrString::String(s) => s,
+						};
+
+						let status = match parts {
+							(Some(title), Some(message), Some(percentage)) => {
+								format!("[{}] {}% {} - {}", token_d, percentage, title, message)
+							}
+							(Some(title), None, Some(percentage)) => {
+								format!("[{}] {}% {}", token_d, percentage, title)
+							}
+							(Some(title), Some(message), None) => {
+								format!("[{}] {} - {}", token_d, title, message)
+							}
+							(None, Some(message), Some(percentage)) => {
+								format!("[{}] {}% {}", token_d, percentage, message)
+							}
+							(Some(title), None, None) => {
+								format!("[{}] {}", token_d, title)
+							}
+							(None, Some(message), None) => {
+								format!("[{}] {}", token_d, message)
+							}
+							(None, None, Some(percentage)) => {
+								format!("[{}] {}%", token_d, percentage)
+							}
+							(None, None, None) => format!("[{}]", token_d),
+						};
+
+						if let lsp::WorkDoneProgress::End(_) = work {
+							self.lsp_progress.end_progress(server_id, &token);
+							if !self.lsp_progress.is_progressing(server_id) {
+								editor_view.spinners_mut().get_or_create(server_id).stop();
+							}
+						} else {
+							self.lsp_progress.update(server_id, token, work);
+						}
+
+						if self.config.load().editor.lsp.display_messages {
+							self.editor.set_status(status);
+						}
+					}
+					Notification::ProgressMessage(_params) => {
+						// do nothing
+					}
+				}
+			}
+			Call::MethodCall(helix_lsp::jsonrpc::MethodCall {
+				method, params, id, ..
+			}) => {
+				let call = match MethodCall::parse(&method, params) {
+					Ok(call) => call,
+					Err(helix_lsp::Error::Unhandled) => {
+						error!("Language Server: Method not found {}", method);
+						return;
+					}
+					Err(err) => {
+						log::error!(
+							"received malformed method call from Language Server: {}: {}",
+							method,
+							err
+						);
+						return;
+					}
+				};
+
+				let reply = match call {
+					MethodCall::WorkDoneProgressCreate(params) => {
+						self.lsp_progress.create(server_id, params.token);
+
+						let type_name = std::any::type_name::<EditorView>();
+						let editor_view : &mut EditorView = self
+							.compositor
+							.find(type_name)
+							.expect("expected at least one EditorView")
+							.downcast_mut()
+							.unwrap();
+						let spinner = editor_view.spinners_mut().get_or_create(server_id);
+						if spinner.is_stopped() {
+							spinner.start();
+						}
+
+						Ok(serde_json::Value::Null)
+					}
+					MethodCall::ApplyWorkspaceEdit(params) => {
+						apply_workspace_edit(
+							&mut self.editor,
+							helix_lsp::OffsetEncoding::Utf8,
+							&params.edit,
+						);
+
+						Ok(json!(lsp::ApplyWorkspaceEditResponse {
+							applied: true,
+							failure_reason: None,
+							failed_change: None,
+						}))
+					}
+					MethodCall::WorkspaceFolders => {
+						let language_server =
+							self.editor.language_servers.get_by_id(server_id).unwrap();
+
+						Ok(json!(language_server.workspace_folders()))
+					}
+					MethodCall::WorkspaceConfiguration(params) => {
+						let result: Vec<_> = params
+							.items
+							.iter()
+							.map(|item| {
+								let mut config = match &item.scope_uri {
+									Some(scope) => {
+										let path = scope.to_file_path().ok()?;
+										let doc = self.editor.document_by_path(path)?;
+										doc.language_config()?.config.as_ref()?
+									}
+									None => self
+										.editor
+										.language_servers
+										.get_by_id(server_id)
+										.unwrap()
+										.config()?,
+								};
+								if let Some(section) = item.section.as_ref() {
+									for part in section.split('.') {
+										config = config.get(part)?;
+									}
+								}
+								Some(config)
+							})
+							.collect();
+						Ok(json!(result))
+					}
+				};
+
+				let language_server = match self.editor.language_servers.get_by_id(server_id) {
+					Some(language_server) => language_server,
+					None => {
+						warn!("can't find language server with id `{}`", server_id);
+						return;
+					}
+				};
+
+				tokio::spawn(language_server.reply(id, reply));
+			}
+			Call::Invalid { id } => log::error!("LSP invalid method call id={:?}", id),
+		}
+	}
 }

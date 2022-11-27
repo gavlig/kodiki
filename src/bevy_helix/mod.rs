@@ -127,6 +127,12 @@ impl Plugin for BevyHelixPlugin {
 			.insert_resource(HelixColorsCache::default())
 			.insert_resource(SurfacesMapHelix::default())
 
+			.insert_resource(tokio::runtime::Builder::new_multi_thread()
+				.enable_all()
+				.build()
+				.unwrap()
+			)
+
 			.add_startup_system(systems::startup.exclusive_system())
 			.add_system_set(
 				ConditionSet::new()

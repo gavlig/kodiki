@@ -32,6 +32,8 @@ use anyhow      :: { Context, Error, Result };
 
 use std :: path :: PathBuf;
 
+use tokio::runtime::Runtime as TokioRuntime;
+
 fn setup_logging(logpath: PathBuf, verbosity: u64) -> Result<()> {
 	let mut base_config = fern::Dispatch::new();
 
@@ -79,11 +81,13 @@ pub fn startup(
 	world.insert_resource(surfaces_helix);
 	world.insert_resource(surfaces_bevy);
 
-	let app = startup_impl(rect);
+	let tokio_runtime : &TokioRuntime = world.resource();
+
+	let app = tokio_runtime.block_on(startup_impl(rect));
+
 	world.insert_non_send_resource(app.unwrap());
 }
 
-#[tokio::main]
 async fn startup_impl(area: Rect) -> Result<Application, Error> {
 	let args = Args::parse_args().context("could not parse arguments").unwrap();
 
@@ -352,8 +356,7 @@ fn create_bevy_surfaces(
 	}
 }
 
-#[tokio::main]
-pub async fn input(
+pub fn input(
 	mut ev_keyboard : EventReader<KeyboardInput>,
 	key			    : Res<Input<KeyCode>>,
 	app             : Option<NonSendMut<Application>>,
@@ -469,4 +472,17 @@ pub async fn input(
 		let event = helix_view::input::Event::Key(key_event);
 		app.handle_input_event(&event);
 	}
+}
+
+pub fn tokio_events(
+	app				: Option<NonSendMut<Application>>,
+	tokio_runtime	: &TokioRuntime,
+)
+{
+	if app.is_none() {
+		return;
+	}
+	let mut app = app.unwrap();
+
+	tokio_runtime.block_on(app.handle_tokio_events());
 }
