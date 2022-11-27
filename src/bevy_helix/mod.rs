@@ -139,6 +139,7 @@ impl Plugin for BevyHelixPlugin {
 				.run_in_state(AppMode::Main)
 				.with_system(systems::render)
 				.with_system(systems::input)
+				.with_system(systems::tokio_events)
 				.into()
 			)
 			.add_system_set(

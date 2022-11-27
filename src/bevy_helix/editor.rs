@@ -155,6 +155,10 @@ impl EditorViewBevy {
 
 		statusline::render(&mut context, statusline_area, statusline_surface);
 	}
+
+	pub fn spinners_mut(&mut self) -> &mut ProgressSpinners {
+		&mut self.editor_view_helix.spinners
+	}
 }
 
 impl Component for EditorViewBevy {

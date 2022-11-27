@@ -476,7 +476,7 @@ pub fn input(
 
 pub fn tokio_events(
 	app				: Option<NonSendMut<Application>>,
-	tokio_runtime	: &TokioRuntime,
+	tokio_runtime	: Res<TokioRuntime>,
 )
 {
 	if app.is_none() {

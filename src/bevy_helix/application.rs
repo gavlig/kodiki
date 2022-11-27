@@ -32,6 +32,8 @@ use {
 #[cfg(windows)]
 type Signals = futures_util::stream::Empty<()>;
 
+use crate::bevy_helix::editor::EditorViewBevy;
+
 use super :: compositor :: CompositorBevy;
 use super :: editor;
 
@@ -497,11 +499,11 @@ impl Application {
 							.compositor
 							.has_component(std::any::type_name::<Prompt>()) =>
 					{
-						let type_name = std::any::type_name::<EditorView>();
-						let editor_view : &mut EditorView = self
+						let type_name = std::any::type_name::<EditorViewBevy>();
+						let editor_view : &mut EditorViewBevy = self
 							.compositor
 							.find(type_name)
-							.expect("expected at least one EditorView")
+							.expect("expected at least one EditorViewBevy")
 							.downcast_mut()
 							.unwrap();
 						let lsp::ProgressParams { token, value } = params;
@@ -606,11 +608,11 @@ impl Application {
 					MethodCall::WorkDoneProgressCreate(params) => {
 						self.lsp_progress.create(server_id, params.token);
 
-						let type_name = std::any::type_name::<EditorView>();
-						let editor_view : &mut EditorView = self
+						let type_name = std::any::type_name::<EditorViewBevy>();
+						let editor_view : &mut EditorViewBevy = self
 							.compositor
 							.find(type_name)
-							.expect("expected at least one EditorView")
+							.expect("expected at least one EditorViewBevy")
 							.downcast_mut()
 							.unwrap();
 						let spinner = editor_view.spinners_mut().get_or_create(server_id);
