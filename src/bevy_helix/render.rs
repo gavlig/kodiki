@@ -308,8 +308,14 @@ pub fn update_cursor_cell_material(
 	material_assets: &mut Assets<StandardMaterial>,
 	commands: &mut Commands
 ) {
+	let wrong_color = (cell_bevy.fg != cell_helix.fg && cell_bevy.bg != cell_helix.bg);
+	if !wrong_color {
+		return;
+	}
+
 	// helix reverses color in cell with cursor and we "revert" it back to make it visible with 3d cursor
 	cell_bevy.fg = cell_helix.fg;
+	cell_bevy.bg = cell_helix.bg;
 
 	update_cell_materials_inner(
 		cell_bevy,
