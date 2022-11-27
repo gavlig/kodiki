@@ -19,8 +19,11 @@ use helix_term		:: { commands :: apply_workspace_edit };
 use std             :: {
 	io              :: { stdin, stdout, Write },
 	sync            :: { Arc },
-	time            :: { Duration, Instant },
+	pin				:: { Pin }
 };
+
+
+use tokio			:: time :: { Sleep, sleep, Duration };
 
 use anyhow          :: { Context, Error };
 
@@ -32,12 +35,9 @@ use {
 #[cfg(windows)]
 type Signals = futures_util::stream::Empty<()>;
 
-use crate::bevy_helix::editor::EditorViewBevy;
-
 use super :: compositor :: CompositorBevy;
 use super :: editor;
-
-const LSP_DEADLINE: Duration = Duration::from_millis(16);
+use super :: editor :: EditorViewBevy;
 
 pub struct Application {
 	compositor	: CompositorBevy,
@@ -52,7 +52,8 @@ pub struct Application {
 	signals		: Signals,
 	jobs		: Jobs,
 	lsp_progress: LspProgressMap,
-	last_render : Instant,
+
+	tokio_idle_timer : Pin<Box<Sleep>>,
 }
 
 #[cfg(feature = "integration")]
@@ -224,7 +225,7 @@ impl Application {
 			signals,
 			jobs: Jobs::new(),
 			lsp_progress: LspProgressMap::new(),
-			last_render: Instant::now(),
+			tokio_idle_timer: Box::pin(sleep(Duration::ZERO)),
 		};
 
 		Ok(app)
@@ -300,9 +301,8 @@ impl Application {
 			Some(callback) = self.jobs.wait_futures.next() => {
 				self.jobs.handle_callback(&mut self.editor, &mut self.compositor, callback);
 			}
-			_ = &mut self.editor.idle_timer => {
-				// self.editor.clear_idle_timer();
-				// self.handle_idle_timeout();
+			_ = &mut self.tokio_idle_timer => {
+				// if no events don't wait/block at all
 			}
 		}
 	}
