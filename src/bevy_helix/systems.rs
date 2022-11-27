@@ -359,6 +359,7 @@ fn create_bevy_surfaces(
 pub fn input(
 	mut ev_keyboard : EventReader<KeyboardInput>,
 	key			    : Res<Input<KeyCode>>,
+	tokio_runtime	: Res<TokioRuntime>,
 	app             : Option<NonSendMut<Application>>,
 ) {
 	if app.is_none() {
@@ -470,7 +471,7 @@ pub fn input(
 		};
 
 		let event = helix_view::input::Event::Key(key_event);
-		app.handle_input_event(&event);
+		tokio_runtime.block_on(app.handle_input_event(&event));
 	}
 }
 

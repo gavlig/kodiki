@@ -264,7 +264,7 @@ impl Application {
 		self.compositor.layers.len() == 1
 	}
 
-	pub fn handle_input_event(&mut self, event : &helix_view::input::Event) {
+	pub async fn handle_input_event(&mut self, event : &helix_view::input::Event) {
 		let mut cx = helix_term::compositor::Context {
 			editor: &mut self.editor,
 			jobs: &mut self.jobs,
@@ -282,19 +282,16 @@ impl Application {
 		tokio::select! {
 			biased;
 
-			Some(_signal) = self.signals.next() => {
-				println!("PLACEHOLDER handle_signals");
-				// self.handle_signals(signal).await;
+			Some(signal) = self.signals.next() => {
+				self.handle_signals(signal).await;
 			}
 			Some((id, call)) = self.editor.language_servers.incoming.next() => {
-				println!("handle_language_server_message called!!!");
 				self.handle_language_server_message(call, id).await;
 			}
 			Some(payload) = self.editor.debugger_events.next() => {
-				let needs_render = self.editor.handle_debugger_message(payload).await;
+				let _needs_render = self.editor.handle_debugger_message(payload).await;
 			}
 			Some(_config_event) = self.editor.config_events.1.recv() => {
-				println!("PLACEHOLDER handle_config_events");
 				// self.handle_config_events(config_event);
 			}
 			Some(callback) = self.jobs.futures.next() => {
@@ -304,8 +301,43 @@ impl Application {
 				self.jobs.handle_callback(&mut self.editor, &mut self.compositor, callback);
 			}
 			_ = &mut self.editor.idle_timer => {
-				println!("PLACEHOLDER idle_timer");
+				// self.editor.clear_idle_timer();
+				// self.handle_idle_timeout();
 			}
+		}
+	}
+
+	#[cfg(unix)]
+	pub async fn handle_signals(&mut self, signal: i32) {
+		match signal {
+			signal::SIGTSTP => {
+			}
+			signal::SIGCONT => {
+			}
+			signal::SIGUSR1 => {
+			}
+			_ => unreachable!(),
+		}
+	}
+
+	pub fn handle_idle_timeout(&mut self) {
+		use helix_term::compositor::EventResult;
+		let type_name = std::any::type_name::<EditorViewBevy>();
+		let editor_view : &mut EditorViewBevy = self
+			.compositor
+			.find(type_name)
+			.expect("expected at least one EditorView")
+			.downcast_mut()
+			.unwrap();
+
+		let mut cx = helix_term::compositor::Context {
+			editor: &mut self.editor,
+			jobs: &mut self.jobs,
+			scroll: None,
+		};
+		if let EventResult::Consumed(_) = editor_view.handle_idle_timeout(&mut cx) {
+			println!("handle_idle_timeout event consumed");
+			// self.render();
 		}
 	}
 

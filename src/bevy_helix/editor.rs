@@ -1,6 +1,6 @@
 use helix_term::compositor::{Component, Context, Event, EventResult, SurfacesMap, surface_by_id_mut};
 use helix_term::keymap::Keymaps;
-use helix_term::ui::EditorView;
+use helix_term::ui::{EditorView, ProgressSpinners};
 
 use helix_core::{
 	syntax::{self, HighlightEvent},
@@ -12,6 +12,7 @@ use helix_view::{
 	graphics::{CursorKind, Rect},
 	input::KeyEvent,
 	keyboard::{KeyCode, KeyModifiers},
+	document::Mode,
 	Document, Editor, View
 };
 
@@ -158,6 +159,27 @@ impl EditorViewBevy {
 
 	pub fn spinners_mut(&mut self) -> &mut ProgressSpinners {
 		&mut self.editor_view_helix.spinners
+	}
+
+	pub fn handle_idle_timeout(&mut self, cx: &mut Context) -> EventResult {
+		if self.editor_view_helix.completion.is_some()
+			|| cx.editor.mode != Mode::Insert
+			|| !cx.editor.config().auto_completion
+		{
+			return EventResult::Ignored(None);
+		}
+
+		let mut cx = helix_term::commands::Context {
+			register: None,
+			editor: cx.editor,
+			jobs: cx.jobs,
+			count: None,
+			callback: None,
+			on_next_key_callback: None,
+		};
+		helix_term::commands::insert::idle_completion(&mut cx);
+
+		EventResult::Consumed(None)
 	}
 }
 
