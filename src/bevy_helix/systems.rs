@@ -211,9 +211,10 @@ pub fn render(
 		// }
 	}
 
-	{ // render cursor
+	if app.editor_focused() { // render cursor
 		let mut surface_bevy_editor = surfaces_bevy.get_mut(&String::from(EditorViewBevy::ID)).unwrap();
 		let surface_helix_editor = surfaces_helix.get(&String::from(EditorViewBevy::ID)).unwrap();
+
 		animate::cursor(
 			&mut cursor,
 			&mut q_cursor_transform,
@@ -466,6 +467,6 @@ pub async fn input(
 		};
 
 		let event = helix_view::input::Event::Key(key_event);
-		app.handle_event(&event);
+		app.handle_input_event(&event);
 	}
 }

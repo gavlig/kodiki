@@ -251,7 +251,17 @@ impl Application {
 		compositor.render_ext(area, surfaces, &mut cx);
 	}
 
-	pub fn handle_event(&mut self, event : &helix_view::input::Event) {
+	pub fn cursor(&mut self, area : helix_view::graphics::Rect) -> (Option<(u16, u16)>, helix_view::graphics::CursorKind) {
+		let (pos, kind) = self.compositor.cursor(area, &self.editor);
+		(pos.map(|pos| (pos.col as u16, pos.row as u16)), kind)
+	}
+
+	pub fn editor_focused(&self) -> bool {
+		// hacky, but works for now
+		self.compositor.layers.len() == 1
+	}
+
+	pub fn handle_input_event(&mut self, event : &helix_view::input::Event) {
 		let mut cx = helix_term::compositor::Context {
 			editor: &mut self.editor,
 			jobs: &mut self.jobs,
@@ -263,8 +273,4 @@ impl Application {
 		compositor_helix.handle_event(event, &mut cx);
 	}
 
-	pub fn cursor(&mut self, area : helix_view::graphics::Rect) -> (Option<(u16, u16)>, helix_view::graphics::CursorKind) {
-		let (pos, kind) = self.compositor.cursor(area, &self.editor);
-		(pos.map(|pos| (pos.col as u16, pos.row as u16)), kind)
-	}
 }

@@ -15,7 +15,7 @@ pub use helix_view::input::Event;
 use std::any::Any;
 
 pub struct CompositorBevy {
-	layers: Vec<Box<dyn Component>>,
+	pub layers: Vec<Box<dyn Component>>,
 	last_picker: Option<Box<dyn Component>>,
 }
 
