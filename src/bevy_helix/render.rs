@@ -308,8 +308,8 @@ pub fn update_cursor_cell_material(
 	material_assets: &mut Assets<StandardMaterial>,
 	commands: &mut Commands
 ) {
-	// emulate reversed color only for symbol because native cursor rendering is turned off
-	cell_bevy.fg = cell_helix.bg;
+	// helix reverses color in cell with cursor and we "revert" it back to make it visible with 3d cursor
+	cell_bevy.fg = cell_helix.fg;
 
 	update_cell_materials_inner(
 		cell_bevy,
