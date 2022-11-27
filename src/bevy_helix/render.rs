@@ -284,7 +284,6 @@ pub fn cursor(
 	}
 
 	let width				= surface_helix.area.width;
-	let height				= surface_helix.area.height;
 	let content_helix		= &surface_helix.content;
 	let content_bevy		= &mut surface_bevy.content;
 
