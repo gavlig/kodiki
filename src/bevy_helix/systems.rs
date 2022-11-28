@@ -368,16 +368,18 @@ pub fn input(
 	}
 	let mut app = app.unwrap();
 
+	if ev_keyboard.is_empty() {
+		return;
+	}
+
 	for e in ev_keyboard.iter() {
 		if e.state != ButtonState::Pressed {
 			continue;
 		}
 
-		if e.key_code.is_none() {
-			continue;
-		}
-
 		let helix_keycode =
+		if e.key_code.is_some() {
+		
 		match e.key_code.unwrap() {
 			KeyCode::Back		=> KeyCodeHelix::Backspace,
 			KeyCode::Return		=> KeyCodeHelix::Enter,
@@ -448,8 +450,42 @@ pub fn input(
 			KeyCode::Comma		=> KeyCodeHelix::Char(','),
 			KeyCode::Convert	=> KeyCodeHelix::Char('.'),
 			KeyCode::Slash		=> KeyCodeHelix::Char('/'),
+			KeyCode::Period		=> KeyCodeHelix::Char('.'),
+			KeyCode::At			=> KeyCodeHelix::Char('@'),
+			KeyCode::Asterisk	=> KeyCodeHelix::Char('*'),
+			KeyCode::Plus		=> KeyCodeHelix::Char('+'),
+			KeyCode::Minus		=> KeyCodeHelix::Char('-'),
+			KeyCode::Grave		=> KeyCodeHelix::Char('`'),
 
 			_ => { println!("skipping keycode {:?}", e.key_code); continue; }
+		}
+		
+		// !e.key_code.is_some()
+		} else {
+
+		match e.scan_code {
+			2					=> KeyCodeHelix::Char('!'),
+			4					=> KeyCodeHelix::Char('#'),
+			5					=> KeyCodeHelix::Char('$'),
+			6					=> KeyCodeHelix::Char('%'),
+			7					=> KeyCodeHelix::Char('^'),
+			8					=> KeyCodeHelix::Char('&'),
+			10					=> KeyCodeHelix::Char('('),
+			11					=> KeyCodeHelix::Char(')'),
+			12					=> KeyCodeHelix::Char('_'),
+			13					=> KeyCodeHelix::Char('+'),
+			26					=> KeyCodeHelix::Char('{'),
+			27					=> KeyCodeHelix::Char('}'),
+			40					=> KeyCodeHelix::Char('"'),
+			41					=> KeyCodeHelix::Char('~'),
+			43					=> KeyCodeHelix::Char('|'),
+			51					=> KeyCodeHelix::Char('<'),
+			52					=> KeyCodeHelix::Char('>'),
+			53					=> KeyCodeHelix::Char('?'),
+			
+			_ => { println!("skipping scancode {:?}", e.scan_code); continue; }
+		}
+
 		};
 
 		let mut modifiers = helix_view::keyboard::KeyModifiers::NONE;

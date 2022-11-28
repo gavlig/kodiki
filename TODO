@@ -1,8 +1,11 @@
 1. Camera is still not usable
 2. (Done!)Symbols of diagnostic and spinner are missing
 3. Mouse support
-4. Some keycodes are missing
+4. (Done!)Some keycodes are missing
 5. Cache words and chunks of background quads
 6. Panels/surfaces need to be placed and animated
 7. (Done!)Other fonts (not ubuntu_mono) have wrong background quad size
 7.1. (Done!)that's because i have to make sure i have same font used everywhere 
+8. Completion
+8.1. commands.rs : 3920 completion wants EditorView and we only have EditorViewBevy
+9. handle exit
