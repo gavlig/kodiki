@@ -62,7 +62,7 @@ pub fn cursor(
 		let target_pos	= Vec3::new(target_x, target_y, cursor_z);
 
 		let delta_seconds = time.delta_seconds();
-		let delta_accum	= delta_seconds / /*cursor_easing_seconds*/ 0.05;
+		let delta_accum	= delta_seconds / /*cursor_easing_seconds*/ 0.0001;
 
 		let cursor_entity = cursor.entity.unwrap();
 		let mut cursor_transform = q_cursor_transform.get_mut(cursor_entity).unwrap();
