@@ -59,6 +59,70 @@ impl ABGlyphFont {
 	}
 }
 
+pub struct UsedFonts<'a> {
+	pub main		: &'a ABGlyphFont,
+	pub fallback	: &'a ABGlyphFont,
+}
+
+pub struct CharWithFonts<'a> {
+	pub glyph_str	: String,
+	pub main		: &'a ABGlyphFont,
+	pub fallback	: &'a ABGlyphFont,
+
+	pub initialized	: bool,
+	pub use_fallback: bool,
+}
+
+impl CharWithFonts<'_> {
+	pub fn new<'a>(
+		glyph_str	: String,
+		used_fonts	: &'a UsedFonts
+	) -> CharWithFonts<'a>
+	{
+		let mut cwf = CharWithFonts {
+			glyph_str	: glyph_str,
+			main		: used_fonts.main,
+			fallback	: used_fonts.fallback,
+		
+			initialized	: false,
+			use_fallback: false,
+		};
+
+		cwf.initialize();
+
+		cwf
+	}
+
+	pub fn use_fallback_font(
+		char_with_fonts	: &CharWithFonts,
+	) -> bool
+	{
+		let glyph_id = char_with_fonts.main.glyph_id(&char_with_fonts.glyph_str);
+		let use_fallback = glyph_id == GlyphId(0);
+		if use_fallback {
+			let glyph_id = char_with_fonts.fallback.glyph_id(&char_with_fonts.glyph_str);
+			assert!(glyph_id != GlyphId(0));
+		}
+	
+		use_fallback
+	}
+
+	pub fn initialize(&mut self) {
+		self.use_fallback = CharWithFonts::use_fallback_font(&self);
+		self.initialized = true;
+	}
+
+	pub fn current_font(&self) -> &ABGlyphFont {
+		assert!(self.initialized);
+
+		if self.use_fallback {
+			self.fallback
+		} else {
+			self.main
+		}
+	}
+}
+
 unsafe impl Sync for ABGlyphFont {}
 unsafe impl Send for ABGlyphFont {}
 

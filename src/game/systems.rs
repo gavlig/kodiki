@@ -49,10 +49,10 @@ pub fn setup_world_system(
 	spawn::fixed_sphere	(Transform::identity(), 0.02, Color::SEA_GREEN, &mut mesh_assets, &mut material_assets, &mut commands);
 
 	// without font we can't go further
-	let font_handle = &font_handles.ubuntu_mono;
-	let font		= fonts.get_mut(font_handle).unwrap();
+	let font_handle 	= font_handles.main.clone_weak();
+	let font			= fonts.get(&font_handle).unwrap();
 	
-	let mut pos		= Vec3::new(0.0, 0.0, 0.0);
+	let mut pos			= Vec3::new(0.0, 0.0, 0.0);
 
 	for (layer_name, surface_helix) in surfaces_helix.iter() {
 		if surfaces_bevy.contains_key(layer_name) {
@@ -335,15 +335,19 @@ pub fn stats_system(
 
 pub fn load_assets(
 	mut font_handles	: ResMut<FontAssetHandles>,
-	mut ass				: ResMut<AssetServer>,
+		ass				: ResMut<AssetServer>,
 ) {
-	font_handles.droid_sans_mono = ass.load("fonts/droidsans-mono.ttf");
-	font_handles.open_dyslexic = ass.load("fonts/OpenDyslexic3-Regular.ttf");
-	font_handles.source_code_pro = ass.load("fonts/SourceCodePro-Regular.ttf");
-	font_handles.B612 = ass.load("fonts/B612Mono-Regular.ttf");
-	font_handles.share_tech = ass.load("fonts/ShareTechMono-Regular.ttf");
+	font_handles.droid_sans_mono	= ass.load("fonts/droidsans-mono.ttf");
+	font_handles.open_dyslexic		= ass.load("fonts/OpenDyslexic3-Regular.ttf");
+	font_handles.source_code_pro	= ass.load("fonts/SourceCodePro-Regular.ttf");
+	font_handles.B612				= ass.load("fonts/B612Mono-Regular.ttf");
+	font_handles.share_tech			= ass.load("fonts/ShareTechMono-Regular.ttf");
 
-	font_handles.ubuntu_mono = ass.load("fonts/UbuntuMono-Regular.otf");
+	font_handles.ubuntu_mono		= ass.load("fonts/UbuntuMono-Regular.otf");
+	font_handles.dejavu_serif		= ass.load("fonts/DejaVuSerif.ttf");
+
+	font_handles.main				= font_handles.ubuntu_mono.clone_weak();
+	font_handles.fallback			= font_handles.dejavu_serif.clone_weak();
 }
 
 pub fn asset_loading_events(
@@ -355,20 +359,12 @@ pub fn asset_loading_events(
 		match ev {
 			AssetEvent::Created { handle } => {
 				font_handles.loaded_cnt += 1;
-				if font_handles.droid_sans_mono == *handle {
-					println!("droid sans loaded!");
-				}
-
-				if font_handles.open_dyslexic == *handle {
-					println!("open_dyslexic loaded!");
-				}
-
-				if font_handles.source_code_pro == *handle {
-					println!("source_code_pro loaded!");
-				}
-
 				if font_handles.ubuntu_mono == *handle {
 					println!("ubuntu_mono loaded!");
+				}
+
+				if font_handles.dejavu_serif == *handle {
+					println!("dejavu serif loaded!");
 				}
 			}
 			AssetEvent::Modified { handle: _ } => {
@@ -378,7 +374,7 @@ pub fn asset_loading_events(
 		}
 	}
 
-	if font_handles.loaded_cnt == 6 {
+	if font_handles.loaded_cnt == 7 {
 		commands.insert_resource(NextState(AppMode::AssetsLoaded));
 		println!("assets loaded!");
 	}

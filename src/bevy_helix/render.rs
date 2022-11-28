@@ -6,7 +6,7 @@ use bevy_prototype_debug_lines :: { * };
 
 // use bevy_infinite_grid	:: { InfiniteGridBundle };
 
-use crate				:: bevy_ab_glyph::{ ABGlyphFont, TextMeshesCache };
+use crate				:: bevy_ab_glyph::{ UsedFonts, CharWithFonts, TextMeshesCache };
 use crate				:: bevy_ab_glyph :: mesh_generator :: generate_glyph_mesh_wcache;
 
 use super				:: { * };
@@ -46,7 +46,7 @@ pub fn surface(
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
 
-	font			: &ABGlyphFont,
+	used_fonts		: &UsedFonts,
 
 	text_meshes_cache : &mut TextMeshesCache,
 	helix_colors_cache : &mut HelixColorsCache,
@@ -60,7 +60,7 @@ pub fn surface(
 
 	surface_bevy.content.resize_with(surface_helix.content.len(), || { CellBevy::default() });
 
-	let v_advance	= font.vertical_advance();
+	let v_advance	= used_fonts.main.vertical_advance();
 
 	let mut surface_children : Vec<Entity> = Vec::new();
 
@@ -81,6 +81,8 @@ pub fn surface(
 			let content_index = (y_cell * width + x_cell) as usize;
 			let cell_helix = &content_helix[content_index];
 			let cell_bevy = &mut content_bevy[content_index];
+
+			let mut char_with_fonts = CharWithFonts::new(cell_helix.symbol.clone(), used_fonts);
 			
 			// figure out colors first
 			update_cell_materials(
@@ -97,14 +99,14 @@ pub fn surface(
 				pos,
 				cell_helix,
 				cell_bevy,
-				font,
+				&mut char_with_fonts,
 				text_meshes_cache,
 				&mut surface_children,
 				mesh_assets,
 				commands
 			);
 
-			x += font.horizontal_advance(&cell_helix.symbol);
+			x += used_fonts.main.horizontal_advance(&cell_helix.symbol);
 
 			column += 1;
 		}
@@ -123,7 +125,7 @@ fn update_cell_mesh(
 	pos				: Vec3,
 	cell_helix		: &CellHelix,
 	cell_bevy		: &mut CellBevy,
-	font			: &ABGlyphFont,
+	char_with_fonts	: &mut CharWithFonts,
 	text_meshes_cache : &mut TextMeshesCache,
 	surface_children: &mut Vec<Entity>,
 	mesh_assets		: &mut Assets<Mesh>,
@@ -147,8 +149,7 @@ fn update_cell_mesh(
 	}
 
 	let mesh_handle = generate_glyph_mesh_wcache(
-		&cell_helix.symbol,
-		&font,
+		char_with_fonts,
 		mesh_assets,
 		text_meshes_cache
 	);
@@ -167,7 +168,7 @@ fn update_cell_mesh(
 				material : cell_bevy.fg_handle.as_ref().unwrap().clone_weak(),
 				transform : Transform {
 					translation	: pos,
-					scale		: [font.scale; 3].into(),
+					scale		: [char_with_fonts.current_font().scale; 3].into(),
 					..default()
 				},
 				..default()

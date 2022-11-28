@@ -16,16 +16,21 @@ pub type LyonPoint      = lyon :: math :: Point;
 
 use bevy::render::mesh::shape as render_shape;
 
-use super :: { TextMeshesCache, ABGlyphFont };
+use super :: { TextMeshesCache, ABGlyphFont, CharWithFonts };
 
 fn generate_glyph_outline(
-	glyph_str: &String,
-	font: &FontVec
+	glyph_str	: &String,
+	font		: &FontVec,
+	debug		: bool,
 ) -> Outline
 {
 	let placeholder_glyph_id = font.glyph_id('?');
 
 	let glyph_id = font.glyph_id(glyph_str.chars().next().unwrap());
+
+	if debug {
+		println!("generate_glyph_outline glyph_id: {:?} char {}", glyph_id, glyph_str.chars().next().unwrap());
+	}
 
 	let mut outline = font.outline(glyph_id);
 	// couldn't find outline for requested character, use placeholder instead
@@ -321,10 +326,12 @@ fn generate_connecting_quads(
 }
 
 pub fn generate_glyph_mesh(
-	glyph_str	: &String,
-	font		: &ABGlyphFont,
+	char_with_fonts	: &mut CharWithFonts,
 ) -> Mesh {
-	let glyph_outline		= generate_glyph_outline(glyph_str, &font.f);
+	let glyph_str			= &char_with_fonts.glyph_str;
+	let font				= char_with_fonts.current_font();
+
+	let glyph_outline		= generate_glyph_outline(glyph_str, &font.f, false);
 	let path				= generate_path_from_outline(glyph_outline);
 
 	// geometry of a glyph's front face
@@ -349,25 +356,26 @@ pub fn generate_glyph_mesh(
 	generate_connecting_quads(&triangles, &mut vertex_buffer, &mut normals);
 
 	let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-	mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertex_buffer.vertices);
-	mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
-	mesh.set_indices(Some(Indices::U16(vertex_buffer.indices)));
+	mesh.insert_attribute	(Mesh::ATTRIBUTE_POSITION, vertex_buffer.vertices);
+	mesh.insert_attribute	(Mesh::ATTRIBUTE_NORMAL, normals);
+	mesh.set_indices(Some	(Indices::U16(vertex_buffer.indices)));
 
 	mesh
 }
 
 pub fn generate_glyph_mesh_wcache(
-	glyph_str	: &String,
-	font		: &ABGlyphFont,
+	char_with_fonts	: &mut CharWithFonts,
 	mesh_assets	: &mut Assets<Mesh>,
 	text_meshes_cache : &mut TextMeshesCache
 ) -> Handle<Mesh>
 {
-	match text_meshes_cache.meshes.get(glyph_str) {
+	let glyph_str = char_with_fonts.glyph_str.clone();
+
+	match text_meshes_cache.meshes.get(&glyph_str) {
 		Some(handle) => handle.clone_weak(),
 		None => {
 			let handle = mesh_assets.add(
-				generate_glyph_mesh(glyph_str, font)
+				generate_glyph_mesh(char_with_fonts)
 			);
 			
 			text_meshes_cache.meshes.insert_unique_unchecked(glyph_str.clone(), handle).1.clone()

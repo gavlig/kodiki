@@ -18,14 +18,13 @@ use crate :: game :: DespawnResource;
 use crate :: game :: FontAssetHandles;
 
 
-use crate :: bevy_ab_glyph :: ABGlyphFont;
-use crate :: bevy_ab_glyph :: TextMeshesCache;
+use crate :: bevy_ab_glyph :: { ABGlyphFont, UsedFonts, TextMeshesCache };
 
 use helix_term  :: config		:: Config;
 use helix_term  :: args			:: Args;
 use helix_term	:: compositor	:: SurfacesMap as SurfacesMapHelix;
 use helix_tui   :: buffer		:: Buffer as SurfaceHelix;
-use helix_view  :: graphics 	:: *;
+use helix_view  :: graphics 	:: { * };
 use helix_view  :: keyboard 	:: KeyCode as KeyCodeHelix;
 
 use anyhow      :: { Context, Error, Result };
@@ -143,8 +142,10 @@ pub fn render(
 		return;
 	}
 
-	let font_handle = &font_handles.ubuntu_mono;
-	let font		= fonts.get(font_handle).unwrap();
+	let used_fonts	= UsedFonts{
+		main	: fonts.get(&font_handles.main).unwrap(),
+		fallback: fonts.get(&font_handles.fallback).unwrap()
+	};
 
 	// will make sure we run this function only once
 	// if surfaces_bevy.len() > 1 {
@@ -180,7 +181,7 @@ pub fn render(
 	create_bevy_surfaces(
 		&mut surfaces_helix,
 		&mut surfaces_bevy,
-		&font,
+		used_fonts.main,
 		&mut text_meshes_cache,
 		&mut mesh_assets,
 		&mut commands
@@ -194,7 +195,7 @@ pub fn render(
 			surface_helix,
 			surface_bevy,
 
-			&font,
+			&used_fonts,
 
 			&mut text_meshes_cache,
 			&mut helix_colors_cache,
@@ -222,7 +223,7 @@ pub fn render(
 		animate::cursor(
 			&mut cursor,
 			&mut q_cursor_transform,
-			font,
+			used_fonts.main,
 			&time,
 			&mut app
 		);
