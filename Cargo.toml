@@ -24,8 +24,8 @@ hex                 = { version = "0.4.3"}
 
 bevy 				= { version = "0.8", features = ["bevy_render"] }
 
-bevy_fly_camera		= { git = "https://github.com/gavlig/bevy_fly_camera.git", branch = "gryazevichki" }
-bevy_mod_picking	= { version = "0.8.2" } # https://github.com/aevyrie/bevy_mod_picking.git
+bevy_fly_camera		= { git = "https://github.com/gavlig/bevy_fly_camera.git", branch = "kodiki" }
+bevy_mod_picking	= { git = "https://github.com/gavlig/bevy_mod_picking.git", branch = "kodiki" }
 iyes_loopless		= { version = "0.7.0" }
 # bevy_infinite_grid	= { path = "../bevy_infinite_grid" } # { git = "https://github.com/gavlig/bevy_infinite_grid"}
 bevy_shadertoy_wgsl	= { git = "https://github.com/gavlig/bevy_shadertoy_wgsl.git" } # { path = "../bevy_shadertoy_wgsl" }
