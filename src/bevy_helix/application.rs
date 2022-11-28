@@ -90,7 +90,7 @@ impl Application {
 			&helix_loader::runtime_dir(),
 		));
 
-		let true_color = true; // config.editor.true_color; // helix_term::true_color();
+		let true_color = true;
 		let theme = config
 			.theme
 			.as_ref()

@@ -1,10 +1,5 @@
 use bevy				:: prelude :: { * };
-use bevy_mod_picking	:: { * };
 use bevy_contrib_colors	:: { Tailwind };
-
-use bevy_prototype_debug_lines :: { * };
-
-// use bevy_infinite_grid	:: { InfiniteGridBundle };
 
 use crate				:: bevy_ab_glyph::{ UsedFonts, CharWithFonts, TextMeshesCache };
 use crate				:: bevy_ab_glyph :: mesh_generator :: generate_glyph_mesh_wcache;

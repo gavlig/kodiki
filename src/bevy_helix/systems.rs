@@ -359,9 +359,9 @@ fn create_bevy_surfaces(
 
 pub fn input(
 	mut ev_keyboard : EventReader<KeyboardInput>,
-	key			    : Res<Input<KeyCode>>,
+	key				: Res<Input<KeyCode>>,
 	tokio_runtime	: Res<TokioRuntime>,
-	app             : Option<NonSendMut<Application>>,
+	app				: Option<NonSendMut<Application>>,
 ) {
 	if app.is_none() {
 		return;

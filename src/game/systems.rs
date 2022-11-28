@@ -21,7 +21,7 @@ use crate			:: { bevy_helix :: HelixColorsCache };
 use crate			:: { bevy_helix :: editor :: EditorViewBevy };
 use crate           :: { bevy_ab_glyph :: TextMeshesCache };
 
-use helix_term	:: compositor	:: SurfacesMap	as SurfacesMapHelix;
+use helix_term	:: compositor :: SurfacesMap as SurfacesMapHelix;
 
 pub fn setup_world_system(
 		surfaces_helix	: ResMut<SurfacesMapHelix>,
