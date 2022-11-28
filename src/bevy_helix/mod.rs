@@ -7,12 +7,15 @@ use helix_term :: compositor :: SurfacesMap as SurfacesMapHelix;
 use crate :: game :: AppMode;
 
 pub mod spawn;
-mod render;
-mod animate;
+
 pub mod application;
 pub use application :: *;
-mod compositor;
 pub mod editor;
+
+mod render;
+mod animate;
+mod input;
+mod compositor;
 mod systems;
 
 #[derive(Component)]
@@ -138,15 +141,15 @@ impl Plugin for BevyHelixPlugin {
 				ConditionSet::new()
 				.run_in_state(AppMode::Main)
 				.with_system(systems::render)
-				.with_system(systems::input)
 				.with_system(systems::tokio_events)
+				.with_system(systems::input_keyboard)
 				.into()
 			)
 			.add_system_set(
 				ConditionSet::new()
 				.run_in_state(AppMode::Editor)
 				.with_system(systems::render)
-				// .with_system(systems::input)
+				.with_system(systems::tokio_events)
 				.into()
 			)
  			;
