@@ -47,8 +47,9 @@ pub struct DespawnResource {
 pub enum AppMode {
 	AssetLoading,
 	AssetsLoaded,
-	Main,
-	Editor,
+	Main,			// keyboard input + mouse visible + no camera movement + zoom available
+	Reader,			// keyboard input + mouse invisible + camera slides up/down + zoom available
+	Fly				// no keyboard input + mouse invisible + flying camera + no zoom available
 }
 
 #[derive(Default, Resource)]
@@ -122,24 +123,28 @@ impl Plugin for AppPlugin {
 				SystemSet::new()
 				.with_system(setup_world_system)
 				.with_system(setup_lighting_system)
-				.with_system(setup_camera_system)
-				.with_system(setup_cursor_visibility_system)
 			)
 
 			.add_system_set(
 				ConditionSet::new()
 				.run_in_state(AppMode::Main)
 				.with_system(input_system)
-				.with_system(cursor_visibility_system)
 				.with_system(stats_system)
 				.into()
 			)
 
 			.add_system_set(
 				ConditionSet::new()
-				.run_in_state(AppMode::Editor)
+				.run_in_state(AppMode::Reader)
 				.with_system(input_system)
-				.with_system(cursor_visibility_system)
+				.into()
+			)
+
+			.add_system_set(
+				ConditionSet::new()
+				.run_in_state(AppMode::Fly)
+				.with_system(input_system)
+				.with_system(stats_system)
 				.into()
 			)
 

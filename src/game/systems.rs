@@ -226,11 +226,18 @@ pub fn input_system(
 	mut exit		: EventWriter<AppExit>,
 	mut q_camera	: Query<&mut Camera>,
 	mut q_camera3d	: Query<&mut Camera3d>,
-	mut q_fly_camera: Query<&mut FlyCamera>,
-		q_selection	: Query<&Selection>,
-		q_children	: Query<&Children>,
+	mut q_reader_camera : Query<&mut ReaderCamera>,
+
+	mut windows		: ResMut<Windows>,
+	mut	commands	: Commands
 ) {
 	let delta_seconds = time.delta_seconds();
+
+	let window 		= windows.get_primary_mut();
+	if window.is_none() {
+		return;
+	}
+	let window		= window.unwrap();
 
 	if key.pressed(KeyCode::LControl) && key.pressed(KeyCode::LAlt) && key.just_pressed(KeyCode::Escape) {
 		exit.send(AppExit);
@@ -260,20 +267,40 @@ pub fn input_system(
 		shadertoy_canvas.active = toggle;
 	}
 
-	if !q_fly_camera.is_empty() {
-		let mut camera = q_fly_camera.single_mut();
+	if !q_reader_camera.is_empty() {
+		let mut camera = q_reader_camera.single_mut();
 
-		// if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Space) {
-		// 	let toggle 	= !camera.enabled_reader;
-		// 	camera.enabled_reader = toggle;
-		// }
+		// Reader mode
+		if key.just_pressed(KeyCode::LAlt) && !key.pressed(KeyCode::LControl) {
+			camera.set_restrictions(true, true, true);
 
-		camera.enabled_reader = !key.pressed(KeyCode::LAlt);
+			set_cursor_visibility(false, window);
 
-		// camera.enabled_rotation = true;
-		camera.enabled_zoom = true;
+			commands.insert_resource(NextState(AppMode::Reader));
+		} else if key.just_released(KeyCode::LAlt) && camera.mode == CameraMode::Reader {
+			camera.set_restrictions(false, false, true);
 
-		if camera.enabled_reader {
+			set_cursor_visibility(true, window);
+
+			commands.insert_resource(NextState(AppMode::Main));
+		}
+
+		// Fly mode
+		if key.just_pressed(KeyCode::LControl) && key.pressed(KeyCode::LAlt) {
+			camera.set_mode_wrestrictions(CameraMode::Fly, true, true, false);
+			
+			set_cursor_visibility(false, window);
+			
+			commands.insert_resource(NextState(AppMode::Fly));
+		} else if key.just_released(KeyCode::LControl) && camera.mode == CameraMode::Fly {
+			camera.set_mode_wrestrictions(CameraMode::Reader, false, false, true);
+			
+			set_cursor_visibility(true, window);
+			
+			commands.insert_resource(NextState(AppMode::Main));
+		}
+
+		if camera.mode == CameraMode::Reader {
 			// if key.pressed(KeyCode::Left) {
 			// 	camera.column_dec(delta_seconds);
 			// }
@@ -289,27 +316,18 @@ pub fn input_system(
 			// if key.pressed(KeyCode::Down) {
 			// 	camera.row_inc(delta_seconds);
 			// }
-		} else {
-			// camera.enabled_rotation = true;
-			// camera.enabled_translation = true;
-			// camera.enabled_zoom = true;
-		}
-
-		if key.just_released(KeyCode::Escape) {
-			camera.enabled_translation = !mouse_state.visible; // 
-			camera.enabled_rotation = !mouse_state.visible;
 		}
 	}
 }
 
 pub fn stats_system(
-	q_camera: Query<&FlyCamera>,
+	q_camera: Query<(&ReaderCamera, &Transform)>,
 	// q_center_pick: Query<(&Transform, &Row, &Column), With<CenterPick>>
 	q_text_descriptor: Query<&TextDescriptor>,
 ) {
-	for fly_camera in q_camera.iter() {
+	for (camera, transform) in q_camera.iter() {
 		let (qw, qh) =
-		if let Some(target) = fly_camera.target {
+		if let Some(target) = camera.target {
 			let descriptor = q_text_descriptor.get(target).unwrap();
 			(descriptor.glyph_width, descriptor.glyph_height)
 		} else {
@@ -317,14 +335,25 @@ pub fn stats_system(
 		};
 
 		screen_print!("row: {}({:.1}) col: {}({:.1}) zoom: {:.1} pitch: {:.1} glyph_w: {:.1} glyph_h: {:.1}",
-			fly_camera.row,
-			fly_camera.vertical_scroll,
-			fly_camera.column,
-			fly_camera.horizontal_scroll,
-			fly_camera.zoom,
-			fly_camera.pitch,
+			camera.row,
+			camera.vertical_scroll,
+			camera.column,
+			camera.horizontal_scroll,
+			camera.zoom,
+			camera.pitch,
 			qw,
 			qh
+		);
+
+		screen_print!("camera transform. p: {:.2} {:.2} {:.2} q: {:.2} {:.2} {:.2} {:.2}",
+			transform.translation.x,
+			transform.translation.y,
+			transform.translation.z,
+
+			transform.rotation.x,
+			transform.rotation.y,
+			transform.rotation.z,
+			transform.rotation.w
 		);
 	}
 

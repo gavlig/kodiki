@@ -1,6 +1,6 @@
 use bevy				:: prelude :: { * };
 use bevy				:: core_pipeline :: clear_color :: ClearColorConfig;
-use bevy_fly_camera		:: { FlyCamera };
+use bevy_reader_camera	:: { ReaderCamera, CameraMode };
 use bevy_mod_picking	:: { * };
 use bevy::render::mesh::shape as render_shape;
 
@@ -9,7 +9,7 @@ use bevy::render::mesh::shape as render_shape;
 use super				:: { * };
 
 pub fn camera(
-	root_entity			: Option<Entity>,
+	target_entity		: Option<Entity>,
 	camera_ids			: &mut ResMut<CameraIDs>,
 	commands			: &mut Commands
 ) {
@@ -34,12 +34,15 @@ pub fn camera(
 			..default()
 		})
 		.insert(
-			FlyCamera {
+			ReaderCamera {
 				yaw				: 0.0,
 				pitch			: 0.0,
-				enabled_follow	: false,
+				mode			: CameraMode::Reader,
+				enabled_zoom	: true,
+				enabled_rotation: false,
+				enabled_translation : false,
 				max_speed		: 0.07,
-				target			: root_entity,
+				target			: target_entity,
 				..default()
 			}
 		)

@@ -1,14 +1,15 @@
 #![feature(rustc_private)]
 #![allow(non_snake_case, dead_code)]
 
-use bevy			::  prelude :: *;
-use bevy :: window 	:: { PresentMode, WindowMode };
-use bevy_fly_camera	:: { FlyCameraPlugin };
-use bevy_shadertoy_wgsl	:: { * };
-use bevy_mod_picking :: { * };
+use bevy					::  prelude :: *;
+use bevy :: window			:: { PresentMode, WindowMode };
+use bevy_reader_camera		:: { ReaderCameraPlugin };
+use bevy_shadertoy_wgsl		:: { * };
+use bevy_mod_picking		:: { * };
+use bevy_tweening			:: { * };
 
 use bevy_debug_text_overlay	:: { OverlayPlugin, screen_print };
-use bevy_polyline	:: { * };
+use bevy_polyline			:: { * };
 use bevy_prototype_debug_lines :: { * };
 
 // use bevy_infinite_grid :: { InfiniteGridPlugin };
@@ -43,7 +44,7 @@ fn main() {
 		.add_plugin(ABGlyphPlugin)
 		.add_plugin(BevyHelixPlugin)
 
-		.add_plugin(FlyCameraPlugin)
+		.add_plugin(ReaderCameraPlugin)
 		.add_plugin(ShadertoyPlugin)
 		.add_plugin(TweeningPlugin)
 

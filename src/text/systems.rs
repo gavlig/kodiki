@@ -1,5 +1,5 @@
 use bevy :: { prelude :: * };
-use bevy_fly_camera :: { * };
+use bevy_reader_camera :: { * };
 
 use super:: { * };
 

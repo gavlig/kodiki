@@ -1,5 +1,5 @@
 use bevy				:: prelude :: { * };
-use bevy_fly_camera		:: { * };
+use bevy_reader_camera	:: { * };
 use bevy_contrib_colors	:: { Tailwind };
 use bevy_tweening		:: { lens :: *, * };
 

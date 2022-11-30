@@ -155,7 +155,14 @@ impl Plugin for BevyHelixPlugin {
 			)
 			.add_system_set(
 				ConditionSet::new()
-				.run_in_state(AppMode::Editor)
+				.run_in_state(AppMode::Reader)
+				.with_system(systems::render)
+				.with_system(systems::tokio_events)
+				.into()
+			)
+			.add_system_set(
+				ConditionSet::new()
+				.run_in_state(AppMode::Fly)
 				.with_system(systems::render)
 				.with_system(systems::tokio_events)
 				.into()

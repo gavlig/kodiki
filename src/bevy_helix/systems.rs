@@ -2,7 +2,7 @@ use bevy :: prelude :: *;
 use bevy :: input :: keyboard :: *;
 
 use bevy_debug_text_overlay :: screen_print;
-use bevy_fly_camera :: FlyCamera;
+use bevy_reader_camera :: ReaderCamera;
 
 use super :: SurfaceBevy;
 use super :: SurfacesMapBevy;
