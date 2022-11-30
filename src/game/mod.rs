@@ -8,8 +8,6 @@ mod systems;
 use systems				:: *;
 mod utils;
 
-use crate				:: text;
-
 use crate				:: bevy_ab_glyph :: { * };
 
 #[derive(Component, Default, Clone)]
@@ -91,8 +89,8 @@ impl Plugin for AppPlugin {
 	fn build(&self, app: &mut App) {
 		let clear_color = ClearColor(Color::hex("282c34").unwrap());
 
-		let w = 1280;
-    	let h = 720;
+		let w = 2560;
+    	let h = 1440;
 
 		app
 			.add_loopless_state(AppMode::AssetLoading)

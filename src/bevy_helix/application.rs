@@ -17,7 +17,6 @@ use serde_json      :: { json };
 use helix_term		:: { commands :: apply_workspace_edit };
 
 use std             :: {
-	io              :: { stdin, stdout, Write },
 	sync            :: { Arc },
 	pin				:: { Pin }
 };
@@ -29,7 +28,7 @@ use anyhow          :: { Context, Error };
 
 #[cfg(not(windows))]
 use {
-	signal_hook :: { consts::signal, low_level },
+	signal_hook :: { consts::signal },
 	signal_hook_tokio :: { Signals },
 };
 #[cfg(windows)]

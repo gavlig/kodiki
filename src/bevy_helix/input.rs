@@ -4,7 +4,7 @@ use bevy :: input :: keyboard :: *;
 
 use super :: application :: Application;
 
-use helix_view  :: keyboard 	:: KeyCode as KeyCodeHelix;
+use helix_view :: keyboard :: KeyCode as KeyCodeHelix;
 
 use tokio::runtime::Runtime as TokioRuntime;
 

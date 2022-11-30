@@ -211,16 +211,6 @@ pub fn render(
 			&mut material_assets,
 			&mut commands
 		);
-		
-		// println!("rendering surface {} len {}", layer_name, surface_bevy.content.len());
-		// println!("layer content:");
-		// for y in 0..surface_helix.area.height {
-		// 	for x in 0..surface_helix.area.width {
-		// 		let content_index = (y * surface_helix.area.width + x) as usize;
-		// 		print!("{}", surface_helix.content[content_index].symbol);
-		// 	}
-		// 	print!("\n");
-		// }
 	}
 
 	// render and animate cursor
