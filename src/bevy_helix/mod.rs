@@ -2,7 +2,7 @@ use bevy :: prelude :: *;
 use bevy :: utils :: HashMap;
 use iyes_loopless :: { prelude :: * };
 
-use helix_term :: compositor :: SurfacesMap as SurfacesMapHelix;
+use helix_term :: compositor :: SurfaceContainer as SurfaceContainerHelix;
 
 use crate :: game :: AppMode;
 
@@ -18,10 +18,7 @@ mod input;
 mod compositor;
 mod systems;
 
-#[derive(Component)]
-pub struct BevyHelix;
-
-#[derive(Default)]
+#[derive(Default, Resource)]
 pub struct CursorBevy {
 	pub entity  : Option<Entity>,
 	pub color   : Color,
@@ -86,11 +83,19 @@ impl SurfaceBevy {
 	}
 }
 
-pub type SurfacesMapBevy = HashMap<String, SurfaceBevy>;
+pub type SurfacesMapBevyInner = HashMap<String, SurfaceBevy>;
+
+#[derive(Resource, Deref, DerefMut, Default)]
+pub struct SurfacesMapBevy(SurfacesMapBevyInner);
+
+pub type SurfacesMapHelixInner = HashMap<String, SurfaceContainerHelix>;
+
+#[derive(Resource, Deref, DerefMut, Default)]
+pub struct SurfacesMapHelix(SurfacesMapHelixInner);
 
 pub type MaterialsMap = HashMap<String, Handle<StandardMaterial>>;
 
-#[derive(Default)]
+#[derive(Default, Resource)]
 pub struct HelixColorsCache {
 	pub materials: MaterialsMap,
 }
@@ -121,6 +126,9 @@ pub fn get_helix_color_material_handle(
 	}
 }
 
+#[derive(Resource, Deref, DerefMut)]
+pub struct TokioRuntime(pub tokio::runtime::Runtime);
+
 pub struct BevyHelixPlugin;
 
 impl Plugin for BevyHelixPlugin {
@@ -130,13 +138,13 @@ impl Plugin for BevyHelixPlugin {
 			.insert_resource(HelixColorsCache::default())
 			.insert_resource(SurfacesMapHelix::default())
 
-			.insert_resource(tokio::runtime::Builder::new_multi_thread()
+			.insert_resource(TokioRuntime{ 0: tokio::runtime::Builder::new_multi_thread()
 				.enable_all()
 				.build()
 				.unwrap()
-			)
+			})
 
-			.add_startup_system(systems::startup.exclusive_system())
+			.add_startup_system(systems::startup)
 			.add_system_set(
 				ConditionSet::new()
 				.run_in_state(AppMode::Main)

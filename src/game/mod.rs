@@ -38,7 +38,7 @@ impl Default for RespawnableEntity {
 	}
 }
 
-#[derive(Default)]
+#[derive(Default, Resource)]
 pub struct DespawnResource {
 	pub entities: Vec<Entity>,
 }
@@ -51,12 +51,17 @@ pub enum AppMode {
 	Editor,
 }
 
-#[derive(Default)]
+#[derive(Default, Resource)]
+pub struct AppState {
+	pub initialized : bool
+}
+
+#[derive(Default, Resource)]
 pub struct MouseCursorState {
 	pub visible : bool
 }
 
-#[derive(Default)]
+#[derive(Default, Resource)]
 pub struct FontAssetHandles {
 	pub droid_sans_mono	: Handle<ABGlyphFont>,
 	pub open_dyslexic	: Handle<ABGlyphFont>,
@@ -73,7 +78,7 @@ pub struct FontAssetHandles {
 	pub loaded_cnt		: u32,
 }
 
-#[derive(Default)]
+#[derive(Default, Resource)]
 pub struct CameraIDs {
 	pub camera2d: Option<Entity>,
 	pub camera3d: Option<Entity>,
@@ -89,12 +94,9 @@ impl Plugin for AppPlugin {
     	let h = 720;
 
 		app
-			.add_plugin		(PickingPlugin)
-			.add_plugin		(InteractablePickingPlugin)
-			.add_plugins	(HighlightablePickingPlugins)
-
 			.add_loopless_state(AppMode::AssetLoading)
 
+			.insert_resource(AppState::default())
 			.insert_resource(MouseCursorState::default())
 			.insert_resource(FontAssetHandles::default())
 
@@ -121,6 +123,7 @@ impl Plugin for AppPlugin {
 				.with_system(setup_world_system)
 				.with_system(setup_lighting_system)
 				.with_system(setup_camera_system)
+				.with_system(setup_cursor_visibility_system)
 			)
 
 			.add_system_set(

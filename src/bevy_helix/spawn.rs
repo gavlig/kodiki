@@ -1,7 +1,7 @@
 use bevy				:: prelude :: { * };
-use bevy_mod_picking	:: { * };
 use bevy_fly_camera		:: { * };
 use bevy_contrib_colors	:: { Tailwind };
+use bevy_tweening		:: { lens :: *, * };
 
 // use bevy_infinite_grid	:: { InfiniteGridBundle };
 
@@ -44,7 +44,7 @@ pub fn quad(
 
 	let quad_pos		= quad_pos_in + Vec3::new(quad_width / 2.0, -quad_height / 2.0, 0.0);
 
-	commands.spawn_bundle(PbrBundle {
+	commands.spawn(PbrBundle {
 		mesh			: quad_mesh_handle.clone_weak(),
 		transform		: Transform {
 			translation	: quad_pos,
@@ -166,15 +166,25 @@ pub fn surface(
 	//
 	//
 
+	let tween = Tween::new(
+		EaseFunction::ExponentialOut,
+		std::time::Duration::from_millis(450),
+		TransformPositionLens {
+			start: Vec3::new(0.0, 0.0, -0.2),
+			end: world_position,
+		},
+	);
+
 	let root_entity =
-	commands.spawn_bundle(TransformBundle {
-		local		: Transform::from_translation(world_position),
+	commands.spawn(TransformBundle {
+		local		: Transform::from_translation(Vec3::new(0.0, 0.0, -0.2)),
 		..default()
 	})
-	.insert_bundle(VisibilityBundle {
+	.insert(VisibilityBundle {
 		visibility	: Visibility { is_visible: true },
 		..default()
 	})
+	.insert(Animator::new(tween))
 	.id();
 
 	let text_descriptor = TextDescriptor {
@@ -186,7 +196,6 @@ pub fn surface(
 
 	commands.entity(root_entity)
 		.insert(text_descriptor)
-		.insert(BevyHelix)
 		;
 	
 	if children.len() > 0 {

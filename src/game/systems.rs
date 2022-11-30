@@ -1,6 +1,7 @@
 use bevy			:: { prelude :: * };
 use bevy			:: { app::AppExit };
 use bevy			:: core_pipeline :: clear_color :: ClearColorConfig;
+use bevy			:: window :: CursorGrabMode;
 use bevy_fly_camera	:: { * };
 use bevy_mod_picking:: { * };
 use iyes_loopless	:: { prelude :: * };
@@ -15,13 +16,12 @@ use super			:: spawn :: WorldAxisDesc;
 use super           :: { * };
 use crate			:: { bevy_helix };
 use crate			:: { bevy_helix :: SurfacesMapBevy };
+use crate			:: { bevy_helix :: SurfacesMapHelix };
 use crate			:: { bevy_helix :: SurfaceBevy };
 use crate			:: { bevy_helix :: CursorBevy };
 use crate			:: { bevy_helix :: HelixColorsCache };
 use crate			:: { bevy_helix :: editor :: EditorViewBevy };
 use crate           :: { bevy_ab_glyph :: TextMeshesCache };
-
-use helix_term	:: compositor :: SurfacesMap as SurfacesMapHelix;
 
 pub fn setup_world_system(
 		surfaces_helix	: ResMut<SurfacesMapHelix>,
@@ -44,9 +44,9 @@ pub fn setup_world_system(
 ) {
 	// spawn::infinite_grid(&mut commands);
 
-	spawn::world_axis	(Transform::identity(), WorldAxisDesc::default(), &mut mesh_assets, &mut material_assets, &mut commands);
+	spawn::world_axis	(Transform::default(), WorldAxisDesc::default(), &mut mesh_assets, &mut material_assets, &mut commands);
 
-	spawn::fixed_sphere	(Transform::identity(), 0.02, Color::SEA_GREEN, &mut mesh_assets, &mut material_assets, &mut commands);
+	spawn::fixed_sphere	(Transform::default(), 0.02, Color::SEA_GREEN, &mut mesh_assets, &mut material_assets, &mut commands);
 
 	// without font we can't go further
 	let font_handle 	= font_handles.main.clone_weak();
@@ -54,7 +54,7 @@ pub fn setup_world_system(
 	
 	let mut pos			= Vec3::new(0.0, 0.0, 0.0);
 
-	for (layer_name, surface_helix) in surfaces_helix.iter() {
+	for (layer_name, container_helix) in surfaces_helix.iter() {
 		if surfaces_bevy.contains_key(layer_name) {
 			println!("setup_world_system: not creating surface {} because it already exists!", layer_name);
 			continue;
@@ -67,7 +67,7 @@ pub fn setup_world_system(
 			layer_name,
 			pos,
 
-			&surface_helix,
+			&container_helix.surface,
 			&mut surface_bevy,
 
 			&font,
@@ -109,7 +109,7 @@ pub fn setup_lighting_system(
 ) {
 	const HALF_SIZE: f32		= 100.0;
 
-	commands.spawn_bundle(DirectionalLightBundle {
+	commands.spawn(DirectionalLightBundle {
 		directional_light: DirectionalLight {
 			illuminance: 8000.0,
 			// Configure the projection to better fit the scene
@@ -153,7 +153,7 @@ pub fn setup_cursor_visibility_system(
 ) {
 	let window = windows.get_primary_mut().unwrap();
 
-	window.set_cursor_lock_mode	(true);
+	window.set_cursor_grab_mode	(CursorGrabMode::Locked);
 	window.set_cursor_visibility(false);
 
 	picking.enable_picking 		= false;
@@ -182,10 +182,10 @@ pub fn cursor_visibility_system(
 
 	let mut set_cursor_visibility = |v| {
 		window.set_cursor_visibility(v);
-		window.set_cursor_lock_mode(!v);
+		window.set_cursor_grab_mode	(if v { CursorGrabMode::None } else { CursorGrabMode::Locked });
 	};
 
-	let mut set_visibility = |v| {
+	let mut set_editor_mode = |v| {
 		set_cursor_visibility(v);
 
 		picking.enable_picking = v;
@@ -199,7 +199,7 @@ pub fn cursor_visibility_system(
 
 	if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Escape) {
 		let toggle 	= !mouse_state.visible;
-		set_visibility(toggle);
+		set_editor_mode(toggle);
 	}
 
 	if btn.just_pressed(MouseButton::Left) && app_mode.0 == AppMode::Main{
@@ -395,7 +395,7 @@ pub fn setup_shadertoy(
 }
 
 pub fn despawn_system(mut commands: Commands, time: Res<Time>, mut despawn: ResMut<DespawnResource>) {
-	if time.seconds_since_startup() > 0.1 {
+	if time.elapsed_seconds() > 0.1 {
 		for entity in &despawn.entities {
 //			println!("Despawning entity {:?}", entity);
 			commands.entity(*entity).despawn_recursive();

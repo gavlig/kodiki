@@ -22,18 +22,19 @@ serde 				= { version = "1", features = ["derive"] }
 serde_json			= { version = "1.0.83" }
 hex                 = { version = "0.4.3"}
 
-bevy 				= { version = "0.8", features = ["bevy_render"] }
+bevy 				= { version = "0.9", features = ["bevy_render"] }
 
 bevy_fly_camera		= { git = "https://github.com/gavlig/bevy_fly_camera.git", branch = "kodiki" }
-bevy_mod_picking	= { git = "https://github.com/gavlig/bevy_mod_picking.git", branch = "kodiki" }
-iyes_loopless		= { version = "0.7.0" }
+bevy_mod_picking	= { version = "0.10" } # { git = "https://github.com/gavlig/bevy_mod_picking.git", branch = "kodiki" }
+iyes_loopless		= { version = "0.9" }
 # bevy_infinite_grid	= { path = "../bevy_infinite_grid" } # { git = "https://github.com/gavlig/bevy_infinite_grid"}
 bevy_shadertoy_wgsl	= { git = "https://github.com/gavlig/bevy_shadertoy_wgsl.git" } # { path = "../bevy_shadertoy_wgsl" }
 bevy_contrib_colors = { git = "https://github.com/gavlig/bevy_contrib_colors.git" }
+bevy_tweening		= { version = "0.6" }
 
-bevy-debug-text-overlay = { version = "3.0" }
-bevy_prototype_debug_lines = { version = "0.8", features = ["3d"] }
-bevy_polyline       = "0.3"
+bevy-debug-text-overlay = { version = "4.0" }
+bevy_prototype_debug_lines = { version = "0.9", features = ["3d"] }
+bevy_polyline       = "0.4"
 
 #
 # TEXT RENDERING START

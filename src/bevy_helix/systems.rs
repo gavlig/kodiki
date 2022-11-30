@@ -1,11 +1,12 @@
 use bevy :: prelude :: *;
-use bevy :: input :: *;
 use bevy :: input :: keyboard :: *;
 
 use bevy_debug_text_overlay :: screen_print;
+use bevy_fly_camera :: FlyCamera;
 
 use super :: SurfaceBevy;
 use super :: SurfacesMapBevy;
+use super :: SurfacesMapHelix;
 use super :: CursorBevy;
 use super :: HelixColorsCache;
 use super :: application :: Application;
@@ -14,6 +15,7 @@ use super :: render;
 use super :: animate;
 use super :: editor :: EditorViewBevy;
 use super :: input;
+use super :: TokioRuntime;
 
 use crate :: game :: DespawnResource;
 use crate :: game :: FontAssetHandles;
@@ -23,16 +25,14 @@ use crate :: bevy_ab_glyph :: { ABGlyphFont, UsedFonts, TextMeshesCache };
 
 use helix_term  :: config		:: Config;
 use helix_term  :: args			:: Args;
-use helix_term	:: compositor	:: SurfacesMap as SurfacesMapHelix;
+use helix_term	:: compositor	:: SurfaceContainer as SurfaceContainerHelix;
+use helix_term	:: compositor	:: SurfacePlacement as SurfacePlacementHelix;
 use helix_tui   :: buffer		:: Buffer as SurfaceHelix;
-use helix_view  :: graphics 	:: { * };
-use helix_view  :: keyboard 	:: KeyCode as KeyCodeHelix;
+use helix_view  :: graphics 	:: { Rect };
 
 use anyhow      :: { Context, Error, Result };
 
 use std :: path :: PathBuf;
-
-use tokio::runtime::Runtime as TokioRuntime;
 
 fn setup_logging(logpath: PathBuf, verbosity: u64) -> Result<()> {
 	let mut base_config = fern::Dispatch::new();
@@ -76,7 +76,13 @@ pub fn startup(
 	};
 
 	let surface_editor = SurfaceHelix::empty(rect);
-	surfaces_helix.insert(String::from(EditorViewBevy::ID), surface_editor);
+	surfaces_helix.insert(
+		String::from(EditorViewBevy::ID),
+		SurfaceContainerHelix {
+			surface: surface_editor,
+			placement: SurfacePlacementHelix::Center,
+		}
+	);
 
 	world.insert_resource(surfaces_helix);
 	world.insert_resource(surfaces_bevy);
@@ -126,7 +132,7 @@ pub fn render(
 		fonts			: Res<Assets<ABGlyphFont>>,
 		font_handles    : Res<FontAssetHandles>,
 	mut	cursor          : ResMut<CursorBevy>,
-	mut	q_cursor_transform : Query<&mut Transform>,
+	mut	q_transform		: Query<&mut Transform>,
 		app             : Option<NonSendMut<Application>>,
 		time			: Res<Time>,
 
@@ -158,8 +164,8 @@ pub fn render(
 	let editor_area = app.area;
 
 	// erase previous frame
-	for (_name, surface) in surfaces_helix.iter_mut() {
-		surface.reset();
+	for (_name, surface_container) in surfaces_helix.iter_mut() {
+		surface_container.surface.reset();
 	}
 
 	let old_style = false;
@@ -167,7 +173,7 @@ pub fn render(
 	// first let helix render into surface_helix
 	if old_style {
 		let surface_helix_editor = surfaces_helix.get_mut(&String::from(EditorViewBevy::ID)).unwrap();
-		app.render(surface_helix_editor);
+		app.render(&mut surface_helix_editor.surface);
 	} else {
 		app.render_ext(editor_area, &mut surfaces_helix);
 	}
@@ -187,13 +193,13 @@ pub fn render(
 		&mut mesh_assets,
 		&mut commands
 	);
-	
-	// render surfaces
-	for (layer_name, surface_helix) in surfaces_helix.iter_mut() {
+
+	// render and animate surfaces
+	for (layer_name, container_helix) in surfaces_helix.iter_mut() {
 		let surface_bevy = surfaces_bevy.get_mut(layer_name).unwrap();
 
 		render::surface(
-			surface_helix,
+			&mut container_helix.surface,
 			surface_bevy,
 
 			&used_fonts,
@@ -217,13 +223,14 @@ pub fn render(
 		// }
 	}
 
-	if app.editor_focused() { // render cursor
+	// render and animate cursor
+	if app.editor_focused() { 
 		let mut surface_bevy_editor = surfaces_bevy.get_mut(&String::from(EditorViewBevy::ID)).unwrap();
-		let surface_helix_editor = surfaces_helix.get(&String::from(EditorViewBevy::ID)).unwrap();
+		let container_helix_editor = surfaces_helix.get(&String::from(EditorViewBevy::ID)).unwrap();
 
 		animate::cursor(
 			&mut cursor,
-			&mut q_cursor_transform,
+			&mut q_transform,
 			used_fonts.main,
 			&time,
 			&mut app
@@ -232,7 +239,7 @@ pub fn render(
 		render::cursor(
 			&mut cursor,
 			&mut surface_bevy_editor,
-			surface_helix_editor,
+			&container_helix_editor.surface,
 			&app.editor.theme,
 			&mut helix_colors_cache,
 			&mut material_assets,
@@ -247,9 +254,9 @@ fn screen_print_active_layers(
 {
 	let mut surface_names_str = String::default();
 	surface_names_str.push_str(format!("{} helix layers:\n", surfaces_helix.len()).as_str());
-	for (name, surface) in surfaces_helix.iter() {
+	for (name, container) in surfaces_helix.iter() {
 		surface_names_str.push_str(" - ");
-		surface_names_str.push_str(format!("{} len: {} w: {} h: {}", name, surface.content.len(), surface.area.width, surface.area.height).as_str());
+		surface_names_str.push_str(format!("{} len: {} w: {} h: {}", name, container.surface.content.len(), container.surface.area.width, container.surface.area.height).as_str());
 		surface_names_str.push('\n');
 	}
 	screen_print!("\n{}", surface_names_str);
@@ -263,9 +270,9 @@ fn cleanup_unused_surfaces(
     let mut to_remove = Vec::<String>::default();
 
 	// surfaces helix
-    for (layer_name, surface_helix) in surfaces_helix.iter_mut() {
+    for (layer_name, container_helix) in surfaces_helix.iter_mut() {
 		// if "dirty" is false it means that during render surface wasn't modified/filled up, meaning it's not longer used
-		if surface_helix.dirty {
+		if container_helix.surface.dirty {
 			continue;
 		}
 				
@@ -305,11 +312,11 @@ fn cleanup_stale_surfaces(
 			continue;
 		}
 
-		let surface_helix = surfaces_helix.get(layer_name).unwrap();
-		if surface_helix.area != surface_bevy.area {
+		let container_helix = surfaces_helix.get(layer_name).unwrap();
+		if container_helix.surface.area != surface_bevy.area {
 			despawn.entities.push(surface_bevy.entity.unwrap());
 			to_remove.push(layer_name.clone());
-			println!("stale bevy surface removed: {} helix.area: {:?} bevy.area: {:?}", layer_name, surface_helix.area, surface_bevy.area);
+			println!("stale bevy surface removed: {} helix.area: {:?} bevy.area: {:?}", layer_name, container_helix.surface.area, surface_bevy.area);
 		}
 	}
     for layer in to_remove {
@@ -328,12 +335,17 @@ fn create_bevy_surfaces(
 	mut commands		: &mut Commands,
 )
 {
-	let pos			= Vec3::new(0.0, 0.0, 0.5);
-
-	for (surface_name, surface_helix) in surfaces_helix.iter() {
-		if surfaces_bevy.contains_key(surface_name) {
+	for (surface_name, container_helix) in surfaces_helix.iter() {
+		if let Some(surface_bevy) = surfaces_bevy.get_mut(surface_name) {
 			continue;
 		}
+
+		let pos =
+		match container_helix.placement {
+			SurfacePlacementHelix::Top => Vec3::new(0.0, -0.0, 0.3),
+			SurfacePlacementHelix::Center => Vec3::new(0.7, -1.2, 0.5),
+			_ => Vec3::new(0.0, -0.0, 0.3),
+		};
 
 		let mut surface_bevy = SurfaceBevy::default();
 
@@ -341,7 +353,7 @@ fn create_bevy_surfaces(
 			surface_name,
 			pos,
 
-			&surface_helix,
+			&container_helix.surface,
 			&mut surface_bevy,
 
 			&font,

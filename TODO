@@ -1,11 +1,16 @@
 1. Camera is still not usable
-2. (Done!)Symbols of diagnostic and spinner are missing
+2. ✅ Symbols of diagnostic and spinner are missing
 3. Mouse support
-4. (Done!)Some keycodes are missing
+4. ✅ Some keycodes are missing
 5. Cache words and chunks of background quads
-6. Panels/surfaces need to be placed and animated
-7. (Done!)Other fonts (not ubuntu_mono) have wrong background quad size
-7.1. (Done!)that's because i have to make sure i have same font used everywhere 
+6. ✅ Panels/surfaces need to be placed and animated
+6.1. Stale panels don't need to be animated
+7. ✅ Other fonts (not ubuntu_mono) have wrong background quad size
+7.1. ✅ that's because i have to make sure i have same font used everywhere 
 8. Completion
 8.1. commands.rs : 3920 completion wants EditorView and we only have EditorViewBevy
-9. handle exit
+9. Handle exit
+10. Show hints on basic helix actions
+11. Showing docs crashes due to not having EditorView either (see 8.1)
+12. error messages are not shown
+13. ✅ bevy 0.9 because it has a fix for alt+symbol keyboard event not generating

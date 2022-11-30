@@ -390,7 +390,7 @@ fn spawn_sphere(
 	materials: &mut Assets<StandardMaterial>,
 	commands: &mut Commands
 ) {
-	commands.spawn_bundle(
+	commands.spawn(
 		PbrBundle {
 			mesh			: meshes.add(Mesh::from(render_shape::UVSphere{ radius: 0.01, ..default() })), // 0.225
 			material		: materials.add(
@@ -403,7 +403,7 @@ fn spawn_sphere(
 			..Default::default()
 		})
 		.insert				(ABGlyphCurveDebug { i, p0: *p, ..default() })
-		.insert_bundle		(PickableBundle::default());
+		.insert				(PickableBundle::default());
 }
 
 fn spawn_sphere2(
@@ -414,7 +414,7 @@ fn spawn_sphere2(
 	materials: &mut Assets<StandardMaterial>,
 	commands: &mut Commands
 ) {
-	commands.spawn_bundle(
+	commands.spawn(
 		PbrBundle {
 			mesh			: meshes.add(Mesh::from(render_shape::UVSphere{ radius: 0.005, ..default() })),
 			material		: materials.add(
@@ -439,7 +439,7 @@ fn spawn_line(
 	polyline_materials: &mut Assets<PolylineMaterial>,
 	commands: &mut Commands
 ) {
-	commands.spawn_bundle(PolylineBundle {
+	commands.spawn(PolylineBundle {
 		polyline: polylines.add(Polyline {
 			vertices: vec![p0, p1],
 			..default()

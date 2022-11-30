@@ -128,7 +128,7 @@ unsafe impl Send for ABGlyphFont {}
 
 pub type TextMeshesMap = HashMap<String, Handle<Mesh>>;
 
-#[derive(Default)]
+#[derive(Resource, Default)]
 pub struct TextMeshesCache {
 	pub meshes: TextMeshesMap,
 }

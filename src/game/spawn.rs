@@ -14,9 +14,9 @@ pub fn camera(
 	commands			: &mut Commands
 ) {
 	// for 2d background
-	let camera2d = commands.spawn_bundle(Camera2dBundle::default()).id();
+	let camera2d = commands.spawn(Camera2dBundle::default()).id();
 
-	let camera3d = commands.spawn_bundle(Camera3dBundle {
+	let camera3d = commands.spawn(Camera3dBundle {
 			transform: Transform {
 				translation: Vec3::new(1.5, 0., 7.),
 				..default()
@@ -43,7 +43,7 @@ pub fn camera(
 				..default()
 			}
 		)
-		.insert_bundle	(PickingCameraBundle::default())
+		.insert			(PickingCameraBundle::default())
 		.id				();
 
 	camera_ids.camera2d = Some(camera2d);
@@ -59,8 +59,7 @@ pub fn ground(
 	let ground_height 	= 0.1;
 
 	let ground			= commands
-		.spawn			()
-		.insert_bundle	(PbrBundle {
+		.spawn			(PbrBundle {
 			mesh		: meshes.add(Mesh::from(render_shape::Box::new(ground_size * 2.0, ground_height * 2.0, ground_size * 2.0))),
 			material	: materials.add(Color::rgb(0.8, 0.8, 0.8).into()),
 			transform	: Transform::from_xyz(0.0, -ground_height, 0.0),
@@ -109,7 +108,7 @@ pub fn world_axis(
 
 	// X
 	transform.translation = transform_in.translation + offset_x;
-	commands.spawn_bundle(PbrBundle {
+	commands.spawn(PbrBundle {
 		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(max_dim, min_dim, min_dim))),
 		material	: materials.add			(Color::rgb(max_color, min_color, min_color).into()),
 		transform	: transform,
@@ -117,7 +116,7 @@ pub fn world_axis(
 	});
 	// Y
 	transform.translation = transform_in.translation + offset_y;
-	commands.spawn_bundle(PbrBundle {
+	commands.spawn(PbrBundle {
 		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(min_dim, max_dim, min_dim))),
 		material	: materials.add			(Color::rgb(min_color, max_color, min_color).into()),
 		transform	: transform,
@@ -125,7 +124,7 @@ pub fn world_axis(
 	});
 	// Z
 	transform.translation = transform_in.translation + offset_z;
-	commands.spawn_bundle(PbrBundle {
+	commands.spawn(PbrBundle {
 		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(min_dim, min_dim, max_dim))),
 		material	: materials.add			(Color::rgb(min_color, min_color, max_color).into()),
 		transform	: transform,
@@ -134,7 +133,7 @@ pub fn world_axis(
 }
 
 pub fn infinite_grid(
-	commands		: &mut Commands,
+	commands			: &mut Commands,
 ) {
 	// commands.spawn_bundle(InfiniteGridBundle::default());
 }
@@ -147,7 +146,7 @@ pub fn fixed_cube(
 	materials			: &mut ResMut<Assets<StandardMaterial>>,
 	commands			: &mut Commands
 ) {
-	commands.spawn_bundle(PbrBundle {
+	commands.spawn		(PbrBundle {
 		mesh			: meshes.add	(Mesh::from(render_shape::Box::new(hsize.x * 2.0, hsize.y * 2.0, hsize.z * 2.0))),
 		material		: materials.add	(color.into()),
 		..default()
@@ -164,7 +163,7 @@ pub fn fixed_sphere(
 	materials			: &mut ResMut<Assets<StandardMaterial>>,
 	commands			: &mut Commands
 ) {
-	commands.spawn_bundle(PbrBundle {
+	commands.spawn		(PbrBundle {
 		mesh			: meshes.add	(Mesh::from(render_shape::UVSphere { radius: radius, ..default() } )),
 		material		: materials.add	(StandardMaterial { base_color: color, unlit: true, ..default() }),
 		..default()

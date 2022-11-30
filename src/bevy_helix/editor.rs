@@ -1,4 +1,4 @@
-use helix_term::compositor::{Component, Context, Event, EventResult, SurfacesMap, surface_by_id_mut};
+use helix_term::compositor::{Component, Context, Event, EventResult, SurfacesMap, surface_by_id_mut, SurfacePlacement};
 use helix_term::keymap::Keymaps;
 use helix_term::ui::{EditorView, ProgressSpinners};
 
@@ -59,7 +59,7 @@ impl EditorViewBevy {
 		is_focused: bool,
 	) {
 		let editor_component_name = String::from(self.id().unwrap());
-		let surface_editor = surface_by_id_mut(&editor_component_name, viewport, surfaces);
+		let surface_editor = &mut surface_by_id_mut(&editor_component_name, viewport, SurfacePlacement::Center, surfaces).surface;
 
 		// clear with background color
 		surface_editor.set_style(viewport, editor.theme.get("ui.background"));
@@ -152,7 +152,7 @@ impl EditorViewBevy {
 			statusline::RenderContext::new(editor, doc, view, is_focused, &self.editor_view_helix.spinners);
 
 		let statusline_name = String::from(EditorViewBevy::ID_STATUSLINE);
-		let statusline_surface = surface_by_id_mut(&statusline_name, statusline_area, surfaces);
+		let statusline_surface = &mut surface_by_id_mut(&statusline_name, statusline_area, SurfacePlacement::Top, surfaces).surface;
 
 		statusline::render(&mut context, statusline_area, statusline_surface);
 	}
@@ -230,7 +230,7 @@ impl Component for EditorViewBevy {
 				let auto_info_component_name = String::from("auto-info-component");
 
 				let auto_info_area = info.area();
-				let auto_info_surface = surface_by_id_mut(&auto_info_component_name, auto_info_area, surfaces); 
+				let auto_info_surface = &mut surface_by_id_mut(&auto_info_component_name, auto_info_area, SurfacePlacement::Center, surfaces).surface; 
 
 				let surface_area = auto_info_surface.area.clone();
 				if surface_area != auto_info_area {

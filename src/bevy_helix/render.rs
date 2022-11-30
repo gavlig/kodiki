@@ -125,7 +125,8 @@ fn update_cell_mesh(
 	surface_children: &mut Vec<Entity>,
 	mesh_assets		: &mut Assets<Mesh>,
 	commands		: &mut Commands
-) {
+)
+{
 	let wrong_symbol = cell_helix.symbol != cell_bevy.symbol;
 	if !wrong_symbol {
 		return;
@@ -158,7 +159,7 @@ fn update_cell_mesh(
 	} else {
 		// spawn new entity with an existing mesh
 		cell_bevy.symbol_entity = Some(
-			commands.spawn_bundle(PbrBundle {
+			commands.spawn(PbrBundle {
 				mesh : mesh_handle,
 				material : cell_bevy.fg_handle.as_ref().unwrap().clone_weak(),
 				transform : Transform {
