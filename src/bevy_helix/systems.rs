@@ -11,6 +11,7 @@ use super :: CursorBevy;
 use super :: HelixColorsCache;
 use super :: application :: Application;
 use super :: spawn;
+use super :: fill;
 use super :: render;
 use super :: animate;
 use super :: editor :: EditorViewBevy;
@@ -230,7 +231,16 @@ pub fn tick(
 	screen_print_active_layers(&surfaces_helix);
 
 	cleanup_unused_surfaces(&mut surfaces_helix, &mut surfaces_bevy, &mut despawn);
-	cleanup_stale_surfaces(&mut surfaces_helix, &mut surfaces_bevy, &mut despawn);
+	
+	// if surface area changed - refill it
+	refill_stale_surfaces(
+		&mut surfaces_helix,
+		&mut surfaces_bevy,
+		used_fonts.main,
+		&mut text_meshes_cache,
+		&mut mesh_assets,
+		&mut commands
+	);
 
 	// create bevy surfaces for every helix surface
 	spawn_bevy_surfaces(
@@ -338,10 +348,15 @@ fn cleanup_unused_surfaces(
 }
 
 // "stale" bevy surface is the one that has a size different from its helix counterpart
-fn cleanup_stale_surfaces(
+fn refill_stale_surfaces(
 	surfaces_helix	: &mut SurfacesMapHelix,
 	surfaces_bevy	: &mut SurfacesMapBevy,
-	despawn			: &mut DespawnResource
+	
+	font				: &ABGlyphFont,
+	mut text_meshes_cache : &mut TextMeshesCache,
+
+	mut mesh_assets		: &mut Assets<Mesh>,
+	mut commands		: &mut Commands,
 ) {
     let mut to_remove = Vec::<String>::default();
 
@@ -352,13 +367,17 @@ fn cleanup_stale_surfaces(
 
 		let container_helix = surfaces_helix.get(layer_name).unwrap();
 		if container_helix.surface.area != surface_bevy.area {
-			despawn.entities.push(surface_bevy.entity.unwrap());
-			to_remove.push(layer_name.clone());
-			println!("stale bevy surface removed: {} helix.area: {:?} bevy.area: {:?}", layer_name, container_helix.surface.area, surface_bevy.area);
+			fill::surface(
+				layer_name,
+				surface_bevy,
+				&container_helix.surface,
+				font,
+				text_meshes_cache,
+				mesh_assets,
+				commands
+			);
+			println!("stale bevy refilled: {} helix.area: {:?} bevy.area: {:?}", layer_name, container_helix.surface.area, surface_bevy.area);
 		}
-	}
-    for layer in to_remove {
-		surfaces_bevy.remove(&layer);
 	}
 }
 
