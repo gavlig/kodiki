@@ -6,16 +6,17 @@ use helix_term :: compositor :: SurfaceContainer as SurfaceContainerHelix;
 
 use crate :: game :: AppMode;
 
-pub mod spawn;
+mod application;
+use application :: *;
+mod editor;
+mod compositor;
 
-pub mod application;
-pub use application :: *;
-pub mod editor;
-
+mod spawn;
+mod fill;
 mod render;
 mod animate;
 mod input;
-mod compositor;
+
 mod systems;
 
 #[derive(Default, Resource)]
@@ -80,6 +81,10 @@ impl SurfaceBevy {
 			content.push(cell.clone());
 		}
 		SurfaceBevy { content, ..default() }
+	}
+	
+	pub fn new_with_entity(surface_entity: Entity) -> SurfaceBevy {
+		SurfaceBevy { entity: Some(surface_entity), ..default() }
 	}
 }
 
