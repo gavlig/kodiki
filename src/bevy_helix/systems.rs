@@ -356,14 +356,12 @@ fn refill_stale_surfaces(
 	surfaces_helix	: &mut SurfacesMapHelix,
 	surfaces_bevy	: &mut SurfacesMapBevy,
 	
-	font				: &ABGlyphFont,
-	mut text_meshes_cache : &mut TextMeshesCache,
+	font			: &ABGlyphFont,
+	text_meshes_cache : &mut TextMeshesCache,
 
-	mut mesh_assets		: &mut Assets<Mesh>,
-	mut commands		: &mut Commands,
+	mesh_assets		: &mut Assets<Mesh>,
+	commands		: &mut Commands,
 ) {
-    let mut to_remove = Vec::<String>::default();
-
     for (layer_name, surface_bevy) in surfaces_bevy.iter_mut() {
 		if !surfaces_helix.contains_key(layer_name) {
 			continue;
