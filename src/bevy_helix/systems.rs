@@ -94,6 +94,38 @@ pub fn startup_app(
 	world.insert_non_send_resource(app.unwrap());
 }
 
+async fn startup_impl(area: Rect) -> Result<Application, Error> {
+	let args = Args::parse_args().context("could not parse arguments").unwrap();
+
+	// let logpath = args.log_file.as_ref().cloned().unwrap_or(helix_loader::log_file());
+	// setup_logging(logpath, args.verbosity).context("failed to initialize logging").unwrap();
+
+	let config_dir = helix_loader::config_dir();
+	if !config_dir.exists() {
+		std::fs::create_dir_all(&config_dir).ok();
+	}
+
+	helix_loader::initialize_config_file(args.config_file.clone());
+
+	let config = match std::fs::read_to_string(helix_loader::config_file()) {
+		Ok(config) => toml::from_str(&config)
+			.map(helix_term::keymap::merge_keys)
+			.unwrap_or_else(|err| {
+				eprintln!("Bad config: {}", err);
+				eprintln!("Press <ENTER> to continue with default config");
+				use std::io::Read;
+				let _ = std::io::stdin().read(&mut []);
+				Config::default()
+			}),
+		Err(err) if err.kind() == std::io::ErrorKind::NotFound => Config::default(),
+		Err(err) => { eprintln!("Error while loading config from {}: {}", helix_loader::config_file().display(), err); return Err(anyhow::anyhow!("!!!")); }
+	};
+
+	let app = Application::new(args, config, area).context("unable to create new application");
+
+	app
+}
+
 pub fn startup_spawn(
 	mut surfaces_helix	: ResMut<SurfacesMapHelix>,
 	mut surfaces_bevy	: ResMut<SurfacesMapBevy>,
@@ -140,38 +172,6 @@ pub fn startup_spawn(
 	);
 	
 	q_reader_camera.single_mut().target = surface_bevy_editor.entity;
-}
-
-async fn startup_impl(area: Rect) -> Result<Application, Error> {
-	let args = Args::parse_args().context("could not parse arguments").unwrap();
-
-	// let logpath = args.log_file.as_ref().cloned().unwrap_or(helix_loader::log_file());
-	// setup_logging(logpath, args.verbosity).context("failed to initialize logging").unwrap();
-
-	let config_dir = helix_loader::config_dir();
-	if !config_dir.exists() {
-		std::fs::create_dir_all(&config_dir).ok();
-	}
-
-	helix_loader::initialize_config_file(args.config_file.clone());
-
-	let config = match std::fs::read_to_string(helix_loader::config_file()) {
-		Ok(config) => toml::from_str(&config)
-			.map(helix_term::keymap::merge_keys)
-			.unwrap_or_else(|err| {
-				eprintln!("Bad config: {}", err);
-				eprintln!("Press <ENTER> to continue with default config");
-				use std::io::Read;
-				let _ = std::io::stdin().read(&mut []);
-				Config::default()
-			}),
-		Err(err) if err.kind() == std::io::ErrorKind::NotFound => Config::default(),
-		Err(err) => { eprintln!("Error while loading config from {}: {}", helix_loader::config_file().display(), err); return Err(anyhow::anyhow!("!!!")); }
-	};
-
-	let app = Application::new(args, config, area).context("unable to create new application");
-
-	app
 }
 
 pub fn tick(
