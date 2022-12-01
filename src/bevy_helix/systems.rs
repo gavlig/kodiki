@@ -1,10 +1,10 @@
 use bevy :: prelude :: *;
 use bevy :: input :: keyboard :: *;
+use bevy_tweening :: { lens :: *, * };
 
 use bevy_debug_text_overlay :: screen_print;
 use bevy_reader_camera :: ReaderCamera;
 
-use super :: SurfaceBevy;
 use super :: SurfacesMapBevy;
 use super :: SurfacesMapHelix;
 use super :: CursorBevy;
@@ -21,7 +21,6 @@ use super :: TokioRuntime;
 use crate :: game :: DespawnResource;
 use crate :: game :: FontAssetHandles;
 
-
 use crate :: bevy_ab_glyph :: { ABGlyphFont, UsedFonts, TextMeshesCache };
 
 use helix_term  :: config		:: Config;
@@ -34,6 +33,7 @@ use helix_view  :: graphics 	:: { Rect };
 use anyhow      :: { Context, Error, Result };
 
 use std :: path :: PathBuf;
+use std::time::Duration;
 
 fn setup_logging(logpath: PathBuf, verbosity: u64) -> Result<()> {
 	let mut base_config = fern::Dispatch::new();
@@ -369,6 +369,7 @@ fn refill_stale_surfaces(
 
 		let container_helix = surfaces_helix.get(layer_name).unwrap();
 		if container_helix.surface.area != surface_bevy.area {
+			println!("refilling stale bevy surface: {} helix.area: {:?} bevy.area: {:?}", layer_name, container_helix.surface.area, surface_bevy.area);
 			fill::surface(
 				layer_name,
 				surface_bevy,
@@ -378,7 +379,6 @@ fn refill_stale_surfaces(
 				mesh_assets,
 				commands
 			);
-			println!("stale bevy refilled: {} helix.area: {:?} bevy.area: {:?}", layer_name, container_helix.surface.area, surface_bevy.area);
 		}
 	}
 }
@@ -399,16 +399,10 @@ fn spawn_bevy_surfaces(
 			continue;
 		}
 
-		let pos =
-		match container_helix.placement {
-			SurfacePlacementHelix::Top => Vec3::new(0.0, -0.0, 0.3),
-			SurfacePlacementHelix::Center => Vec3::new(0.7, -1.2, 0.5),
-			_ => Vec3::new(0.0, -0.0, 0.3),
-		};
-
-		spawn::surface(
+		let start_pos = Vec3::new(0.0, 0.0, -0.5);
+		let surface_entity = spawn::surface(
 			surface_name,
-			Some(pos),
+			Some(start_pos),
 			surfaces_bevy,
 			&container_helix.surface,
 			&font,
@@ -416,6 +410,25 @@ fn spawn_bevy_surfaces(
 			&mut text_meshes_cache,
 			&mut mesh_assets,
 			&mut commands
+		);
+		
+		let target_pos = match container_helix.placement {
+			SurfacePlacementHelix::Top => Vec3::new(0.0, -0.0, 0.3),
+			SurfacePlacementHelix::Center => Vec3::new(0.7, -1.2, 0.5),
+			_ => Vec3::new(0.0, 0.0, 0.3),
+		};
+		
+		let tween_point = animate::TweenPoint {
+			pos: target_pos,
+			ease_function: EaseFunction::ExponentialOut,
+			delay: Duration::from_millis(450),
+		};
+		
+		animate::surface(
+			start_pos,
+			Vec::from([tween_point]),
+			surface_entity,
+			commands
 		);
 
 		println!("new bevy surface created: {}", surface_name);

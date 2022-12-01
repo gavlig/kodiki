@@ -1,10 +1,13 @@
 use bevy				:: prelude :: { * };
+use bevy_tweening		:: { lens :: *, * };
 
 use bevy_prototype_debug_lines :: { * };
 
 use crate				:: bevy_ab_glyph::{ ABGlyphFont };
 
 use super				:: { * };
+
+use std :: time :: Duration;
 
 pub fn cursor(
 	cursor				: &mut CursorBevy,
@@ -59,4 +62,52 @@ pub fn cursor(
 		cursor.easing_accum = (cursor.easing_accum + delta_accum).min(1.0);
 		cursor_transform.translation = cursor_transform.translation.lerp(target_pos, cursor.easing_accum);
 	}
+}
+
+pub struct TweenPoint {
+	pub pos			: Vec3,
+	pub delay		: Duration,
+	pub ease_function : EaseFunction,
+}
+
+pub fn surface(
+	start_position	: Vec3,
+	tween_path		: Vec<TweenPoint>,
+	surface_entity	: Entity,
+	commands		: &mut Commands
+)
+{
+	let path_len	= tween_path.len();
+	assert!			(path_len > 0);
+	
+	let tween_point_first = tween_path.first().unwrap();
+	let tween_start = Tween::new(
+		tween_point_first.ease_function,
+		tween_point_first.delay,
+		TransformPositionLens {
+			start	: start_position,
+			end		: tween_point_first.pos,
+		},
+	);
+	
+	let mut seq		= Sequence::from_single(tween_start);
+	for i in 1 .. path_len {
+		let tween_point_prev	= &tween_path[i - 1];
+		let tween_point			= &tween_path[i];
+		
+		let tween	= Tween::new(
+			tween_point.ease_function,
+			tween_point.delay,
+			TransformPositionLens {
+				start: tween_point_prev.pos,
+				end	: tween_point.pos,
+			},
+		);
+		
+		seq			= seq.then(tween);
+	}
+
+	commands.entity(surface_entity)
+		.insert(Transform::from_translation(start_position))
+		.insert(Animator::new(seq));
 }
