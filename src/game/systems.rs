@@ -1,42 +1,23 @@
-use bevy			:: { prelude :: * };
-use bevy			:: { app::AppExit };
-use bevy			:: core_pipeline :: clear_color :: ClearColorConfig;
-use bevy			:: window :: CursorGrabMode;
-use bevy_fly_camera	:: { * };
-use bevy_mod_picking:: { * };
-use iyes_loopless	:: { prelude :: * };
-use bevy_shadertoy_wgsl :: { * };
+use bevy				:: { prelude :: * };
+use bevy				:: { app::AppExit };
+use bevy				:: core_pipeline :: clear_color :: ClearColorConfig;
+use bevy				:: window :: CursorGrabMode;
+use bevy_reader_camera	:: { * };
+use bevy_mod_picking	:: { * };
+use iyes_loopless		:: { prelude :: * };
+use bevy_shadertoy_wgsl	:: { * };
 
 use bevy_debug_text_overlay :: { screen_print };
 use bevy_polyline	:: prelude :: { * };
 
-use crate			:: bevy_ab_glyph :: ABGlyphFont;
+use crate :: bevy_ab_glyph :: ABGlyphFont;
+use crate :: bevy_ab_glyph :: mesh_generator :: generate_glyph_mesh_dbg;
 
-use super			:: spawn :: WorldAxisDesc;
-use super           :: { * };
-use crate			:: { bevy_helix };
-use crate			:: { bevy_helix :: SurfacesMapBevy };
-use crate			:: { bevy_helix :: SurfacesMapHelix };
-use crate			:: { bevy_helix :: SurfaceBevy };
-use crate			:: { bevy_helix :: CursorBevy };
-use crate			:: { bevy_helix :: HelixColorsCache };
-use crate			:: { bevy_helix :: editor :: EditorViewBevy };
-use crate           :: { bevy_ab_glyph :: TextMeshesCache };
+use super :: spawn :: WorldAxisDesc;
+use super :: { * };
 
 pub fn setup_world_system(
-		surfaces_helix	: ResMut<SurfacesMapHelix>,
-	mut surfaces_bevy	: ResMut<SurfacesMapBevy>,
-	mut	cursor          : ResMut<CursorBevy>,
-
-		font_handles	: Res<FontAssetHandles>,
-	mut fonts			: ResMut<Assets<ABGlyphFont>>,
-
 	mut camera_ids		: ResMut<CameraIDs>,
-
-	(mut text_meshes_cache, mut helix_colors_cache) 
-	:
-	(ResMut<TextMeshesCache>, ResMut<HelixColorsCache>),
-
 	mut	mesh_assets		: ResMut<Assets<Mesh>>,
 	mut	material_assets : ResMut<Assets<StandardMaterial>>,
 
@@ -48,55 +29,8 @@ pub fn setup_world_system(
 
 	spawn::fixed_sphere	(Transform::default(), 0.02, Color::SEA_GREEN, &mut mesh_assets, &mut material_assets, &mut commands);
 
-	// without font we can't go further
-	let font_handle 	= font_handles.main.clone_weak();
-	let font			= fonts.get(&font_handle).unwrap();
-	
-	let mut pos			= Vec3::new(0.0, 0.0, 0.0);
-
-	for (layer_name, container_helix) in surfaces_helix.iter() {
-		if surfaces_bevy.contains_key(layer_name) {
-			println!("setup_world_system: not creating surface {} because it already exists!", layer_name);
-			continue;
-		}
-
-		let mut surface_bevy = SurfaceBevy::default();
-
-		let layer_entity =
-		bevy_helix::spawn::surface(
-			layer_name,
-			pos,
-
-			&container_helix.surface,
-			&mut surface_bevy,
-
-			&font,
-
-			&mut text_meshes_cache,
-
-			mesh_assets.as_mut(),
-			&mut commands
-		);
-
-		surface_bevy.entity = Some(layer_entity);
-		surfaces_bevy.insert(layer_name.clone(), surface_bevy);
-	}
-
-	let surface_bevy_editor = surfaces_bevy.get_mut(&String::from(EditorViewBevy::ID)).unwrap();
-
-	bevy_helix::spawn::cursor(
-		&mut cursor,
-		surface_bevy_editor,
-		font,
-		&mut text_meshes_cache,
-		&mut helix_colors_cache,
-		&mut material_assets,
-		&mut mesh_assets,
-		&mut commands
-	);
-
 	spawn::camera(
-		surface_bevy_editor.entity,
+		None,
 		&mut camera_ids,
 		&mut commands
 	);

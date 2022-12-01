@@ -3,6 +3,8 @@
 3. Mouse support
 4. ✅ Some keycodes are missing
 5. Cache words and chunks of background quads
+5.1. Words
+5.2. Quads
 6. ✅ Panels/surfaces need to be placed and animated
 6.1. Stale panels don't need to be animated
 7. ✅ Other fonts (not ubuntu_mono) have wrong background quad size
@@ -14,3 +16,4 @@
 11. Showing docs crashes due to not having EditorView either (see 8.1)
 12. error messages are not shown
 13. ✅ bevy 0.9 because it has a fix for alt+symbol keyboard event not generating
+14. ✅ refactor: spawn helix related stuff inside bevy_helix

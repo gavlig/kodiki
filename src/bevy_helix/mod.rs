@@ -144,11 +144,17 @@ impl Plugin for BevyHelixPlugin {
 				.unwrap()
 			})
 
-			.add_startup_system(systems::startup)
+			.add_exit_system_set(AppMode::AssetsLoaded,
+				ConditionSet::new()
+				.run_in_state(AppMode::AssetsLoaded)
+				.with_system(systems::startup_app)
+				.with_system(systems::startup_spawn)
+				.into()
+			)
 			.add_system_set(
 				ConditionSet::new()
 				.run_in_state(AppMode::Main)
-				.with_system(systems::render)
+				.with_system(systems::tick)
 				.with_system(systems::tokio_events)
 				.with_system(systems::input_keyboard)
 				.into()
@@ -156,14 +162,14 @@ impl Plugin for BevyHelixPlugin {
 			.add_system_set(
 				ConditionSet::new()
 				.run_in_state(AppMode::Reader)
-				.with_system(systems::render)
+				.with_system(systems::tick)
 				.with_system(systems::tokio_events)
 				.into()
 			)
 			.add_system_set(
 				ConditionSet::new()
 				.run_in_state(AppMode::Fly)
-				.with_system(systems::render)
+				.with_system(systems::tick)
 				.with_system(systems::tokio_events)
 				.into()
 			)

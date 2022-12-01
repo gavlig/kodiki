@@ -1,9 +1,6 @@
 use bevy				:: prelude :: { * };
 use bevy_reader_camera	:: { * };
 use bevy_contrib_colors	:: { Tailwind };
-use bevy_tweening		:: { lens :: *, * };
-
-// use bevy_infinite_grid	:: { InfiniteGridBundle };
 
 use super				:: { * };
 
@@ -82,20 +79,17 @@ fn color_from_helix(helix_color: HelixColor) -> Color {
 }
 
 pub fn surface(
-	name			: &String,
-	world_position	: Vec3,
-
+	surface_name	: &String,
+	world_position	: Option<Vec3>,
+	surfaces_bevy	: &mut SurfacesMapBevy,
 	surface_helix	: &SurfaceHelix,
-	surface_bevy	: &mut SurfaceBevy,
-
 	font			: &ABGlyphFont,
-
 	text_meshes_cache : &mut TextMeshesCache,
-
 	mesh_assets		: &mut Assets<Mesh>,
 	commands		: &mut Commands
 ) -> Entity
 {
+	let mut surface_bevy = SurfaceBevy::default();
 	surface_bevy.content.resize_with(surface_helix.content.len(), || { CellBevy::default() });
 
 	let v_advance	= font.vertical_advance();
@@ -111,7 +105,7 @@ pub fn surface(
 	let height		= surface_helix.area.height;
 	let content_bevy = &mut surface_bevy.content;
 	
-	println!("spawn surface {} len {} w {} h {}", name, surface_helix.content.len(), width, height);
+	println!("spawn surface {} len {} w {} h {}", surface_name, surface_helix.content.len(), width, height);
 	
 	for y_cell in 0 .. height {
 		// -v_advance because we move down with every row
@@ -166,25 +160,16 @@ pub fn surface(
 	//
 	//
 
-	let tween = Tween::new(
-		EaseFunction::ExponentialOut,
-		std::time::Duration::from_millis(450),
-		TransformPositionLens {
-			start: Vec3::new(0.0, 0.0, -0.2),
-			end: world_position,
-		},
-	);
-
-	let root_entity =
+	let surface_position = world_position.unwrap_or(Vec3::new(0.0, 0.0, 0.0));
+	let surface_entity =
 	commands.spawn(TransformBundle {
-		local		: Transform::from_translation(Vec3::new(0.0, 0.0, -0.2)),
+		local		: Transform::from_translation(surface_position),
 		..default()
 	})
 	.insert(VisibilityBundle {
 		visibility	: Visibility { is_visible: true },
 		..default()
 	})
-	.insert(Animator::new(tween))
 	.id();
 
 	let text_descriptor = TextDescriptor {
@@ -194,24 +179,24 @@ pub fn surface(
 		glyph_height: v_advance
 	};
 
-	commands.entity(root_entity)
-		.insert(text_descriptor)
-		;
+	commands.entity(surface_entity).insert(text_descriptor);
 	
 	if children.len() > 0 {
-		commands.entity(root_entity).push_children(children.as_slice());
+		commands.entity(surface_entity).push_children(children.as_slice());
 	}
 
-	surface_bevy.entity = Some(root_entity);
+	surface_bevy.entity = Some(surface_entity);
 	surface_bevy.area = surface_helix.area;
+	
+	surfaces_bevy.insert(surface_name.clone(), surface_bevy);
 
-	root_entity
+	surface_entity
 }
 
 pub fn cursor(
 	cursor			: &mut CursorBevy,
 	
-	surface_bevy	: &mut SurfaceBevy,
+	surface_entity	: Entity,
 	font			: &ABGlyphFont,
 
 	text_meshes_cache : &mut TextMeshesCache,
@@ -225,9 +210,6 @@ pub fn cursor(
 	let cursor_color_fg	= color_from_helix(HelixColor::Magenta);
 	let material_handle	= get_helix_color_material_handle(cursor_color_fg, helix_colors_cache, material_assets);
 	
-	// spawn dedicated quad for cursor
-	let root_entity 	= surface_bevy.entity.unwrap();
-
 	let v_advance		= font.vertical_advance();
 	let h_advance		= font.horizontal_advance(&String::from("a")); // in monospace font every letter should be of the same width so we pick 'a'
 
@@ -240,6 +222,7 @@ pub fn cursor(
 	let quad_height		= glyph_height;
 	let quad_pos		= Vec3::new(0., 0., cursor_z);
 
+	// spawn dedicated quad for cursor
 	let quad_entity_id	= 
 	quad(
 		quad_pos,
@@ -251,7 +234,7 @@ pub fn cursor(
 
 	commands.entity(quad_entity_id).insert(material_handle.clone_weak());
 
-	commands.entity(root_entity).add_child(quad_entity_id);
+	commands.entity(surface_entity).add_child(quad_entity_id);
 
 	cursor.entity 		= Some(quad_entity_id);
 	cursor.color		= cursor_color_fg;

@@ -62,8 +62,8 @@ fn setup_logging(logpath: PathBuf, verbosity: u64) -> Result<()> {
 	Ok(())
 }
 
-pub fn startup(
-	world: &mut World
+pub fn startup_app(
+	world: &mut World,
 ) {
 	let mut surfaces_helix = SurfacesMapHelix::default();
 	let 	surfaces_bevy = SurfacesMapBevy::default();
@@ -92,6 +92,54 @@ pub fn startup(
 	let app = tokio_runtime.block_on(startup_impl(rect));
 
 	world.insert_non_send_resource(app.unwrap());
+}
+
+pub fn startup_spawn(
+	mut surfaces_helix	: ResMut<SurfacesMapHelix>,
+	mut surfaces_bevy	: ResMut<SurfacesMapBevy>,
+		font_assets		: Res<Assets<ABGlyphFont>>,
+		font_handles    : Res<FontAssetHandles>,
+	mut	cursor          : ResMut<CursorBevy>,
+	mut q_reader_camera	: Query<&mut ReaderCamera>,
+
+	(mut text_meshes_cache, mut helix_colors_cache) 
+	:
+	(ResMut<TextMeshesCache>, ResMut<HelixColorsCache>),
+
+	mut mesh_assets		: ResMut<Assets<Mesh>>,
+	mut material_assets	: ResMut<Assets<StandardMaterial>>,
+	mut commands        : Commands,
+) {
+	let surface_editor_name = String::from(EditorViewBevy::ID);
+	
+	let used_fonts = UsedFonts{
+		main				: font_assets.get(&font_handles.main).unwrap(),
+		fallback			: font_assets.get(&font_handles.fallback).unwrap()
+	};
+	
+	spawn_bevy_surfaces(
+		&mut surfaces_helix,
+		&mut surfaces_bevy,
+		used_fonts.main,
+		&mut text_meshes_cache,
+		&mut mesh_assets,
+		&mut commands
+	);
+	
+	let surface_bevy_editor = surfaces_bevy.get(&surface_editor_name).unwrap();
+	
+	spawn::cursor(
+		&mut cursor,
+		surface_bevy_editor.entity.unwrap(),
+		used_fonts.main,
+		&mut text_meshes_cache,
+		&mut helix_colors_cache,
+		&mut material_assets,
+		&mut mesh_assets,
+		&mut commands
+	);
+	
+	q_reader_camera.single_mut().target = surface_bevy_editor.entity;
 }
 
 async fn startup_impl(area: Rect) -> Result<Application, Error> {
@@ -126,7 +174,7 @@ async fn startup_impl(area: Rect) -> Result<Application, Error> {
 	app
 }
 
-pub fn render(
+pub fn tick(
 	mut surfaces_helix	: ResMut<SurfacesMapHelix>,
 	mut surfaces_bevy	: ResMut<SurfacesMapBevy>,
 		fonts			: Res<Assets<ABGlyphFont>>,
@@ -185,7 +233,7 @@ pub fn render(
 	cleanup_stale_surfaces(&mut surfaces_helix, &mut surfaces_bevy, &mut despawn);
 
 	// create bevy surfaces for every helix surface
-	create_bevy_surfaces(
+	spawn_bevy_surfaces(
 		&mut surfaces_helix,
 		&mut surfaces_bevy,
 		used_fonts.main,
@@ -314,7 +362,7 @@ fn cleanup_stale_surfaces(
 	}
 }
 
-fn create_bevy_surfaces(
+fn spawn_bevy_surfaces(
 	surfaces_helix		: &mut SurfacesMapHelix,
 	surfaces_bevy		: &mut SurfacesMapBevy,
 
@@ -326,7 +374,7 @@ fn create_bevy_surfaces(
 )
 {
 	for (surface_name, container_helix) in surfaces_helix.iter() {
-		if let Some(surface_bevy) = surfaces_bevy.get_mut(surface_name) {
+		if surfaces_bevy.contains_key(surface_name) {
 			continue;
 		}
 
@@ -337,24 +385,17 @@ fn create_bevy_surfaces(
 			_ => Vec3::new(0.0, -0.0, 0.3),
 		};
 
-		let mut surface_bevy = SurfaceBevy::default();
-
 		spawn::surface(
 			surface_name,
-			pos,
-
+			Some(pos),
+			surfaces_bevy,
 			&container_helix.surface,
-			&mut surface_bevy,
-
 			&font,
 			
 			&mut text_meshes_cache,
-			
 			&mut mesh_assets,
 			&mut commands
 		);
-
-		surfaces_bevy.insert(surface_name.clone(), surface_bevy);
 
 		println!("new bevy surface created: {}", surface_name);
 	}
