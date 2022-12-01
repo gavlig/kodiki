@@ -76,78 +76,15 @@ pub fn setup_lighting_system(
 	//
 }
 
-pub fn setup_camera_system(
-	mut query			: Query<&mut FlyCamera>
-) {
+fn set_cursor_visibility(v: bool, window: &mut Window) {
+	window.set_cursor_visibility(v);
+	window.set_cursor_grab_mode	(if v { CursorGrabMode::None } else { CursorGrabMode::Locked });
 }
 
-pub fn setup_cursor_visibility_system(
-	mut windows	: ResMut<Windows>,
-	mut picking	: ResMut<PickingPluginsState>,
-) {
-	let window = windows.get_primary_mut().unwrap();
-
-	window.set_cursor_grab_mode	(CursorGrabMode::Locked);
-	window.set_cursor_visibility(false);
-
-	picking.enable_picking 		= false;
-	picking.enable_highlighting = false;
-	picking.enable_interacting 	= false;
-}
-
-pub fn cursor_visibility_system(
-	mut windows		: ResMut<Windows>,
-	btn				: Res<Input<MouseButton>>,
-	key				: Res<Input<KeyCode>>,
-	time			: Res<Time>,
-	mut q_camera	: Query<&mut FlyCamera>,
-		app_mode	: Res<CurrentState<AppMode>>,
-	mut picking		: ResMut<PickingPluginsState>,
-	mut mouse_state	: ResMut<MouseCursorState>,
-	mut	commands	: Commands
-) {
-	let window 		= windows.get_primary_mut();
-	if window.is_none() {
-		return;
-	}
-	let window		= window.unwrap();
-	mouse_state.visible = window.cursor_visible();
-	let window_id	= window.id();
-
-	let mut set_cursor_visibility = |v| {
-		window.set_cursor_visibility(v);
-		window.set_cursor_grab_mode	(if v { CursorGrabMode::None } else { CursorGrabMode::Locked });
-	};
-
-	let mut set_editor_mode = |v| {
-		set_cursor_visibility(v);
-
-		picking.enable_picking = v;
-		picking.enable_highlighting = v;
-		picking.enable_interacting = v;
-
-		commands.insert_resource(NextState(
-			if v { AppMode::Editor } else { AppMode::Main }
-		));
-	};
-
-	if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Escape) {
-		let toggle 	= !mouse_state.visible;
-		set_editor_mode(toggle);
-	}
-
-	if btn.just_pressed(MouseButton::Left) && app_mode.0 == AppMode::Main{
-		set_cursor_visibility(false);
-	}
-
-	// #[cfg(debug_assertions)]
-	if time.seconds_since_startup() > 1.0 {
-		let is_editor = app_mode.0 == AppMode::Editor;
-		set_cursor_visibility(is_editor);
-
-		let mut camera 	= q_camera.single_mut();
-		camera.enabled_rotation = !is_editor;
-	}
+fn toggle_picking_mode(v: bool, mut picking: &mut PickingPluginsState) {
+	picking.enable_picking = v;
+	picking.enable_highlighting = v;
+	picking.enable_interacting = v;
 }
 
 pub fn input_system(
@@ -360,7 +297,6 @@ pub fn setup_shadertoy(
 pub fn despawn_system(mut commands: Commands, time: Res<Time>, mut despawn: ResMut<DespawnResource>) {
 	if time.elapsed_seconds() > 0.1 {
 		for entity in &despawn.entities {
-//			println!("Despawning entity {:?}", entity);
 			commands.entity(*entity).despawn_recursive();
 		}
 		despawn.entities.clear();
