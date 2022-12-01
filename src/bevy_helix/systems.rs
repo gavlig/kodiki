@@ -150,9 +150,13 @@ pub fn startup_spawn(
 		fallback			: font_assets.get(&font_handles.fallback).unwrap()
 	};
 	
-	spawn_bevy_surfaces(
-		&mut surfaces_helix,
+	let container_helix_editor = surfaces_helix.get(&surface_editor_name).unwrap();
+	
+	spawn::surface(
+		&surface_editor_name,
+		None,
 		&mut surfaces_bevy,
+		&container_helix_editor.surface,
 		used_fonts.main,
 		&mut text_meshes_cache,
 		&mut mesh_assets,
