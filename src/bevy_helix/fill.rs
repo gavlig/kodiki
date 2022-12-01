@@ -20,8 +20,22 @@ pub fn surface(
 )
 {
 	let surface_entity = surface_bevy.entity.unwrap();
-	// cleanup all children from previous times
-	commands.entity(surface_entity).despawn_descendants();
+	
+	let new_content_len = surface_helix.content.len();
+	let old_content_len = surface_bevy.content.len();
+	
+	if new_content_len < old_content_len {
+		let cleanup_from = new_content_len;
+		let cleanup_till = old_content_len;
+		
+		for i in cleanup_from .. cleanup_till {
+			let bg_quad_entity = surface_bevy.content[i].bg_quad_entity.unwrap();
+			commands.entity(bg_quad_entity).despawn();
+			if let Some(symbol_entity) = surface_bevy.content[i].symbol_entity {
+				commands.entity(symbol_entity).despawn();
+			}
+		}
+	}
 	
 	surface_bevy.content.resize_with(surface_helix.content.len(), || { CellBevy::default() });
 	surface_bevy.area = surface_helix.area;
@@ -53,35 +67,38 @@ pub fn surface(
 			let content_index = (y_cell * width + x_cell) as usize;
 
 			let cell_bevy	= &mut content_bevy[content_index];
+			// there could already be an existing entity
+			if cell_bevy.bg_quad_entity.is_none() {
 
-			let column_offset = h_advance * x_cell as f32;
-			let x 			= column_offset;
-			
-			let quad_width	= h_advance;
-			let quad_height	= v_advance.abs();
-			
-			//
-			//
-			// Background Quad
-			
-			let quad_pos		= Vec3::new(x, y, -font.depth_scaled());
-			let quad_entity_id	= 
-			spawn::quad(
-			 	quad_pos,
-			 	Vec2::new(quad_width, quad_height),
-			 	text_meshes_cache,
-				mesh_assets,
-			 	commands
-			);
-			
-			cell_bevy.bg_quad_entity = Some(quad_entity_id);
+				let column_offset = h_advance * x_cell as f32;
+				let x 			= column_offset;
+				
+				let quad_width	= h_advance;
+				let quad_height	= v_advance.abs();
+				
+				//
+				//
+				// Background Quad
+				
+				let quad_pos		= Vec3::new(x, y, -font.depth_scaled());
+				let quad_entity_id	= 
+				spawn::quad(
+					quad_pos,
+					Vec2::new(quad_width, quad_height),
+					text_meshes_cache,
+					mesh_assets,
+					commands
+				);
+				
+				cell_bevy.bg_quad_entity = Some(quad_entity_id);
 
-			commands.entity(quad_entity_id)
-			.insert(Row { 0: row })
-			.insert(Column { 0: column })
-			;
+				commands.entity(quad_entity_id)
+				.insert(Row { 0: row })
+				.insert(Column { 0: column })
+				;
 
-			children.push(quad_entity_id);
+				children.push(quad_entity_id);
+			}
 
 			column 	+= 1;
 		}
