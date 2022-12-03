@@ -1,8 +1,8 @@
 use bevy				:: prelude :: { * };
 use bevy_contrib_colors	:: { Tailwind };
 
-use crate				:: bevy_ab_glyph::{ UsedFonts, CharWithFonts, TextMeshesCache };
-use crate				:: bevy_ab_glyph :: mesh_generator :: generate_glyph_mesh_wcache;
+use crate				:: bevy_ab_glyph::{ UsedFonts, GlyphWithFonts, TextMeshesCache };
+use crate				:: bevy_ab_glyph :: mesh_generator :: { generate_string_mesh_wcache };
 
 use super				:: { * };
 
@@ -37,6 +37,43 @@ fn color_from_helix(helix_color: HelixColor) -> Color {
 	}
 }
 
+struct Word<'a> {
+	pub x				: f32,
+	pub y				: f32,
+	pub row				: u32,
+	pub column			: u32,
+	pub color			: HelixColor,
+	pub string_with_fonts : StringWithFonts<'a>,
+	pub string			: String,
+}
+
+impl Default for Word<'_> {
+	fn default() -> Self {
+		Self {
+			x			: 0.0,
+			y			: 0.0,
+			row			: 0,
+			column		: 0,
+			color		: HelixColor::Cyan,
+			string_with_fonts : Vec::new(),
+			string		: String::new(),
+		}
+	}
+}
+
+impl Word<'_> {
+
+}
+
+type Words<'a> = Vec<Word<'a>>;
+
+#[derive(Component, Clone, Debug)]
+pub struct WordDescription {
+	pub string	: String,
+	pub row		: u32,
+	pub column	: u32,
+}
+
 pub fn surface(
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
@@ -51,9 +88,13 @@ pub fn surface(
 	commands		: &mut Commands,
 )
 {
+	if !surface_bevy.update {
+		return;
+	}
+	
+	surface_bevy.rows.resize_with(surface_helix.area.height as usize, || { WordRowBevy::new() });
+	
 	let root_entity = surface_bevy.entity.unwrap();
-
-	surface_bevy.content.resize_with(surface_helix.content.len(), || { CellBevy::default() });
 
 	let v_advance	= used_fonts.main.vertical_advance();
 
@@ -66,41 +107,116 @@ pub fn surface(
 	
 	let width		= surface_helix.area.width;
 	let height		= surface_helix.area.height;
-	let content_helix = &surface_helix.content;
-	let content_bevy = &mut surface_bevy.content;
+	let cells_helix = &surface_helix.content;
+	let rows_bevy	= &mut surface_bevy.rows;
 
 	for y_cell in 0..height {
 		y = -v_advance * row as f32;
 		
+		let mut row_bevy		= &mut rows_bevy[y_cell as usize];
+		let mut row_synced		= true;
+		let mut words			= Words::new();
+		let mut word_started	= false;
+		
 		for x_cell in 0..width {
-			let content_index = (y_cell * width + x_cell) as usize;
-			let cell_helix = &content_helix[content_index];
-			let cell_bevy = &mut content_bevy[content_index];
-
-			let mut char_with_fonts = CharWithFonts::new(cell_helix.symbol.clone(), used_fonts);
+			let content_index	= (y_cell * width + x_cell) as usize;
+			let cell_helix		= &cells_helix[content_index];
+			let glyph_with_fonts_current = GlyphWithFonts::new(cell_helix.symbol.clone(), used_fonts);
 			
-			// figure out colors first
-			update_cell_materials(
-				cell_bevy,
-				cell_helix,
-				helix_colors_cache,
-				material_assets,
-				commands
-			);
-
-			// now spawn new mesh if needed
-			let pos = Vec3::new(x, y, 0.0);
-			update_cell_mesh(
-				pos,
-				cell_helix,
-				cell_bevy,
-				&mut char_with_fonts,
-				text_meshes_cache,
-				&mut surface_children,
-				mesh_assets,
-				commands
-			);
-
+			// collect symbols with the same color into a word and spawn it when word ends
+			let symbol_color	= cell_helix.fg;
+			let is_space		= cell_helix.symbol == " " || cell_helix.symbol == "\t";
+			let end_of_row		= x_cell == width - 1;
+			
+			// println!("[{}] started {} ended {} is_space {} different_color {} end_of_row {} different_font {}",
+			// 	if !is_space { cell_helix.symbol.clone() } else { String::from("space") },
+			// 	word.started,
+			// 	word_ended,
+			// 	is_space,
+			// 	different_color,
+			// 	end_of_row,
+			// 	different_font
+			// );
+			
+			if !is_space {
+				if !word_started {
+					word_started	= true;
+					
+					let mut word	= Word::default();
+					word.x			= x;
+					word.y			= y;
+					word.row		= row;
+					word.column		= column;
+					word.color		= symbol_color;
+					
+					word.string.push_str(cell_helix.symbol.as_str());
+					word.string_with_fonts.push(glyph_with_fonts_current);
+					
+					words.push		(word);
+					
+					// println!("word started! symbol {}", cell_helix.symbol);
+				} else if word_started {
+					let word		= words.last_mut().unwrap();
+					word.string.push_str(cell_helix.symbol.as_str());
+					word.string_with_fonts.push(glyph_with_fonts_current);
+					
+					// println!("word filling! symbol {}", cell_helix.symbol);
+				}
+			}
+			
+			if word_started {
+				let word			= words.last().unwrap();
+				let glyph_with_fonts_current = GlyphWithFonts::new(cell_helix.symbol.clone(), used_fonts);
+				let different_color = word.color != symbol_color;
+				let different_font	= if let Some(char_with_fonts) = word.string_with_fonts.first() {
+					char_with_fonts.current_font() != glyph_with_fonts_current.current_font()
+				} else {
+					false
+				};
+				
+				let word_ended		= is_space || different_color || different_font || end_of_row;
+				if word_ended {
+					word_started	= false;
+					let word_index	= words.len() - 1;
+					
+					if row_synced {
+						row_synced = check_row_sync(word_index, word, &mut row_bevy, commands);
+					}
+					
+					let word_description = WordDescription {
+						string	: word.string.clone(),
+						row		: row,
+						column	: column,
+					};
+					
+					// now spawn new mesh if needed
+					if !row_synced {
+						let word_entity = update_word_mesh(
+							word_index,
+							word,
+							&word_description,
+							&mut row_bevy,
+							text_meshes_cache,
+							helix_colors_cache,
+							mesh_assets,
+							material_assets,
+							commands
+						);
+						
+						if let Some(entity) = word_entity {
+							surface_children.push(entity);
+						}
+					}
+					
+					// println!("word ended {}: is_space {} different_color {} end_of_row {} different_font {}", word.string, is_space, different_color, end_of_row, different_font);
+				}
+			}
+			
+			if end_of_row && !row_synced {
+				let word_index	= words.len();
+				cleanup_desync_row(word_index, &mut row_bevy, commands);
+			}
+			
 			x += used_fonts.main.horizontal_advance(&cell_helix.symbol);
 
 			column += 1;
@@ -109,147 +225,230 @@ pub fn surface(
 		x			= 0.0;
 		column		= 0;
 		row			+= 1;
+		
+		// break;
 	}
 
 	if surface_children.len() > 0 {
 		commands.entity(root_entity).push_children(surface_children.as_slice());
 	}
+	
+	// surface_bevy.render = false;
 }
 
-fn update_cell_mesh(
-	pos				: Vec3,
-	cell_helix		: &CellHelix,
-	cell_bevy		: &mut CellBevy,
-	char_with_fonts	: &mut CharWithFonts,
-	text_meshes_cache : &mut TextMeshesCache,
-	surface_children: &mut Vec<Entity>,
-	mesh_assets		: &mut Assets<Mesh>,
+fn check_row_sync(
+	word_index			: usize,
+	word 				: &Word,
+	row_bevy			: &mut WordRowBevy,
+	commands			: &mut Commands
+) -> bool
+{
+	let row_len			= row_bevy.len();
+	if word_index >= row_len {
+		return false;
+	}
+
+	// check if it's the same word as we already have in row_bevy and return if so
+	let word_bevy = &row_bevy[word_index];
+	if word_bevy.string == word.string {
+		return true;
+	}
+	
+	// as we're desynced invalidate all remaining meshes, transforms and materials. Just keep entities to avoid respawning
+	for i in word_index .. row_len {
+		let word_bevy = &row_bevy[i];
+		commands.entity(word_bevy.entity.unwrap())
+		.remove::<Handle<Mesh>>()
+		.remove::<Handle<StandardMaterial>>()
+		.remove::<Transform>()
+		.remove::<WordDescription>()
+		;
+	}
+	
+	return false;
+}
+
+fn cleanup_desync_row(
+	word_index			: usize,
+	row_bevy			: &mut WordRowBevy,
+	commands			: &mut Commands
+)
+{
+	let row_len			= row_bevy.len();
+	if word_index >= row_len {
+		return;
+	}
+	
+	for i in word_index .. row_len {
+		let word_bevy = &row_bevy[i];
+		commands.entity(word_bevy.entity.unwrap()).despawn_recursive();
+	}
+	
+	assert!(word_index <= row_len);
+	row_bevy.truncate(word_index);
+}
+
+fn update_word_mesh(
+	word_index			: usize,
+	word 				: &Word,
+	word_description	: &WordDescription,
+	row_bevy			: &mut WordRowBevy,
+	text_meshes_cache	: &mut TextMeshesCache,
+	helix_colors_cache	: &mut HelixColorsCache,
+	mesh_assets			: &mut Assets<Mesh>,
+	material_assets		: &mut Assets<StandardMaterial>,
+	commands			: &mut Commands
+) -> Option<Entity>
+{
+	let word_mesh_handle = generate_string_mesh_wcache(&word.string_with_fonts, mesh_assets, text_meshes_cache);
+	let color			= color_from_helix(word.color);
+	let material_handle = get_helix_color_material_handle(
+		color,
+		helix_colors_cache,
+		material_assets
+	);
+	
+	// spawn new word if it doesnt exist in the row yet
+	if word_index >= row_bevy.len() {
+		let word_entity = spawn_word_mesh(
+			word,
+			word_description,
+			&word_mesh_handle,
+			&material_handle,
+			commands
+		);
+		
+		row_bevy.push(WordBevy {
+			entity		: Some(word_entity),
+			string		: word.string.clone(),
+			color		: word.color,
+		});
+		
+		return Some(word_entity);
+	} else {
+		let entity = row_bevy[word_index].entity.unwrap();
+		fill_word_entity(entity, word, word_description, &word_mesh_handle, &material_handle, commands);
+		
+		return None;
+	}
+}
+
+fn spawn_word_mesh(
+	word 			: &Word,
+	word_description: &WordDescription,
+	mesh_handle		: &Handle<Mesh>,
+	material_handle	: &Handle<StandardMaterial>,
+	commands		: &mut Commands
+) -> Entity
+{
+	let font		= word.string_with_fonts.first().unwrap().current_font();
+	let word_mesh_entity = commands.spawn(PbrBundle {
+		mesh		: mesh_handle.clone_weak(),
+		material	: material_handle.clone_weak(),
+		transform	: Transform {
+			translation	: Vec3::new(word.x, word.y, 0.0),
+			scale		: [font.scale; 3].into(),
+			..default()
+		},
+		..default()
+	})
+	.insert(word_description.clone())
+	.id();
+	
+	word_mesh_entity
+}
+
+fn fill_word_entity(
+	entity			: Entity,
+	word 			: &Word,
+	word_description: &WordDescription,
+	mesh_handle		: &Handle<Mesh>,
+	material_handle	: &Handle<StandardMaterial>,
 	commands		: &mut Commands
 )
 {
-	let wrong_symbol = cell_helix.symbol != cell_bevy.symbol;
-	if !wrong_symbol {
-		return;
-	}
-
-	// Special case - space character. Doesn't require mesh
-	let space_symbol = cell_helix.symbol == " ";
-	if space_symbol {
-		// remove a mesh if there was an entity
-		if let Some(entity) = cell_bevy.symbol_entity {
-			// remove mesh
-			commands.entity(entity).remove::<Handle<Mesh>>();
-		}
-		cell_bevy.symbol = cell_helix.symbol.clone();
-		return;
-	}
-
-	let mesh_handle = generate_glyph_mesh_wcache(
-		char_with_fonts,
-		mesh_assets,
-		text_meshes_cache
-	);
-
-	if let Some(entity) = cell_bevy.symbol_entity {
-		// replace previous mesh with new one
-		commands.entity(entity)
-			.remove::<Handle<Mesh>>()
-			.insert(mesh_handle)
-			;
-	} else {
-		// spawn new entity with an existing mesh
-		cell_bevy.symbol_entity = Some(
-			commands.spawn(PbrBundle {
-				mesh : mesh_handle,
-				material : cell_bevy.fg_handle.as_ref().unwrap().clone_weak(),
-				transform : Transform {
-					translation	: pos,
-					scale		: [char_with_fonts.current_font().scale; 3].into(),
-					..default()
-				},
-				..default()
-			})
-			.id()
-		);
-
-		// insert material
-		commands.entity(cell_bevy.symbol_entity.unwrap()).insert(
-			cell_bevy.fg_handle.as_ref().unwrap().clone_weak()
-		);
-
-		surface_children.push(cell_bevy.symbol_entity.unwrap());
-	}
-
-	cell_bevy.symbol = cell_helix.symbol.clone();
-}
-
-pub fn update_cell_materials(
-	cell_bevy: &mut CellBevy,
-	cell_helix: &CellHelix,
-	helix_colors_cache: &mut HelixColorsCache,
-	material_assets: &mut Assets<StandardMaterial>,
-	commands: &mut Commands
-) {
-	let reversed = cell_helix.modifier == helix_view::graphics::Modifier::REVERSED;
-	let wrong_color = !reversed && (cell_bevy.fg != cell_helix.fg || cell_bevy.bg != cell_helix.bg);
-	let reversed_and_wrong_color = reversed && (cell_bevy.fg != cell_helix.bg || cell_bevy.bg != cell_helix.fg);
-
-	if !wrong_color && !reversed_and_wrong_color {
-		return;
-	}
-
-	// take care of reversed colors: if reversed - foreground becomes background
-	(cell_bevy.fg, cell_bevy.bg) =
-	if !reversed {
-		(cell_helix.fg, cell_helix.bg)
-	} else {
-		(cell_helix.bg, cell_helix.fg)
+	let font		= word.string_with_fonts.first().unwrap().current_font();
+	let transform	= Transform {
+		translation	: Vec3::new(word.x, word.y, 0.0),
+		scale		: [font.scale; 3].into(),
+		..default()
 	};
 	
-	update_cell_materials_inner(
-		cell_bevy,
-		helix_colors_cache,
-		material_assets,
-		commands
-	);
+	commands.entity(entity)
+	.insert(mesh_handle.clone_weak())
+	.insert(material_handle.clone_weak())
+	.insert(transform)
+	.insert(word_description.clone())
+	;
 }
 
-fn update_cell_materials_inner(
-	cell_bevy: &mut CellBevy,
-	helix_colors_cache: &mut HelixColorsCache,
-	material_assets: &mut Assets<StandardMaterial>,
-	commands: &mut Commands
-) {
-	let color_fg = color_from_helix(cell_bevy.fg);
-	let color_bg = color_from_helix(cell_bevy.bg);
+// fn update_cell_background(
+// 	cell_bevy: &mut CellBevy,
+// 	cell_helix: &CellHelix,
+// 	helix_colors_cache: &mut HelixColorsCache,
+// 	material_assets: &mut Assets<StandardMaterial>,
+// 	commands: &mut Commands
+// ) {
+// 	let reversed = cell_helix.modifier == helix_view::graphics::Modifier::REVERSED;
+// 	let wrong_color = !reversed && (cell_bevy.fg != cell_helix.fg || cell_bevy.bg != cell_helix.bg);
+// 	let reversed_and_wrong_color = reversed && (cell_bevy.fg != cell_helix.bg || cell_bevy.bg != cell_helix.fg);
 
-	cell_bevy.fg_handle = Some(get_helix_color_material_handle(
-		color_fg,
-		helix_colors_cache,
-		material_assets
-	));
+// 	if !wrong_color && !reversed_and_wrong_color {
+// 		return;
+// 	}
 
-	cell_bevy.bg_handle = Some(get_helix_color_material_handle(
-		color_bg,
-		helix_colors_cache,
-		material_assets
-	));
-
-	// replace material to reflect changed color
-	if let Some(cell_bevy_entity_symbol) = cell_bevy.symbol_entity {
-		commands.entity		(cell_bevy_entity_symbol)
-		.remove::<Handle<StandardMaterial>>()
-		.insert(cell_bevy.fg_handle.as_ref().unwrap().clone_weak())
-		;
-	}
+// 	// take care of reversed colors: if reversed - foreground becomes background
+// 	(cell_bevy.fg, cell_bevy.bg) =
+// 	if !reversed {
+// 		(cell_helix.fg, cell_helix.bg)
+// 	} else {
+// 		(cell_helix.bg, cell_helix.fg)
+// 	};
 	
-	if let Some(cell_bevy_entity_bg_quad) = cell_bevy.bg_quad_entity {
-		commands.entity		(cell_bevy_entity_bg_quad)
-		.remove::<Handle<StandardMaterial>>()
-		.insert(cell_bevy.bg_handle.as_ref().unwrap().clone_weak())
-		;
-	}
-}
+// 	update_cell_background_inner(
+// 		cell_bevy,
+// 		helix_colors_cache,
+// 		material_assets,
+// 		commands
+// 	);
+// }
+
+// fn update_cell_background_inner(
+// 	cell_bevy: &mut CellBevy,
+// 	helix_colors_cache: &mut HelixColorsCache,
+// 	material_assets: &mut Assets<StandardMaterial>,
+// 	commands: &mut Commands
+// ) {
+// 	let color_fg = color_from_helix(cell_bevy.fg);
+// 	let color_bg = color_from_helix(cell_bevy.bg);
+
+// 	cell_bevy.fg_handle = Some(get_helix_color_material_handle(
+// 		color_fg,
+// 		helix_colors_cache,
+// 		material_assets
+// 	));
+
+// 	cell_bevy.bg_handle = Some(get_helix_color_material_handle(
+// 		color_bg,
+// 		helix_colors_cache,
+// 		material_assets
+// 	));
+
+// 	// replace material to reflect changed color
+// 	if let Some(cell_bevy_entity_symbol) = cell_bevy.symbol_entity {
+// 		commands.entity		(cell_bevy_entity_symbol)
+// 		.remove::<Handle<StandardMaterial>>()
+// 		.insert(cell_bevy.fg_handle.as_ref().unwrap().clone_weak())
+// 		;
+// 	}
+	
+// 	if let Some(cell_bevy_entity_bg_quad) = cell_bevy.bg_quad_entity {
+// 		commands.entity		(cell_bevy_entity_bg_quad)
+// 		.remove::<Handle<StandardMaterial>>()
+// 		.insert(cell_bevy.bg_handle.as_ref().unwrap().clone_weak())
+// 		;
+// 	}
+// }
 
 pub fn cursor(
 	cursor			: &mut CursorBevy,
@@ -280,43 +479,43 @@ pub fn cursor(
 		cursor.color		= cursor_color_fg;
 	}
 
-	let width				= surface_helix.area.width;
-	let content_helix		= &surface_helix.content;
-	let content_bevy		= &mut surface_bevy.content;
+	// let width				= surface_helix.area.width;
+	// let content_helix		= &surface_helix.content;
+	// let content_bevy		= &mut surface_bevy.content;
 
-	let content_index 		= (cursor.y * width + cursor.x) as usize;
-	let cell_helix			= &content_helix[content_index];
-	let cell_bevy			= &mut content_bevy[content_index];
+	// let content_index 		= (cursor.y * width + cursor.x) as usize;
+	// let cell_helix			= &content_helix[content_index];
+	// let cell_bevy			= &mut content_bevy[content_index];
 
-	update_cursor_cell_material(
-		cell_bevy,
-		cell_helix,
-		helix_colors_cache,
-		material_assets,
-		commands
-	)
+	// update_cursor_cell_material(
+	// 	cell_bevy,
+	// 	cell_helix,
+	// 	helix_colors_cache,
+	// 	material_assets,
+	// 	commands
+	// )
 }
 
-pub fn update_cursor_cell_material(
-	cell_bevy: &mut CellBevy,
-	cell_helix: &CellHelix,
-	helix_colors_cache: &mut HelixColorsCache,
-	material_assets: &mut Assets<StandardMaterial>,
-	commands: &mut Commands
-) {
-	let wrong_color = (cell_bevy.fg != cell_helix.fg && cell_bevy.bg != cell_helix.bg);
-	if !wrong_color {
-		return;
-	}
+// fn update_cursor_cell_material(
+// 	cell_bevy: &mut CellBevy,
+// 	cell_helix: &CellHelix,
+// 	helix_colors_cache: &mut HelixColorsCache,
+// 	material_assets: &mut Assets<StandardMaterial>,
+// 	commands: &mut Commands
+// ) {
+// 	let wrong_color = (cell_bevy.fg != cell_helix.fg && cell_bevy.bg != cell_helix.bg);
+// 	if !wrong_color {
+// 		return;
+// 	}
 
-	// helix reverses color in cell with cursor and we "revert" it back to make it visible with 3d cursor
-	cell_bevy.fg = cell_helix.fg;
-	cell_bevy.bg = cell_helix.bg;
+// 	// helix reverses color in cell with cursor and we "revert" it back to make it visible with 3d cursor
+// 	cell_bevy.fg = cell_helix.fg;
+// 	cell_bevy.bg = cell_helix.bg;
 
-	update_cell_materials_inner(
-		cell_bevy,
-		helix_colors_cache,
-		material_assets,
-		commands
-	);
-}
+// 	update_cell_background_inner(
+// 		cell_bevy,
+// 		helix_colors_cache,
+// 		material_assets,
+// 		commands
+// 	);
+// }

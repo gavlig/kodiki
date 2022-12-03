@@ -4,7 +4,7 @@ use iyes_loopless :: { prelude :: * };
 
 use helix_term :: compositor :: SurfaceContainer as SurfaceContainerHelix;
 
-use crate :: game :: AppMode;
+use crate :: { game :: AppMode, bevy_ab_glyph :: StringWithFonts };
 
 mod application;
 use application :: *;
@@ -30,59 +30,45 @@ pub struct CursorBevy {
 	pub easing_accum : f32,
 }
 
-// representation of helix_tui::buffer::Cell in Bevy
 #[derive(Debug, Clone, PartialEq)]
-pub struct CellBevy {
-	pub symbol_entity		: Option<Entity>,
-	pub bg_quad_entity		: Option<Entity>,
-	pub symbol				: String,
-	pub fg					: helix_view::graphics::Color,
-	pub bg					: helix_view::graphics::Color,
-
-	pub fg_handle			: Option<Handle<StandardMaterial>>,
-	pub bg_handle			: Option<Handle<StandardMaterial>>,
+pub struct WordBevy {
+	pub entity				: Option<Entity>,
+	pub string				: String,
+	pub color				: helix_view::graphics::Color,
 }
 
-impl Default for CellBevy {
-	fn default() -> Self {
-		Self {
-			symbol_entity	: None,
-			bg_quad_entity	: None,
-			symbol  		: " ".into(),
-			fg      		: helix_view::graphics::Color::Reset,
-			bg      		: helix_view::graphics::Color::Reset,
+pub type WordRowBevy		= Vec<WordBevy>;
+pub type WordRowsBevy		= Vec<WordRowBevy>;
 
-			fg_handle 		: None,
-			bg_handle 		: None,
-		}
-	}
+#[derive(Debug, Clone, PartialEq)]
+pub struct BackgroundQuadBevy {
+	pub entity				: Option<Entity>,
+	pub fg					: helix_view::graphics::Color,
+	pub fg_handle			: Option<Handle<StandardMaterial>>,
 }
 
 // representation of helix_tui::buffer::Buffer in Bevy
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SurfaceBevy {
 	pub entity  : Option<Entity>,
-	pub content : Vec<CellBevy>,
+	pub rows	: WordRowsBevy,
 	pub area	: helix_view::graphics::Rect,
+	
+	pub update	: bool,
+}
+
+impl Default for SurfaceBevy {
+	fn default() -> Self {
+		Self {
+			entity	: None,
+			rows	: WordRowsBevy::new(),
+			area	: helix_view::graphics::Rect::default(),
+			update	: true,
+		}
+	}
 }
 
 impl SurfaceBevy {
-	/// Returns a SurfaceBevy with all cells set to the default one
-	pub fn empty(area: helix_view::graphics::Rect) -> SurfaceBevy {
-		let cell: CellBevy = CellBevy::default();
-		SurfaceBevy::filled(area, &cell)
-	}
-
-	/// Returns a SurfaceBevy with all cells initialized with the attributes of the given Cell
-	pub fn filled(area: helix_view::graphics::Rect, cell: &CellBevy) -> SurfaceBevy {
-		let size = area.area() as usize;
-		let mut content = Vec::with_capacity(size);
-		for _ in 0..size {
-			content.push(cell.clone());
-		}
-		SurfaceBevy { content, ..default() }
-	}
-	
 	pub fn new_with_entity(surface_entity: Entity) -> SurfaceBevy {
 		SurfaceBevy { entity: Some(surface_entity), ..default() }
 	}
