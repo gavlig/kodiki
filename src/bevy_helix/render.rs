@@ -138,34 +138,9 @@ pub fn surface(
 			// 	different_font
 			// );
 			
-			if !is_space {
-				if !word_started {
-					word_started	= true;
-					
-					let mut word	= Word::default();
-					word.x			= x;
-					word.y			= y;
-					word.row		= row;
-					word.column		= column;
-					word.color		= symbol_color;
-					
-					word.string.push_str(cell_helix.symbol.as_str());
-					word.string_with_fonts.push(glyph_with_fonts_current);
-					
-					words.push		(word);
-					
-					// println!("word started! symbol {}", cell_helix.symbol);
-				} else if word_started {
-					let word		= words.last_mut().unwrap();
-					word.string.push_str(cell_helix.symbol.as_str());
-					word.string_with_fonts.push(glyph_with_fonts_current);
-					
-					// println!("word filling! symbol {}", cell_helix.symbol);
-				}
-			}
-			
 			if word_started {
-				let word			= words.last().unwrap();
+				let word_index		= words.len() - 1;
+				let word			= words.last_mut().unwrap();
 				let glyph_with_fonts_current = GlyphWithFonts::new(cell_helix.symbol.clone(), used_fonts);
 				let different_color = word.color != symbol_color;
 				let different_font	= if let Some(char_with_fonts) = word.string_with_fonts.first() {
@@ -177,7 +152,6 @@ pub fn surface(
 				let word_ended		= is_space || different_color || different_font || end_of_row;
 				if word_ended {
 					word_started	= false;
-					let word_index	= words.len() - 1;
 					
 					if row_synced {
 						row_synced = check_row_sync(word_index, word, &mut row_bevy, commands);
@@ -208,8 +182,31 @@ pub fn surface(
 						}
 					}
 					
-					// println!("word ended {}: is_space {} different_color {} end_of_row {} different_font {}", word.string, is_space, different_color, end_of_row, different_font);
+					// println!("word ended {}: is_space {} different_color {} different_font {} end_of_row {}", word.string, is_space, different_color, different_font, end_of_row);
+				} else {
+					word.string.push_str(cell_helix.symbol.as_str());
+					word.string_with_fonts.push(glyph_with_fonts_current);
+					
+					// println!("word filling! symbol {}", cell_helix.symbol);
 				}
+			}
+			
+			if !is_space && !word_started {
+				word_started	= true;
+				
+				let mut word	= Word::default();
+				word.x			= x;
+				word.y			= y;
+				word.row		= row;
+				word.column		= column;
+				word.color		= symbol_color;
+				
+				word.string.push_str(cell_helix.symbol.as_str());
+				word.string_with_fonts.push(glyph_with_fonts_current);
+				
+				words.push		(word);
+				
+				// println!("word started! symbol {}", cell_helix.symbol);
 			}
 			
 			if end_of_row && !row_synced {
@@ -233,7 +230,7 @@ pub fn surface(
 		commands.entity(root_entity).push_children(surface_children.as_slice());
 	}
 	
-	// surface_bevy.render = false;
+	// surface_bevy.update = false;
 }
 
 fn check_row_sync(
