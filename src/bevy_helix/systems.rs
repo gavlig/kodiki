@@ -180,19 +180,32 @@ pub fn startup_spawn(
 }
 
 pub fn tick(
-	mut surfaces_helix	: ResMut<SurfacesMapHelix>,
-	mut surfaces_bevy	: ResMut<SurfacesMapBevy>,
-		fonts			: Res<Assets<ABGlyphFont>>,
-		font_handles    : Res<FontAssetHandles>,
-	mut	cursor          : ResMut<CursorBevy>,
-	mut	q_transform		: Query<&mut Transform>,
-		app             : Option<NonSendMut<Application>>,
-		time			: Res<Time>,
-
-	(mut text_meshes_cache, mut helix_colors_cache) 
+	app		: Option<NonSendMut<Application>>,
+	time	: Res<Time>,
+	
+	(
+		mut surfaces_helix,
+		mut surfaces_bevy,
+		mut text_meshes_cache,
+		mut helix_colors_cache,
+		mut cursor,
+			font_assets,
+			font_handles,
+	)
 	:
-	(ResMut<TextMeshesCache>, ResMut<HelixColorsCache>),
-
+	(
+		ResMut<SurfacesMapHelix>,
+		ResMut<SurfacesMapBevy>,
+		ResMut<TextMeshesCache>,
+		ResMut<HelixColorsCache>,
+		ResMut<CursorBevy>,
+		Res<Assets<ABGlyphFont>>,
+		Res<FontAssetHandles>,
+	),
+	
+		
+	mut	q_transform		: Query<&mut Transform>,
+	
 	mut mesh_assets		: ResMut<Assets<Mesh>>,
 	mut material_assets	: ResMut<Assets<StandardMaterial>>,
 	mut despawn         : ResMut<DespawnResource>,
@@ -203,8 +216,8 @@ pub fn tick(
 	}
 
 	let used_fonts	= UsedFonts{
-		main	: fonts.get(&font_handles.main).unwrap(),
-		fallback: fonts.get(&font_handles.fallback).unwrap()
+		main	: font_assets.get(&font_handles.main).unwrap(),
+		fallback: font_assets.get(&font_handles.fallback).unwrap()
 	};
 
 	// will make sure we run this function only once
