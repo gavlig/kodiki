@@ -38,7 +38,7 @@ pub fn camera(
 				yaw				: 0.0,
 				pitch			: 0.0,
 				mode			: CameraMode::Reader,
-				enabled_zoom	: true,
+				enabled_zoom	: false,
 				enabled_rotation: false,
 				enabled_translation : false,
 				max_speed		: 0.07,

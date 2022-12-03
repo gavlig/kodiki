@@ -45,7 +45,7 @@ pub struct DespawnResource {
 pub enum AppMode {
 	AssetLoading,
 	AssetsLoaded,
-	Main,			// keyboard input + mouse visible + no camera movement + zoom available
+	Main,			// keyboard input + mouse visible + no camera movement + no zoom available
 	Reader,			// keyboard input + mouse invisible + camera slides up/down + zoom available
 	Fly				// no keyboard input + mouse invisible + flying camera + no zoom available
 }

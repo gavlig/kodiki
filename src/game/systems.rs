@@ -149,7 +149,7 @@ pub fn input_system(
 
 			commands.insert_resource(NextState(AppMode::Reader));
 		} else if key.just_released(KeyCode::LAlt) && camera.mode == CameraMode::Reader {
-			camera.set_restrictions(false, false, true);
+			camera.set_restrictions(false, false, false);
 
 			set_cursor_visibility(true, window);
 
