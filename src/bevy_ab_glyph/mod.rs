@@ -4,19 +4,32 @@ use bevy :: utils	:: HashMap;
 
 use ab_glyph :: { Font, FontVec, GlyphId };
 
-#[derive(TypeUuid)]
+use std :: path::{ PathBuf };
+
+#[derive(TypeUuid, Debug)]
 #[uuid = "1a92e0e6-6915-11ed-9022-0242ac120002"]
 pub struct ABGlyphFont {
 	pub f			: FontVec,
+	pub path		: PathBuf,
 
 	pub scale		: f32,
 	pub depth		: f32, // how thick the mesh is.
 	pub tolerance	: f32, // how detailed the mesh is. bigger number means less details
 }
 
+impl PartialEq for ABGlyphFont {
+    fn eq(&self, other: &Self) -> bool {
+        self.path == other.path && self.scale == other.scale && self.depth == other.depth && self.tolerance == other.tolerance
+    }
+}
+
 impl ABGlyphFont {
 	pub fn glyph_id(&self, glyph_str: &String) -> GlyphId {
 		self.f.glyph_id(glyph_str.chars().next().unwrap())
+	}
+	
+	pub fn glyph_id_char(&self, glyph_char: char) -> GlyphId {
+		self.f.glyph_id(glyph_char)
 	}
 
 	pub fn vertical_advance(&self) -> f32 {
@@ -29,9 +42,14 @@ impl ABGlyphFont {
 	}
 
 	pub fn horizontal_advance(&self, glyph_str: &String) -> f32 {
+		let glyph_char = glyph_str.chars().next().unwrap();
+		self.horizontal_advance_char(glyph_char)
+	}
+	
+	pub fn horizontal_advance_char(&self, glyph_char: char) -> f32 {
 		let unit_scale = self.f.units_per_em().unwrap();
 
-		let glyph_id = self.glyph_id(glyph_str);
+		let glyph_id = self.glyph_id_char(glyph_char);
 		let advance_unscaled = self.f.h_advance_unscaled(glyph_id) / unit_scale;
 		let advance = advance_unscaled * self.scale;
 
@@ -59,12 +77,16 @@ impl ABGlyphFont {
 	}
 }
 
+unsafe impl Sync for ABGlyphFont {}
+unsafe impl Send for ABGlyphFont {}
+
 pub struct UsedFonts<'a> {
 	pub main		: &'a ABGlyphFont,
 	pub fallback	: &'a ABGlyphFont,
 }
 
-pub struct CharWithFonts<'a> {
+#[derive(Clone, Debug)]
+pub struct GlyphWithFonts<'a> {
 	pub glyph_str	: String,
 	pub main		: &'a ABGlyphFont,
 	pub fallback	: &'a ABGlyphFont,
@@ -73,13 +95,13 @@ pub struct CharWithFonts<'a> {
 	pub use_fallback: bool,
 }
 
-impl CharWithFonts<'_> {
+impl GlyphWithFonts<'_> {
 	pub fn new<'a>(
 		glyph_str	: String,
 		used_fonts	: &'a UsedFonts
-	) -> CharWithFonts<'a>
+	) -> GlyphWithFonts<'a>
 	{
-		let mut cwf = CharWithFonts {
+		let mut cwf = GlyphWithFonts {
 			glyph_str	: glyph_str,
 			main		: used_fonts.main,
 			fallback	: used_fonts.fallback,
@@ -94,7 +116,7 @@ impl CharWithFonts<'_> {
 	}
 
 	pub fn use_fallback_font(
-		char_with_fonts	: &CharWithFonts,
+		char_with_fonts	: &GlyphWithFonts,
 	) -> bool
 	{
 		let glyph_id = char_with_fonts.main.glyph_id(&char_with_fonts.glyph_str);
@@ -108,7 +130,7 @@ impl CharWithFonts<'_> {
 	}
 
 	pub fn initialize(&mut self) {
-		self.use_fallback = CharWithFonts::use_fallback_font(&self);
+		self.use_fallback = GlyphWithFonts::use_fallback_font(&self);
 		self.initialized = true;
 	}
 
@@ -123,8 +145,7 @@ impl CharWithFonts<'_> {
 	}
 }
 
-unsafe impl Sync for ABGlyphFont {}
-unsafe impl Send for ABGlyphFont {}
+pub type StringWithFonts<'a> = Vec<GlyphWithFonts<'a>>;
 
 pub type TextMeshesMap = HashMap<String, Handle<Mesh>>;
 

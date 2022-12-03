@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use bevy :: asset :: { AssetLoader, BoxedFuture, LoadContext, LoadedAsset };
 
 use ab_glyph :: { FontVec };
@@ -17,6 +19,7 @@ impl AssetLoader for FontLoader {
 			let f = FontVec::try_from_vec(bytes.to_vec())?;
 			let font = ABGlyphFont {
 				f,
+				path:		PathBuf::from(load_context.path()),
 				scale:      0.1,
 				depth:      0.05,
 				tolerance:  1.0,

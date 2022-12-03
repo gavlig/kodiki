@@ -16,7 +16,7 @@ pub type LyonPoint      = lyon :: math :: Point;
 
 use bevy::render::mesh::shape as render_shape;
 
-use super :: { TextMeshesCache, ABGlyphFont, CharWithFonts };
+use super :: { TextMeshesCache, ABGlyphFont, GlyphWithFonts, StringWithFonts };
 
 type VertexBuffer = VertexBuffers<[f32; 3], u16>;
 type NormalBuffer = Vec<[f32; 3]>;
@@ -346,7 +346,7 @@ fn generate_connecting_quads(
 }
 
 pub fn generate_glyph_mesh_inner(
-	char_with_fonts	: &CharWithFonts,
+	char_with_fonts	: &GlyphWithFonts,
 ) -> (VertexBuffer, NormalBuffer) {
 	let glyph_str			= &char_with_fonts.glyph_str;
 	let font				= char_with_fonts.current_font();
@@ -379,7 +379,7 @@ pub fn generate_glyph_mesh_inner(
 }
 
 pub fn generate_glyph_mesh(
-	char_with_fonts	: &CharWithFonts,
+	char_with_fonts	: &GlyphWithFonts,
 ) -> Mesh {
 	let (vertex_buffer, normals) = generate_glyph_mesh_inner(char_with_fonts);
 
@@ -392,7 +392,7 @@ pub fn generate_glyph_mesh(
 }
 
 pub fn generate_glyph_mesh_wcache(
-	char_with_fonts	: &CharWithFonts,
+	char_with_fonts	: &GlyphWithFonts,
 	mesh_assets	: &mut Assets<Mesh>,
 	text_meshes_cache : &mut TextMeshesCache
 ) -> Handle<Mesh>
@@ -438,7 +438,7 @@ fn offset_indices(
 }
 
 pub fn generate_string_mesh(
-	string_with_fonts : &Vec<CharWithFonts>,
+	string_with_fonts : &Vec<GlyphWithFonts>,
 ) -> Mesh {
 	let mut vertex_buffer_string: VertexBuffer = VertexBuffers::new();
 	let mut normals_string		: NormalBuffer = Vec::new();
@@ -462,8 +462,15 @@ pub fn generate_string_mesh(
 		
 		// accumulate horizontal offset from current glyph for next glyphs
 		let font = char_with_fonts.current_font();
+		let unit_scale = font.f.units_per_em().unwrap();
+		
 		let glyph_str = &char_with_fonts.glyph_str;
-		x += font.horizontal_advance(glyph_str);
+		let glyph_char = glyph_str.chars().next().unwrap();
+		let glyph_id = font.glyph_id_char(glyph_char);
+		
+		let advance_unscaled = font.f.h_advance_unscaled(glyph_id) / unit_scale;
+		
+		x += advance_unscaled;
 	}
 	
 	mesh.insert_attribute	(Mesh::ATTRIBUTE_POSITION, vertex_buffer_string.vertices);
@@ -471,6 +478,29 @@ pub fn generate_string_mesh(
 	mesh.set_indices(Some	(Indices::U16(vertex_buffer_string.indices)));
 
 	mesh
+}
+
+pub fn generate_string_mesh_wcache(
+	string_with_fonts	: &StringWithFonts,
+	mesh_assets			: &mut Assets<Mesh>,
+	text_meshes_cache	: &mut TextMeshesCache
+) -> Handle<Mesh>
+{
+	let mut glyph_str	= String::new();
+	for symbol in string_with_fonts.iter() {
+		glyph_str.push_str(symbol.glyph_str.as_str());
+	}
+
+	match text_meshes_cache.meshes.get(&glyph_str) {
+		Some(handle) => handle.clone_weak(),
+		None => {
+			let handle = mesh_assets.add(
+				generate_string_mesh(string_with_fonts)
+			);
+			
+			text_meshes_cache.meshes.insert_unique_unchecked(glyph_str.clone(), handle).1.clone()
+		}
+	}
 }
 
 fn spawn_sphere(
