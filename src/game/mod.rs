@@ -121,6 +121,7 @@ impl Plugin for AppPlugin {
 				SystemSet::new()
 				.with_system(setup_world_system)
 				.with_system(setup_lighting_system)
+				// .with_system(setup_ab_glyph_tests)
 			)
 
 			.add_system_set(

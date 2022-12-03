@@ -11,7 +11,7 @@ use bevy_debug_text_overlay :: { screen_print };
 use bevy_polyline	:: prelude :: { * };
 
 use crate :: bevy_ab_glyph :: ABGlyphFont;
-use crate :: bevy_ab_glyph :: mesh_generator :: generate_glyph_mesh_dbg;
+use crate :: bevy_ab_glyph :: mesh_generator :: generate_string_mesh;
 
 use super :: spawn :: WorldAxisDesc;
 use super :: { * };
@@ -36,6 +36,41 @@ pub fn setup_world_system(
 	);
 
 	commands.insert_resource(NextState(AppMode::Main));
+}
+
+pub fn setup_ab_glyph_tests(
+	font_assets			: Res<Assets<ABGlyphFont>>,
+	font_handles		: Res<FontAssetHandles>,
+	mut mesh_assets		: ResMut<Assets<Mesh>>,
+	mut material_assets : ResMut<Assets<StandardMaterial>>,
+	mut commands		: Commands,
+) {
+	let used_fonts	= UsedFonts{
+		main	: font_assets.get(&font_handles.main).unwrap(),
+		fallback: font_assets.get(&font_handles.fallback).unwrap()
+	};
+	
+	let text = String::from("test_text_abcd(){}:/@#$");
+	let mut string_with_fonts = StringWithFonts::new();
+	for c in text.chars() {
+		let char_with_fonts = GlyphWithFonts::new(String::from(c), &used_fonts);
+		string_with_fonts.push(char_with_fonts);
+	}
+	
+	let mesh = generate_string_mesh(&string_with_fonts);
+	let mesh_handle = mesh_assets.add(mesh);
+	let material_handle = material_assets.add(Color::WHITE.into());
+	
+	commands.spawn(PbrBundle {
+		mesh : mesh_handle,
+		material : material_handle,
+		transform : Transform {
+			translation	: Vec3::new(0.0, 0.0, 0.5),
+			scale		: [used_fonts.main.scale; 3].into(),
+			..default()
+		},
+		..default()
+	});
 }
 
 pub fn setup_lighting_system(
