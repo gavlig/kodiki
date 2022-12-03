@@ -114,7 +114,7 @@ pub fn surface(
 		y = -v_advance * row as f32;
 		
 		let mut row_bevy		= &mut rows_bevy[y_cell as usize];
-		let mut row_synced		= true;
+		let mut row_synced		= false;
 		let mut words			= Words::new();
 		let mut word_started	= false;
 		
