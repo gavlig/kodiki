@@ -209,7 +209,7 @@ pub fn surface(
 				// println!("word started! symbol {}", cell_helix.symbol);
 			}
 			
-			if end_of_row && !row_synced {
+			if end_of_row && (!row_synced || words.len() == 0) {
 				let word_index	= words.len();
 				cleanup_desync_row(word_index, &mut row_bevy, commands);
 			}
