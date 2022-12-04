@@ -93,7 +93,17 @@ pub fn surface(
 		return;
 	}
 	
-	surface_bevy.rows.resize_with(surface_helix.area.height as usize, || { WordRowBevy::new() });
+	{ // if new surface size is smaller we need to despawn old unused rows
+		let old_rows_cnt = surface_bevy.rows.len();
+		let new_rows_cnt = surface_helix.area.height as usize;
+		if new_rows_cnt < old_rows_cnt {
+			for i in new_rows_cnt .. old_rows_cnt {
+				despawn_row(&mut surface_bevy.rows[i], commands);
+			}
+		}
+		
+		surface_bevy.rows.resize_with(new_rows_cnt, || { WordRowBevy::new() });
+	}
 	
 	let root_entity = surface_bevy.entity.unwrap();
 
@@ -270,6 +280,18 @@ fn check_row_sync(
 	}
 	
 	return false;
+}
+
+fn despawn_row(
+	row_bevy			: &mut WordRowBevy,
+	commands			: &mut Commands
+)
+{
+	let row_len			= row_bevy.len();
+	for i in 0 .. row_len {
+		let word_bevy = &row_bevy[i];
+		commands.entity(word_bevy.entity.unwrap()).despawn_recursive();
+	}
 }
 
 fn cleanup_desync_row(

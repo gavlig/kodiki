@@ -53,21 +53,16 @@ pub fn glyph_quad(
 }
 
 pub fn background_quad(
-	name			: &String,
 	quad_pos_in		: Vec3,
 	quad_size		: Vec2,
-	text_mesh_cache	: &mut TextMeshesCache,
 	mesh_assets		: &mut Assets<Mesh>,
 	commands		: &mut Commands
 ) -> Entity {
-	let mut quad_mesh_name	= String::from("background-quad-");
-	quad_mesh_name.push_str(name.as_str());
-	
-	let quad_mesh_handle = get_quad_mesh_handle(&quad_mesh_name, quad_size, text_mesh_cache, mesh_assets);
+	let quad_mesh_handle = mesh_assets.add(Mesh::from(shape::Quad::new(quad_size)));
 	let quad_pos		= quad_pos_in;
 
 	commands.spawn(PbrBundle {
-		mesh			: quad_mesh_handle.clone_weak(),
+		mesh			: quad_mesh_handle.clone(),
 		transform		: Transform {
 			translation	: quad_pos,
 			..default()
@@ -141,10 +136,8 @@ pub fn surface_quad(
 	let quad_pos		= Vec3::new(quad_x, quad_y, -font.depth_scaled());
 	let quad_entity_id	= 
 	spawn::background_quad(
-		surface_name,
 		quad_pos,
 		Vec2::new(quad_width, quad_height),
-		text_meshes_cache,
 		mesh_assets,
 		commands
 	);
