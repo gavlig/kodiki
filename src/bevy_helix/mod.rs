@@ -35,6 +35,7 @@ pub struct WordBevy {
 	pub entity				: Option<Entity>,
 	pub string				: String,
 	pub color				: helix_view::graphics::Color,
+	pub column				: u32,
 }
 
 pub type WordRowBevy		= Vec<WordBevy>;

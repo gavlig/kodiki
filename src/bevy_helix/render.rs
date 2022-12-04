@@ -114,7 +114,7 @@ pub fn surface(
 		y = -v_advance * row as f32;
 		
 		let mut row_bevy		= &mut rows_bevy[y_cell as usize];
-		let mut row_synced		= false;
+		let mut row_synced		= true;
 		let mut words			= Words::new();
 		let mut word_started	= false;
 		
@@ -153,7 +153,7 @@ pub fn surface(
 				if word_ended {
 					word_started	= false;
 					
-					if row_synced {
+					if row_synced || word_index == 0 {
 						row_synced = check_row_sync(word_index, word, &mut row_bevy, commands);
 					}
 					
@@ -247,11 +247,12 @@ fn check_row_sync(
 
 	// check if it's the same word as we already have in row_bevy and return if so
 	let word_bevy = &row_bevy[word_index];
-	if word_bevy.string == word.string {
+	if word_bevy.string == word.string && word_bevy.column == word.column && word_bevy.color == word.color {
 		return true;
 	}
 	
 	// as we're desynced invalidate all remaining meshes, transforms and materials. Just keep entities to avoid respawning
+	// TODO: we can be smarter here and clean up only current word since next word can be valid just with wrong transform and/or material
 	for i in word_index .. row_len {
 		let word_bevy = &row_bevy[i];
 		commands.entity(word_bevy.entity.unwrap())
@@ -319,11 +320,18 @@ fn update_word_mesh(
 			entity		: Some(word_entity),
 			string		: word.string.clone(),
 			color		: word.color,
+			column		: word.column
 		});
 		
 		return Some(word_entity);
 	} else {
-		let entity = row_bevy[word_index].entity.unwrap();
+		let word_bevy = &mut row_bevy[word_index];
+		
+		word_bevy.string = word.string.clone();
+		word_bevy.color	= word.color;
+		word_bevy.column = word.column;
+		
+		let entity = word_bevy.entity.unwrap();
 		fill_word_entity(entity, word, word_description, &word_mesh_handle, &material_handle, commands);
 		
 		return None;
