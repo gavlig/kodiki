@@ -123,25 +123,17 @@ pub fn surface(
 			let cell_helix		= &cells_helix[content_index];
 			let glyph_with_fonts_current = GlyphWithFonts::new(cell_helix.symbol.clone(), used_fonts);
 			
-			// collect symbols with the same color into a word and spawn it when word ends
+			// collect symbols with the same font/color into a word and spawn it when word ends
 			let symbol_color	= cell_helix.fg;
 			let is_space		= cell_helix.symbol == " " || cell_helix.symbol == "\t";
 			let end_of_row		= x_cell == width - 1;
 			
-			// println!("[{}] started {} ended {} is_space {} different_color {} end_of_row {} different_font {}",
-			// 	if !is_space { cell_helix.symbol.clone() } else { String::from("space") },
-			// 	word.started,
-			// 	word_ended,
-			// 	is_space,
-			// 	different_color,
-			// 	end_of_row,
-			// 	different_font
-			// );
-			
+			// check if word ended and if not then add symbol to the word in progress
 			if word_started {
-				let word_index		= words.len() - 1;
-				let word			= words.last_mut().unwrap();
+				let word_index	= words.len() - 1;
+				let word		= words.last_mut().unwrap();
 				let glyph_with_fonts_current = GlyphWithFonts::new(cell_helix.symbol.clone(), used_fonts);
+				
 				let different_color = word.color != symbol_color;
 				let different_font	= if let Some(char_with_fonts) = word.string_with_fonts.first() {
 					char_with_fonts.current_font() != glyph_with_fonts_current.current_font()
@@ -149,9 +141,10 @@ pub fn surface(
 					false
 				};
 				
-				let word_ended		= is_space || different_color || different_font || end_of_row;
+				// if word ended check if it's different from what we already have spawned and spawn it or re-use existing entity to attach a different mesh to it
+				let word_ended	= is_space || different_color || different_font || end_of_row;
 				if word_ended {
-					word_started	= false;
+					word_started = false;
 					
 					if row_synced || word_index == 0 {
 						row_synced = check_row_sync(word_index, word, &mut row_bevy, commands);
@@ -181,13 +174,9 @@ pub fn surface(
 							surface_children.push(entity);
 						}
 					}
-					
-					// println!("word ended {}: is_space {} different_color {} different_font {} end_of_row {}", word.string, is_space, different_color, different_font, end_of_row);
 				} else {
 					word.string.push_str(cell_helix.symbol.as_str());
 					word.string_with_fonts.push(glyph_with_fonts_current);
-					
-					// println!("word filling! symbol {}", cell_helix.symbol);
 				}
 			}
 			
@@ -205,8 +194,6 @@ pub fn surface(
 				word.string_with_fonts.push(glyph_with_fonts_current);
 				
 				words.push		(word);
-				
-				// println!("word started! symbol {}", cell_helix.symbol);
 			}
 			
 			if end_of_row && (!row_synced || words.len() == 0) {
@@ -222,15 +209,11 @@ pub fn surface(
 		x			= 0.0;
 		column		= 0;
 		row			+= 1;
-		
-		// break;
 	}
 
 	if surface_children.len() > 0 {
 		commands.entity(root_entity).push_children(surface_children.as_slice());
 	}
-	
-	// surface_bevy.update = false;
 }
 
 fn check_row_sync(
