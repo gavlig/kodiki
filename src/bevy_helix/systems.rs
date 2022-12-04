@@ -277,6 +277,7 @@ pub fn tick(
 			&mut container_helix.surface,
 			surface_bevy,
 
+			&app.editor.theme,
 			&used_fonts,
 
 			&mut text_meshes_cache,

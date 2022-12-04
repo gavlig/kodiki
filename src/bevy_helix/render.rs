@@ -78,6 +78,7 @@ pub fn surface(
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
 
+	theme			: &Theme,
 	used_fonts		: &UsedFonts,
 
 	text_meshes_cache : &mut TextMeshesCache,
@@ -209,6 +210,28 @@ pub fn surface(
 		x			= 0.0;
 		column		= 0;
 		row			+= 1;
+	}
+	
+	//
+	//
+	// Background quad color
+	
+	let background_theme = theme.get("ui.background");
+	if background_theme.bg.is_some() {
+		let color			= color_from_helix(background_theme.bg.unwrap());
+		let background_quad_material_handle = get_helix_color_material_handle(
+			color,
+			helix_colors_cache,
+			material_assets
+		);
+
+		// replace material to reflect changed color
+		if let Some(background_entity) = surface_bevy.background_entity {
+			commands.entity		(background_entity)
+			.remove::<Handle<StandardMaterial>>()
+			.insert(background_quad_material_handle.clone_weak())
+			;
+		}
 	}
 
 	if surface_children.len() > 0 {

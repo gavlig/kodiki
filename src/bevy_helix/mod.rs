@@ -52,6 +52,7 @@ pub struct BackgroundQuadBevy {
 #[derive(Debug, Clone, PartialEq)]
 pub struct SurfaceBevy {
 	pub entity  : Option<Entity>,
+	pub background_entity : Option<Entity>,
 	pub rows	: WordRowsBevy,
 	pub area	: helix_view::graphics::Rect,
 	
@@ -62,6 +63,7 @@ impl Default for SurfaceBevy {
 	fn default() -> Self {
 		Self {
 			entity	: None,
+			background_entity : None,
 			rows	: WordRowsBevy::new(),
 			area	: helix_view::graphics::Rect::default(),
 			update	: true,

@@ -10,6 +10,25 @@ use helix_view :: graphics :: Color as HelixColor;
 use crate :: bevy_ab_glyph :: ABGlyphFont;
 use crate :: bevy_ab_glyph :: TextMeshesCache;
 
+fn get_quad_mesh_handle(
+	quad_mesh_name	: &String,
+	quad_size		: Vec2,
+	text_mesh_cache	: &mut TextMeshesCache,
+	mesh_assets		: &mut Assets<Mesh>,
+) -> Handle<Mesh>
+{
+	let quad_mesh_handle = match text_mesh_cache.meshes.get(quad_mesh_name) {
+		Some(handle) => handle.clone_weak(),
+		None => {
+			let handle = mesh_assets.add(Mesh::from(shape::Quad::new(quad_size)));
+			
+			text_mesh_cache.meshes.insert_unique_unchecked(quad_mesh_name.clone(), handle).1.clone()
+		}
+	};
+	
+	return quad_mesh_handle;
+}
+
 pub fn quad(
 	quad_pos_in		: Vec3,
 	quad_size		: Vec2,
@@ -18,34 +37,39 @@ pub fn quad(
 	commands		: &mut Commands
 ) -> Entity {
 	let quad_mesh_name	= String::from("glyph-background-quad");
-	let quad_width		= quad_size.x;
-	let quad_height		= quad_size.y;
-
-	let quad_mesh_handle = match text_mesh_cache.meshes.get(&quad_mesh_name) {
-		Some(handle) => handle.clone_weak(),
-		None => {
-			let handle = mesh_assets.add(
-				Mesh::from(
-					shape::Quad::new(
-						Vec2::new(
-							quad_width,
-							quad_height
-						)
-					)
-				)
-			);
-			
-			text_mesh_cache.meshes.insert_unique_unchecked(quad_mesh_name.clone(), handle).1.clone()
-		}
-	};
-
-	let quad_pos		= quad_pos_in + Vec3::new(quad_width / 2.0, -quad_height / 2.0, 0.0);
+	let quad_mesh_handle = get_quad_mesh_handle(&quad_mesh_name, quad_size, text_mesh_cache, mesh_assets);
+	let quad_pos		= quad_pos_in + Vec3::new(quad_size.x / 2.0, -quad_size.y / 2.0, 0.0);
 
 	commands.spawn(PbrBundle {
 		mesh			: quad_mesh_handle.clone_weak(),
 		transform		: Transform {
 			translation	: quad_pos,
 			// rotation	: Quat::from_rotation_y(std::f32::consts::PI), // winding ccw something something
+			..default()
+		},
+		..default()
+	})
+	.id()
+}
+
+pub fn background_quad_main(
+	name			: &String,
+	quad_pos_in		: Vec3,
+	quad_size		: Vec2,
+	text_mesh_cache	: &mut TextMeshesCache,
+	mesh_assets		: &mut Assets<Mesh>,
+	commands		: &mut Commands
+) -> Entity {
+	let mut quad_mesh_name	= String::from("background-quad-main-");
+	quad_mesh_name.push_str(name.as_str());
+	
+	let quad_mesh_handle = get_quad_mesh_handle(&quad_mesh_name, quad_size, text_mesh_cache, mesh_assets);
+	let quad_pos		= quad_pos_in;
+
+	commands.spawn(PbrBundle {
+		mesh			: quad_mesh_handle.clone_weak(),
+		transform		: Transform {
+			translation	: quad_pos,
 			..default()
 		},
 		..default()
@@ -105,7 +129,48 @@ pub fn surface(
 	
 	let mut surface_bevy = SurfaceBevy::new_with_entity(surface_entity);
 	
-	fill::surface(surface_name, &mut surface_bevy, surface_helix, font, text_meshes_cache, mesh_assets, commands);
+	surface_bevy.area = surface_helix.area;
+
+	let v_advance	= font.vertical_advance();
+	let h_advance	= font.horizontal_advance(&String::from("a")); // in monospace font every letter should be of the same width so we pick 'a'
+	let v_down_offset = font.vertical_down_offset();
+	
+	let width		= surface_helix.area.width;
+	let height		= surface_helix.area.height;
+	
+	let quad_width	= h_advance * width as f32;
+	let quad_height	= v_advance * height as f32;
+	
+	let quad_x		= h_advance * width as f32 / 2.0;
+	let mut quad_y	= -v_advance * height as f32 / 2.0;
+	// + v_advance because we need to cover row 0 with background quads too
+	quad_y 			+= v_advance;
+	// add offset downwards to cover glyphs with vertical advance (y, g, _ etc)
+	quad_y			-= v_down_offset;
+	
+	let quad_pos		= Vec3::new(quad_x, quad_y, -font.depth_scaled());
+	let quad_entity_id	= 
+	spawn::background_quad_main(
+		surface_name,
+		quad_pos,
+		Vec2::new(quad_width, quad_height),
+		text_meshes_cache,
+		mesh_assets,
+		commands
+	);
+	
+	surface_bevy.background_entity = Some(quad_entity_id);
+	
+	commands.entity(surface_entity).add_child(quad_entity_id);
+
+	let text_descriptor = TextDescriptor {
+		rows		: height as u32,
+		columns		: width as u32,
+		glyph_width	: h_advance,
+		glyph_height: v_advance
+	};
+	
+	commands.entity(surface_entity).insert(text_descriptor);
 	
 	surfaces_bevy.insert(surface_name.clone(), surface_bevy);
 
