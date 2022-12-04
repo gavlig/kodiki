@@ -3,8 +3,8 @@
 3. Mouse support
 4. ✅ Some keycodes are missing
 5. Cache words and chunks of background quads
-5.1. ⌨ Words
-5.2. Quads
+5.1. ✅ Words
+5.2. ⌨ Quads
 6. ✅ Panels/surfaces need to be placed and animated
 6.1. ✅Stale panels don't need to be animated
 6.2. ":" panel needs to be anchored to bottom
