@@ -29,7 +29,7 @@ fn get_quad_mesh_handle(
 	return quad_mesh_handle;
 }
 
-pub fn quad(
+pub fn glyph_quad(
 	quad_pos_in		: Vec3,
 	quad_size		: Vec2,
 	text_mesh_cache	: &mut TextMeshesCache,
@@ -52,7 +52,7 @@ pub fn quad(
 	.id()
 }
 
-pub fn background_quad_main(
+pub fn background_quad(
 	name			: &String,
 	quad_pos_in		: Vec3,
 	quad_size		: Vec2,
@@ -60,7 +60,7 @@ pub fn background_quad_main(
 	mesh_assets		: &mut Assets<Mesh>,
 	commands		: &mut Commands
 ) -> Entity {
-	let mut quad_mesh_name	= String::from("background-quad-main-");
+	let mut quad_mesh_name	= String::from("background-quad-");
 	quad_mesh_name.push_str(name.as_str());
 	
 	let quad_mesh_handle = get_quad_mesh_handle(&quad_mesh_name, quad_size, text_mesh_cache, mesh_assets);
@@ -102,6 +102,67 @@ fn color_from_helix(helix_color: HelixColor) -> Color {
 	}
 }
 
+pub fn surface_quad(
+	surface_name	: &String,
+	surface_bevy	: &mut SurfaceBevy,
+	surface_helix	: &SurfaceHelix,
+	font			: &ABGlyphFont,
+	text_meshes_cache : &mut TextMeshesCache,
+	mesh_assets		: &mut Assets<Mesh>,
+	commands		: &mut Commands
+)
+{
+	if let Some(background_entity) = surface_bevy.background_entity {
+		commands.entity(background_entity).despawn();
+	}
+	
+	let surface_entity = surface_bevy.entity.unwrap();
+	surface_bevy.area = surface_helix.area;
+
+	let v_advance	= font.vertical_advance();
+	let h_advance	= font.horizontal_advance(&String::from("a")); // in monospace font every letter should be of the same width so we pick 'a'
+	let v_down_offset = font.vertical_down_offset();
+	
+	let width		= surface_helix.area.width;
+	let height		= surface_helix.area.height;
+	
+	let quad_width	= h_advance * width as f32;
+	let quad_height	= v_advance * height as f32;
+	
+	let quad_x		= h_advance * width as f32 / 2.0;
+	let mut quad_y	= -v_advance * height as f32 / 2.0;
+	// + v_advance because we need to cover row 0 with background quads too
+	quad_y 			+= v_advance;
+	// add offset downwards to cover glyphs with vertical advance (y, g, _ etc)
+	quad_y			-= v_down_offset;
+	
+	println!("filling surface {} len {} w {} h {}", surface_name, surface_helix.content.len(), width, height);
+	
+	let quad_pos		= Vec3::new(quad_x, quad_y, -font.depth_scaled());
+	let quad_entity_id	= 
+	spawn::background_quad(
+		surface_name,
+		quad_pos,
+		Vec2::new(quad_width, quad_height),
+		text_meshes_cache,
+		mesh_assets,
+		commands
+	);
+	
+	surface_bevy.background_entity = Some(quad_entity_id);
+	
+	commands.entity(surface_entity).add_child(quad_entity_id);
+
+	let text_descriptor = TextDescriptor {
+		rows		: height as u32,
+		columns		: width as u32,
+		glyph_width	: h_advance,
+		glyph_height: v_advance
+	};
+	
+	commands.entity(surface_entity).insert(text_descriptor);
+}
+
 pub fn surface(
 	surface_name	: &String,
 	world_position	: Option<Vec3>,
@@ -129,48 +190,7 @@ pub fn surface(
 	
 	let mut surface_bevy = SurfaceBevy::new_with_entity(surface_entity);
 	
-	surface_bevy.area = surface_helix.area;
-
-	let v_advance	= font.vertical_advance();
-	let h_advance	= font.horizontal_advance(&String::from("a")); // in monospace font every letter should be of the same width so we pick 'a'
-	let v_down_offset = font.vertical_down_offset();
-	
-	let width		= surface_helix.area.width;
-	let height		= surface_helix.area.height;
-	
-	let quad_width	= h_advance * width as f32;
-	let quad_height	= v_advance * height as f32;
-	
-	let quad_x		= h_advance * width as f32 / 2.0;
-	let mut quad_y	= -v_advance * height as f32 / 2.0;
-	// + v_advance because we need to cover row 0 with background quads too
-	quad_y 			+= v_advance;
-	// add offset downwards to cover glyphs with vertical advance (y, g, _ etc)
-	quad_y			-= v_down_offset;
-	
-	let quad_pos		= Vec3::new(quad_x, quad_y, -font.depth_scaled());
-	let quad_entity_id	= 
-	spawn::background_quad_main(
-		surface_name,
-		quad_pos,
-		Vec2::new(quad_width, quad_height),
-		text_meshes_cache,
-		mesh_assets,
-		commands
-	);
-	
-	surface_bevy.background_entity = Some(quad_entity_id);
-	
-	commands.entity(surface_entity).add_child(quad_entity_id);
-
-	let text_descriptor = TextDescriptor {
-		rows		: height as u32,
-		columns		: width as u32,
-		glyph_width	: h_advance,
-		glyph_height: v_advance
-	};
-	
-	commands.entity(surface_entity).insert(text_descriptor);
+	surface_quad(surface_name, &mut surface_bevy, surface_helix, font, text_meshes_cache, mesh_assets, commands);
 	
 	surfaces_bevy.insert(surface_name.clone(), surface_bevy);
 
@@ -208,7 +228,7 @@ pub fn cursor(
 
 	// spawn dedicated quad for cursor
 	let quad_entity_id	= 
-	quad(
+	glyph_quad(
 		quad_pos,
 		Vec2::new(quad_width, quad_height),
 		text_meshes_cache,

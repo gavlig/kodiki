@@ -11,7 +11,6 @@ use super :: CursorBevy;
 use super :: HelixColorsCache;
 use super :: application :: Application;
 use super :: spawn;
-use super :: fill;
 use super :: render;
 use super :: animate;
 use super :: editor :: EditorViewBevy;
@@ -384,7 +383,7 @@ fn refill_stale_surfaces(
 		let container_helix = surfaces_helix.get(layer_name).unwrap();
 		if container_helix.surface.area != surface_bevy.area {
 			println!("refilling stale bevy surface: {} helix.area: {:?} bevy.area: {:?}", layer_name, container_helix.surface.area, surface_bevy.area);
-			fill::surface(
+			spawn::surface_quad(
 				layer_name,
 				surface_bevy,
 				&container_helix.surface,
