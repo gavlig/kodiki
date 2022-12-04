@@ -1,6 +1,7 @@
 use bevy :: prelude :: *;
 use bevy :: input :: *;
 use bevy :: input :: keyboard :: *;
+use bevy :: input :: mouse :: { MouseMotion, MouseScrollUnit, MouseWheel };
 
 use super :: application :: Application;
 
@@ -156,4 +157,21 @@ pub fn keyboard(
 		let event = helix_view::input::Event::Key(key_event);
 		tokio_runtime.block_on(app.handle_input_event(&event));
 	}
+}
+
+pub fn mouse(
+	btn				: Res<Input<MouseButton>>,
+	mut mouse_motion_event_reader: EventReader<MouseMotion>,
+	tokio_runtime	: &TokioRuntime,
+	app				: &mut NonSendMut<Application>,
+) {
+	// let mouse_event = helix_view::input::MouseEvent {
+	// 	column		: 0,
+	// 	row			: 0,
+	// 	kind		: helix_view::input::MouseEventKind::Down(())
+	// 	modifiers
+	// };
+
+	// let event = helix_view::input::Event::Mouse(mouse_event);
+	// tokio_runtime.block_on(app.handle_input_event(&event));
 }
