@@ -246,6 +246,7 @@ pub fn update_main(
 
 	// show currently active helix layers with screen_print!
 	screen_print_active_layers(&surfaces_helix);
+	screen_print_stats(&surfaces_bevy);
 
 	cleanup_unused_surfaces(&mut surfaces_helix, &mut surfaces_bevy, &mut despawn);
 	
@@ -324,6 +325,23 @@ fn screen_print_active_layers(
 		surface_names_str.push('\n');
 	}
 	screen_print!("\n{}", surface_names_str);
+}
+
+fn screen_print_stats(
+	surfaces_bevy : &SurfacesMapBevy,
+)
+{
+	let mut stats	= String::default();
+	stats.push_str	("stats:\n");
+	
+	let mut words_cnt = 0;
+	for (_name, surface) in surfaces_bevy.iter() {
+		for row in surface.rows.iter() {
+			words_cnt += row.len();
+		}
+	}
+	stats.push_str(format!("words: {}", words_cnt).as_str());
+	screen_print!("\n{}", stats);
 }
 
 fn cleanup_unused_surfaces(
