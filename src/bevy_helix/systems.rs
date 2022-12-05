@@ -145,8 +145,8 @@ pub fn startup_spawn(
 	let surface_editor_name = String::from(EditorViewBevy::ID);
 	
 	let used_fonts = UsedFonts{
-		main				: font_assets.get(&font_handles.main).unwrap(),
-		fallback			: font_assets.get(&font_handles.fallback).unwrap()
+		main			: font_assets.get(&font_handles.main).unwrap(),
+		fallback		: font_assets.get(&font_handles.fallback).unwrap()
 	};
 	
 	let container_helix_editor = surfaces_helix.get(&surface_editor_name).unwrap();
@@ -157,7 +157,6 @@ pub fn startup_spawn(
 		&mut surfaces_bevy,
 		&container_helix_editor.surface,
 		used_fonts.main,
-		&mut text_meshes_cache,
 		&mut mesh_assets,
 		&mut commands
 	);
@@ -204,7 +203,6 @@ pub fn tick(
 		Res<Assets<ABGlyphFont>>,
 		Res<FontAssetHandles>,
 	),
-	
 		
 	mut	q_transform		: Query<&mut Transform>,
 	
@@ -256,7 +254,6 @@ pub fn tick(
 		&mut surfaces_helix,
 		&mut surfaces_bevy,
 		used_fonts.main,
-		&mut text_meshes_cache,
 		&mut mesh_assets,
 		&mut commands
 	);
@@ -266,7 +263,6 @@ pub fn tick(
 		&mut surfaces_helix,
 		&mut surfaces_bevy,
 		used_fonts.main,
-		&mut text_meshes_cache,
 		&mut mesh_assets,
 		&mut commands
 	);
@@ -373,7 +369,6 @@ fn refill_stale_surfaces(
 	surfaces_bevy	: &mut SurfacesMapBevy,
 	
 	font			: &ABGlyphFont,
-	text_meshes_cache : &mut TextMeshesCache,
 
 	mesh_assets		: &mut Assets<Mesh>,
 	commands		: &mut Commands,
@@ -391,7 +386,6 @@ fn refill_stale_surfaces(
 				surface_bevy,
 				&container_helix.surface,
 				font,
-				text_meshes_cache,
 				mesh_assets,
 				commands
 			);
@@ -404,7 +398,6 @@ fn spawn_bevy_surfaces(
 	surfaces_bevy		: &mut SurfacesMapBevy,
 
 	font				: &ABGlyphFont,
-	mut text_meshes_cache : &mut TextMeshesCache,
 
 	mut mesh_assets		: &mut Assets<Mesh>,
 	mut commands		: &mut Commands,
@@ -423,7 +416,6 @@ fn spawn_bevy_surfaces(
 			&container_helix.surface,
 			&font,
 			
-			&mut text_meshes_cache,
 			&mut mesh_assets,
 			&mut commands
 		);

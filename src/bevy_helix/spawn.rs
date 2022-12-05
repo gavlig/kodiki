@@ -102,7 +102,6 @@ pub fn surface_quad(
 	surface_bevy	: &mut SurfaceBevy,
 	surface_helix	: &SurfaceHelix,
 	font			: &ABGlyphFont,
-	text_meshes_cache : &mut TextMeshesCache,
 	mesh_assets		: &mut Assets<Mesh>,
 	commands		: &mut Commands
 )
@@ -145,15 +144,6 @@ pub fn surface_quad(
 	surface_bevy.background_entity = Some(quad_entity_id);
 	
 	commands.entity(surface_entity).add_child(quad_entity_id);
-
-	let text_descriptor = TextDescriptor {
-		rows		: height as u32,
-		columns		: width as u32,
-		glyph_width	: h_advance,
-		glyph_height: v_advance
-	};
-	
-	commands.entity(surface_entity).insert(text_descriptor);
 }
 
 pub fn surface(
@@ -162,7 +152,6 @@ pub fn surface(
 	surfaces_bevy	: &mut SurfacesMapBevy,
 	surface_helix	: &SurfaceHelix,
 	font			: &ABGlyphFont,
-	text_meshes_cache : &mut TextMeshesCache,
 	mesh_assets		: &mut Assets<Mesh>,
 	commands		: &mut Commands
 ) -> Entity
@@ -183,9 +172,26 @@ pub fn surface(
 	
 	let mut surface_bevy = SurfaceBevy::new_with_entity(surface_entity);
 	
-	surface_quad(surface_name, &mut surface_bevy, surface_helix, font, text_meshes_cache, mesh_assets, commands);
+	surface_quad(surface_name, &mut surface_bevy, surface_helix, font, mesh_assets, commands);
 	
 	surfaces_bevy.insert(surface_name.clone(), surface_bevy);
+	
+	{
+		let v_advance	= font.vertical_advance();
+		let h_advance	= font.horizontal_advance(&String::from("a")); // in monospace font every letter should be of the same width so we pick 'a'
+		
+		let width		= surface_helix.area.width;
+		let height		= surface_helix.area.height;
+		
+		let text_descriptor = TextDescriptor {
+			rows		: height as u32,
+			columns		: width as u32,
+			glyph_width	: h_advance,
+			glyph_height: v_advance
+		};
+		
+		commands.entity(surface_entity).insert(text_descriptor);
+	}
 
 	surface_entity
 }
