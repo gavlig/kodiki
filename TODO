@@ -4,7 +4,7 @@
 4. ✅ Some keycodes are missing
 5. Cache words and chunks of background quads
 5.1. ✅ Words
-5.2. ⌨ Quads
+5.2. ✅ Quads
 6. ✅ Panels/surfaces need to be placed and animated
 6.1. ✅Stale panels don't need to be animated
 6.2. ":" panel needs to be anchored to bottom
@@ -12,7 +12,7 @@
 7. ✅ Other fonts (not ubuntu_mono) have wrong background quad size
 7.1. ✅ that's because i have to make sure i have same font used everywhere 
 8. Completion
-8.1. commands.rs : 3920 completion wants EditorView and we only have EditorViewBevy
+8.1. ⌨ commands.rs : 3920 completion wants EditorView and we only have EditorViewBevy
 9. Handle exit
 10. Show hints on basic helix actions
 11. Showing docs crashes due to not having EditorView either (see 8.1)
