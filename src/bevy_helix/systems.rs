@@ -180,7 +180,7 @@ pub fn startup_spawn(
 	camera.column		= (surface_bevy_editor.area.width / 2) as u32;
 }
 
-pub fn tick(
+pub fn update_main(
 	app		: Option<NonSendMut<Application>>,
 	time	: Res<Time>,
 	
