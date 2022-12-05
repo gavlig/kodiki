@@ -82,6 +82,19 @@ struct TableCoords {
 	pub row		: u32,
 }
 
+impl TableCoords {
+	pub fn next_row(&mut self) {
+		self.x			= 0.0;
+		self.column		= 0;
+		self.row		+= 1;
+	}
+	
+	pub fn next_column(&mut self, glyph: &String, used_fonts: &UsedFonts) {
+		self.x += used_fonts.main.horizontal_advance(glyph);
+		self.column += 1;
+	}
+}
+
 #[derive(Default)]
 struct RowState {
 	pub word_started : bool,
@@ -136,7 +149,7 @@ pub fn surface(
 	for y_cell in 0..height {
 		table_coords.y = -v_advance * table_coords.row as f32;
 		
-		let mut row_bevy		= &mut rows_bevy[y_cell as usize];
+		let row_bevy			= &mut rows_bevy[y_cell as usize];
 		let mut row_state		= RowState::default();
 		let mut words			= Words::new();
 		
@@ -169,14 +182,10 @@ pub fn surface(
 			
 			// update_background_quads
 			
-			table_coords.x += used_fonts.main.horizontal_advance(&cell_helix.symbol);
-
-			table_coords.column += 1;
+			table_coords.next_column(&cell_helix.symbol, used_fonts);
 		}
 
-		table_coords.x			= 0.0;
-		table_coords.column		= 0;
-		table_coords.row		+= 1;
+		table_coords.next_row();
 	}
 	
 	if surface_children.len() > 0 {
@@ -203,10 +212,6 @@ pub fn surface(
 			.insert(background_quad_material_handle.clone_weak())
 			;
 		}
-	}
-
-	if surface_children.len() > 0 {
-		commands.entity(root_entity).push_children(surface_children.as_slice());
 	}
 }
 
