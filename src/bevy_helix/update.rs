@@ -147,7 +147,7 @@ pub fn surface(
 			row_state.ended		= x_cell == width - 1;
 			
 			// if word ended - spawn it, if not ended - add symbol to the word in progress, if space - do nothing
-			let new_word_entity =
+			let mut new_word_entities =
 			update_text(
 				&table_coords,
 				row_bevy,
@@ -165,9 +165,7 @@ pub fn surface(
 				commands
 			);
 			
-			if let Some(entity) = new_word_entity {
-				surface_children.push(entity);
-			}
+			surface_children.append(&mut new_word_entities);
 			
 			// update_background_quads
 			
@@ -228,12 +226,12 @@ fn update_text<'a>(
 	material_assets	: &mut Assets<StandardMaterial>,
 	
 	commands		: &mut Commands,
-) -> Option<Entity>
+) -> Vec<Entity>
 {
 	let symbol_color	= cell_helix.fg;
 	let is_space		= cell_helix.symbol == " " || cell_helix.symbol == "\t";
 	
-	let mut word_entity : Option<Entity> = None;
+	let mut word_entities : Vec<Entity> = Vec::new();
 	let glyph_with_fonts_current = GlyphWithFonts::new(cell_helix.symbol.clone(), used_fonts);
 	
     if row_state.word_started {
@@ -249,32 +247,28 @@ fn update_text<'a>(
 	
 		// if word ended check if it's different from what we already have spawned and spawn it or re-use existing entity to attach a different mesh to it
 		let word_ended	= is_space || different_color || different_font || row_state.ended;
+		
+		if word_ended && row_state.ended && !is_space {
+			word.string.push_str(cell_helix.symbol.as_str());
+			word.string_with_fonts.push(glyph_with_fonts_current.clone());
+		}
+		
 		if word_ended {
-			row_state.word_started = false;
-		
-			if row_state.synced || word_index == 0 {
-				row_state.synced = check_row_sync(word_index, word, row_bevy, commands);
-			}
-		
-			let word_description = WordDescription {
-				string	: word.string.clone(),
-				row		: table_coords.row,
-				column	: table_coords.column,
-			};
-		
-			// now spawn new mesh if needed
-			if !row_state.synced {
-				word_entity = update_word_mesh(
-					word_index,
-					word,
-					&word_description,
-					row_bevy,
-					text_meshes_cache,
-					helix_colors_cache,
-					mesh_assets,
-					material_assets,
-					commands
-				);
+			let entity = on_word_ended(
+				word_index,
+				word,
+				table_coords,
+				row_bevy,
+				row_state,
+				text_meshes_cache,
+				helix_colors_cache,
+				mesh_assets,
+				material_assets,
+				commands
+			);
+			
+			if let Some(to_add) = entity {
+				word_entities.push(to_add)
 			}
 		} else {
 			word.string.push_str(cell_helix.symbol.as_str());
@@ -295,6 +289,25 @@ fn update_text<'a>(
 		word.string.push_str(cell_helix.symbol.as_str());
 		word.string_with_fonts.push(glyph_with_fonts_current.clone());
 	
+		if row_state.ended {
+			let entity = on_word_ended(
+				words.len(),
+				&word,
+				table_coords,
+				row_bevy,
+				row_state,
+				text_meshes_cache,
+				helix_colors_cache,
+				mesh_assets,
+				material_assets,
+				commands
+			);
+			
+			if let Some(to_add) = entity {
+				word_entities.push(to_add)
+			}
+		}
+
 		words.push		(word);
 	}
 	
@@ -303,7 +316,55 @@ fn update_text<'a>(
 		cleanup_desync_row(word_index, row_bevy, commands);
 	}
 	
-	return word_entity;
+	return word_entities;
+}
+
+fn on_word_ended(
+	word_index		: usize,	
+	word 			: &Word,
+	table_coords	: &TableCoords,
+	row_bevy		: &mut Vec<WordBevy>,
+	row_state		: &mut RowState,
+	
+	text_meshes_cache: &mut TextMeshesCache,
+	helix_colors_cache: &mut HelixColorsCache,
+	
+	mesh_assets		: &mut Assets<Mesh>,
+	material_assets	: &mut Assets<StandardMaterial>,
+	
+	commands		: &mut Commands,
+) -> Option<Entity>
+{
+	let mut word_entity : Option<Entity> = None;
+	
+	row_state.word_started = false;
+		
+	if row_state.synced || word_index == 0 {
+		row_state.synced = check_row_sync(word_index, word, row_bevy, commands);
+	}
+
+	let word_description = WordDescription {
+		string	: word.string.clone(),
+		row		: table_coords.row,
+		column	: table_coords.column,
+	};
+
+	// now spawn new mesh if needed
+	if !row_state.synced {
+		word_entity = update_word_mesh(
+			word_index,
+			word,
+			&word_description,
+			row_bevy,
+			text_meshes_cache,
+			helix_colors_cache,
+			mesh_assets,
+			material_assets,
+			commands
+		);
+	}
+	
+	word_entity
 }
 
 fn check_row_sync(
