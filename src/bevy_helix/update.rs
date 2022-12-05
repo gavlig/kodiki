@@ -253,7 +253,7 @@ fn update_text<'a>(
 		// if word ended check if it's different from what we already have spawned and spawn it or re-use existing entity to attach a different mesh to it
 		let word_ended	= is_space || different_color || different_font || row_state.ended;
 		
-		if word_ended && row_state.ended && !is_space {
+		if (word_ended && row_state.ended && !is_space) || !word_ended {
 			word.string.push_str(cell_helix.symbol.as_str());
 			word.string_with_fonts.push(glyph_with_fonts_current.clone());
 		}
@@ -275,9 +275,6 @@ fn update_text<'a>(
 			if let Some(to_add) = entity {
 				word_entities.push(to_add)
 			}
-		} else {
-			word.string.push_str(cell_helix.symbol.as_str());
-			word.string_with_fonts.push(glyph_with_fonts_current.clone());
 		}
 	}
 	
