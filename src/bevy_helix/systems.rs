@@ -303,8 +303,6 @@ pub fn update_main(
 
 		update::cursor(
 			&mut cursor,
-			&mut surface_bevy_editor,
-			&container_helix_editor.surface,
 			&app.editor.theme,
 			&mut helix_colors_cache,
 			&mut material_assets,
@@ -336,7 +334,7 @@ fn screen_print_stats(
 	
 	let mut words_cnt = 0;
 	for (_name, surface) in surfaces_bevy.iter() {
-		for row in surface.rows.iter() {
+		for row in surface.word_rows.iter() {
 			words_cnt += row.len();
 		}
 	}

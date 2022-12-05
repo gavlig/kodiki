@@ -55,21 +55,27 @@ pub fn glyph_quad(
 pub fn background_quad(
 	quad_pos_in		: Vec3,
 	quad_size		: Vec2,
+	material_handle	: Option<&Handle<StandardMaterial>>,
 	mesh_assets		: &mut Assets<Mesh>,
 	commands		: &mut Commands
 ) -> Entity {
 	let quad_mesh_handle = mesh_assets.add(Mesh::from(shape::Quad::new(quad_size)));
-	let quad_pos		= quad_pos_in;
 
-	commands.spawn(PbrBundle {
+	let entity = commands.spawn(PbrBundle {
 		mesh			: quad_mesh_handle.clone(),
 		transform		: Transform {
-			translation	: quad_pos,
+			translation	: quad_pos_in,
 			..default()
 		},
 		..default()
 	})
-	.id()
+	.id();
+	
+	if let Some(handle) = material_handle {
+		commands.entity(entity).insert(handle.clone_weak());
+	}
+	
+	entity
 }
 
 fn color_from_helix(helix_color: HelixColor) -> Color {
@@ -137,6 +143,7 @@ pub fn surface_quad(
 	spawn::background_quad(
 		quad_pos,
 		Vec2::new(quad_width, quad_height),
+		None,
 		mesh_assets,
 		commands
 	);
@@ -219,7 +226,7 @@ pub fn cursor(
 	let glyph_width		= h_advance;
 	let glyph_height	= v_advance;
 
-	let cursor_z		= -font.depth_scaled() + (font.depth_scaled() / 4.0);
+	let cursor_z		= -font.depth_scaled() + (font.depth_scaled() / 4.0); // FIXME: define depth levels somewhere centralized
 
 	let quad_width		= glyph_width;
 	let quad_height		= glyph_height;

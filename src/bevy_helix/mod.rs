@@ -20,52 +20,58 @@ mod systems;
 
 #[derive(Default, Resource)]
 pub struct CursorBevy {
-	pub entity  : Option<Entity>,
-	pub color   : Color,
-	pub x       : u16,
-	pub y       : u16,
-	pub kind    : helix_view::graphics::CursorKind,
+	pub entity  	: Option<Entity>,
+	pub color   	: Color,
+	pub x       	: u16,
+	pub y       	: u16,
+	pub kind    	: helix_view::graphics::CursorKind,
 
 	pub easing_accum : f32,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct WordBevy {
-	pub entity				: Option<Entity>,
-	pub string				: String,
-	pub color				: helix_view::graphics::Color,
-	pub column				: u32,
+	pub entity		: Option<Entity>,
+	pub string		: String,
+	pub color		: helix_view::graphics::Color,
+	pub column		: u32,
 }
 
-pub type WordRowBevy		= Vec<WordBevy>;
-pub type WordRowsBevy		= Vec<WordRowBevy>;
+pub type WordRowBevy	= Vec<WordBevy>;
+pub type WordRowsBevy	= Vec<WordRowBevy>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct BackgroundQuadBevy {
-	pub entity				: Option<Entity>,
-	pub fg					: helix_view::graphics::Color,
-	pub fg_handle			: Option<Handle<StandardMaterial>>,
+	pub entity		: Option<Entity>,
+	pub color		: helix_view::graphics::Color,
+	pub column		: u32,
+	pub length		: u32,
 }
+
+pub type BackgroundQuadRowBevy = Vec<BackgroundQuadBevy>;
+pub type BackgroundQuadRowsBevy	= Vec<BackgroundQuadRowBevy>;
 
 // representation of helix_tui::buffer::Buffer in Bevy
 #[derive(Debug, Clone, PartialEq)]
 pub struct SurfaceBevy {
-	pub entity  : Option<Entity>,
-	pub background_entity : Option<Entity>,
-	pub rows	: WordRowsBevy,
-	pub area	: helix_view::graphics::Rect,
+	pub entity  			: Option<Entity>,
+	pub background_entity	: Option<Entity>,
+	pub word_rows			: WordRowsBevy,
+	pub background_quad_rows: BackgroundQuadRowsBevy,
+	pub area				: helix_view::graphics::Rect,
 	
-	pub update	: bool,
+	pub update				: bool,
 }
 
 impl Default for SurfaceBevy {
 	fn default() -> Self {
 		Self {
-			entity	: None,
+			entity			: None,
 			background_entity : None,
-			rows	: WordRowsBevy::new(),
-			area	: helix_view::graphics::Rect::default(),
-			update	: true,
+			word_rows		: WordRowsBevy::new(),
+			background_quad_rows : BackgroundQuadRowsBevy::new(),
+			area			: helix_view::graphics::Rect::default(),
+			update			: true,
 		}
 	}
 }
