@@ -74,6 +74,21 @@ pub struct WordDescription {
 	pub column	: u32,
 }
 
+#[derive(Default)]
+struct TableCoords {
+	pub x		: f32,
+	pub y		: f32,
+	pub column	: u32,
+	pub row		: u32,
+}
+
+#[derive(Default)]
+struct RowState {
+	pub word_started : bool,
+	pub synced		: bool,
+	pub ended		: bool,
+}
+
 pub fn surface(
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
@@ -111,10 +126,7 @@ pub fn surface(
 
 	let mut surface_children : Vec<Entity> = Vec::new();
 
-	let mut x		= 0.0;
-	let mut y		= 0.0;
-	let mut column	= 0 as u32;
-	let mut row		= 0 as u32;
+	let mut table_coords = TableCoords::default();
 	
 	let width		= surface_helix.area.width;
 	let height		= surface_helix.area.height;
@@ -122,104 +134,55 @@ pub fn surface(
 	let rows_bevy	= &mut surface_bevy.rows;
 
 	for y_cell in 0..height {
-		y = -v_advance * row as f32;
+		table_coords.y = -v_advance * table_coords.row as f32;
 		
 		let mut row_bevy		= &mut rows_bevy[y_cell as usize];
-		let mut row_synced		= true;
+		let mut row_state		= RowState::default();
 		let mut words			= Words::new();
-		let mut word_started	= false;
 		
 		for x_cell in 0..width {
 			let content_index	= (y_cell * width + x_cell) as usize;
 			let cell_helix		= &cells_helix[content_index];
-			let glyph_with_fonts_current = GlyphWithFonts::new(cell_helix.symbol.clone(), used_fonts);
 			
-			// collect symbols with the same font/color into a word and spawn it when word ends
-			let symbol_color	= cell_helix.fg;
-			let is_space		= cell_helix.symbol == " " || cell_helix.symbol == "\t";
-			let end_of_row		= x_cell == width - 1;
+			row_state.ended		= x_cell == width - 1;
 			
-			// check if word ended and if not then add symbol to the word in progress
-			if word_started {
-				let word_index	= words.len() - 1;
-				let word		= words.last_mut().unwrap();
-				let glyph_with_fonts_current = GlyphWithFonts::new(cell_helix.symbol.clone(), used_fonts);
+			// if word ended - spawn it, if not ended - add symbol to the word in progress, if space - do nothing
+			let new_word_entity =
+			update_text(
+				&table_coords,
+				row_bevy,
+				&mut row_state,
 				
-				let different_color = word.color != symbol_color;
-				let different_font	= if let Some(char_with_fonts) = word.string_with_fonts.first() {
-					char_with_fonts.current_font() != glyph_with_fonts_current.current_font()
-				} else {
-					false
-				};
+				&mut words,
+				cell_helix,
 				
-				// if word ended check if it's different from what we already have spawned and spawn it or re-use existing entity to attach a different mesh to it
-				let word_ended	= is_space || different_color || different_font || end_of_row;
-				if word_ended {
-					word_started = false;
-					
-					if row_synced || word_index == 0 {
-						row_synced = check_row_sync(word_index, word, &mut row_bevy, commands);
-					}
-					
-					let word_description = WordDescription {
-						string	: word.string.clone(),
-						row		: row,
-						column	: column,
-					};
-					
-					// now spawn new mesh if needed
-					if !row_synced {
-						let word_entity = update_word_mesh(
-							word_index,
-							word,
-							&word_description,
-							&mut row_bevy,
-							text_meshes_cache,
-							helix_colors_cache,
-							mesh_assets,
-							material_assets,
-							commands
-						);
-						
-						if let Some(entity) = word_entity {
-							surface_children.push(entity);
-						}
-					}
-				} else {
-					word.string.push_str(cell_helix.symbol.as_str());
-					word.string_with_fonts.push(glyph_with_fonts_current);
-				}
+				used_fonts,
+				text_meshes_cache,
+				helix_colors_cache,
+				
+				mesh_assets,
+				material_assets,
+				commands
+			);
+			
+			if let Some(entity) = new_word_entity {
+				surface_children.push(entity);
 			}
 			
-			if !is_space && !word_started {
-				word_started	= true;
-				
-				let mut word	= Word::default();
-				word.x			= x;
-				word.y			= y;
-				word.row		= row;
-				word.column		= column;
-				word.color		= symbol_color;
-				
-				word.string.push_str(cell_helix.symbol.as_str());
-				word.string_with_fonts.push(glyph_with_fonts_current);
-				
-				words.push		(word);
-			}
+			// update_background_quads
 			
-			if end_of_row && (!row_synced || words.len() == 0) {
-				let word_index	= words.len();
-				cleanup_desync_row(word_index, &mut row_bevy, commands);
-			}
-			
-			x += used_fonts.main.horizontal_advance(&cell_helix.symbol);
+			table_coords.x += used_fonts.main.horizontal_advance(&cell_helix.symbol);
 
-			column += 1;
+			table_coords.column += 1;
 		}
 
-		x			= 0.0;
-		column		= 0;
-		row			+= 1;
+		table_coords.x			= 0.0;
+		table_coords.column		= 0;
+		table_coords.row		+= 1;
+	}
+	
+	if surface_children.len() > 0 {
+		commands.entity(root_entity).push_children(surface_children.as_slice());
 	}
 	
 	//
@@ -247,6 +210,100 @@ pub fn surface(
 	if surface_children.len() > 0 {
 		commands.entity(root_entity).push_children(surface_children.as_slice());
 	}
+}
+
+fn update_text<'a>(
+	table_coords	: &TableCoords,
+	row_bevy		: &mut Vec<WordBevy>,
+	row_state		: &mut RowState,
+	
+	words			: &mut Vec<Word<'a>>,
+	cell_helix		: &CellHelix,
+	used_fonts		: &'a UsedFonts<'a>,
+	
+	text_meshes_cache: &mut TextMeshesCache,
+	helix_colors_cache: &mut HelixColorsCache,
+	
+	mesh_assets		: &mut Assets<Mesh>,
+	material_assets	: &mut Assets<StandardMaterial>,
+	
+	commands		: &mut Commands,
+) -> Option<Entity>
+{
+	let symbol_color	= cell_helix.fg;
+	let is_space		= cell_helix.symbol == " " || cell_helix.symbol == "\t";
+	
+	let mut word_entity : Option<Entity> = None;
+	let glyph_with_fonts_current = GlyphWithFonts::new(cell_helix.symbol.clone(), used_fonts);
+	
+    if row_state.word_started {
+		let word_index	= words.len() - 1;
+		let word		= words.last_mut().unwrap();
+	
+		let different_color = word.color != symbol_color;
+		let different_font	= if let Some(char_with_fonts) = word.string_with_fonts.first() {
+			char_with_fonts.current_font() != glyph_with_fonts_current.current_font()
+		} else {
+			false
+		};
+	
+		// if word ended check if it's different from what we already have spawned and spawn it or re-use existing entity to attach a different mesh to it
+		let word_ended	= is_space || different_color || different_font || row_state.ended;
+		if word_ended {
+			row_state.word_started = false;
+		
+			if row_state.synced || word_index == 0 {
+				row_state.synced = check_row_sync(word_index, word, row_bevy, commands);
+			}
+		
+			let word_description = WordDescription {
+				string	: word.string.clone(),
+				row		: table_coords.row,
+				column	: table_coords.column,
+			};
+		
+			// now spawn new mesh if needed
+			if !row_state.synced {
+				word_entity = update_word_mesh(
+					word_index,
+					word,
+					&word_description,
+					row_bevy,
+					text_meshes_cache,
+					helix_colors_cache,
+					mesh_assets,
+					material_assets,
+					commands
+				);
+			}
+		} else {
+			word.string.push_str(cell_helix.symbol.as_str());
+			word.string_with_fonts.push(glyph_with_fonts_current.clone());
+		}
+	}
+	
+    if !is_space && !row_state.word_started {
+		row_state.word_started = true;
+	
+		let mut word	= Word::default();
+		word.x			= table_coords.x;
+		word.y			= table_coords.y;
+		word.row		= table_coords.row;
+		word.column		= table_coords.column;
+		word.color		= symbol_color;
+	
+		word.string.push_str(cell_helix.symbol.as_str());
+		word.string_with_fonts.push(glyph_with_fonts_current.clone());
+	
+		words.push		(word);
+	}
+	
+    if row_state.ended && (!row_state.synced || words.len() == 0) {
+		let word_index	= words.len();
+		cleanup_desync_row(word_index, row_bevy, commands);
+	}
+	
+	return word_entity;
 }
 
 fn check_row_sync(
