@@ -11,7 +11,7 @@ use super :: CursorBevy;
 use super :: HelixColorsCache;
 use super :: application :: Application;
 use super :: spawn;
-use super :: render;
+use super :: update;
 use super :: animate;
 use super :: editor :: EditorViewBevy;
 use super :: input;
@@ -272,7 +272,7 @@ pub fn tick(
 	for (layer_name, container_helix) in surfaces_helix.iter_mut() {
 		let surface_bevy = surfaces_bevy.get_mut(layer_name).unwrap();
 
-		render::surface(
+		update::surface(
 			&mut container_helix.surface,
 			surface_bevy,
 
@@ -301,7 +301,7 @@ pub fn tick(
 			&mut app
 		);
 
-		render::cursor(
+		update::cursor(
 			&mut cursor,
 			&mut surface_bevy_editor,
 			&container_helix_editor.surface,

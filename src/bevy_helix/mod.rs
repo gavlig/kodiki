@@ -12,7 +12,7 @@ mod editor;
 mod compositor;
 
 mod spawn;
-mod render;
+mod update;
 mod animate;
 mod input;
 
