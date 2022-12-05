@@ -175,7 +175,10 @@ pub fn startup_spawn(
 		&mut commands
 	);
 	
-	q_reader_camera.single_mut().target = surface_bevy_editor.entity;
+	let mut camera		= q_reader_camera.single_mut();
+	camera.target		= surface_bevy_editor.entity;
+	camera.row			= (surface_bevy_editor.area.height / 2) as u32;
+	camera.column		= (surface_bevy_editor.area.width / 2) as u32;
 }
 
 pub fn tick(
