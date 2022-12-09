@@ -10,8 +10,8 @@ use helix_core      :: {
 	pos_at_coords, syntax, Selection,
 };
 use helix_lsp       :: { lsp, util :: lsp_pos_to_pos, LspProgressMap };
-use helix_view      :: { align_view, editor :: ConfigEvent, theme, tree :: Layout, Align, Editor, graphics :: Rect };
-use helix_term      :: { config::Config, job :: Jobs, args::Args, keymap::Keymaps, compositor::Compositor, compositor::SurfacesMap, ui::EditorView, ui::Prompt };
+use helix_view      :: { align_view, editor :: ConfigEvent, theme, tree :: Layout, Align, Editor, graphics :: Rect, input :: Event };
+use helix_term      :: { config::Config, job :: Jobs, args::Args, keymap::Keymaps, compositor::Compositor, compositor::SurfacesMap, ui, ui::EditorView, ui::Prompt };
 use helix_tui 		:: { buffer :: Buffer as Surface };
 use serde_json      :: { json };
 use helix_term		:: { commands :: apply_workspace_edit };
@@ -34,12 +34,8 @@ use {
 #[cfg(windows)]
 type Signals = futures_util::stream::Empty<()>;
 
-use super :: compositor :: CompositorBevy;
-use super :: editor;
-use super :: editor :: EditorViewBevy;
-
 pub struct Application {
-	compositor	: CompositorBevy,
+	compositor	: Compositor,
 	pub editor	: Editor,
 	pub area	: Rect,
 
@@ -115,7 +111,7 @@ impl Application {
 		});
 		let syn_loader = std::sync::Arc::new(syntax::Loader::new(syn_loader_conf));
 
-		let mut compositor = CompositorBevy::new().context("build compositor")?;
+		let mut compositor = Compositor::new(area);
 		let config = Arc::new(ArcSwap::from_pointee(config));
 
 		let mut editor = Editor::new(
@@ -131,7 +127,7 @@ impl Application {
 			&config.keys
 		}));
 
-		let editor_view = Box::new(editor::EditorViewBevy::new(Keymaps::new(keys)));
+		let editor_view = Box::new(ui::EditorView::new(Keymaps::new(keys)));
 		compositor.push(editor_view);
 
 		if args.load_tutor {
@@ -239,7 +235,7 @@ impl Application {
 			 scroll: None,
 		};
 
-		compositor.render(Some(surface), &mut cx);
+		compositor.render(self.area, surface, &mut cx);
 	}
 
 	pub fn render_ext(&mut self, area: Rect, surfaces: &mut SurfacesMap) {
@@ -271,9 +267,7 @@ impl Application {
 			scroll: None,
 		};
 
-		let compositor_bevy = &mut self.compositor;
-		let compositor_helix = compositor_bevy as &mut dyn helix_term::compositor::Compositor;
-		compositor_helix.handle_event(event, &mut cx);
+		self.compositor.handle_event(event, &mut cx);
 	}
 
 	pub async fn handle_tokio_events(&mut self) {
@@ -318,26 +312,14 @@ impl Application {
 			_ => unreachable!(),
 		}
 	}
-
-	pub fn handle_idle_timeout(&mut self) {
-		use helix_term::compositor::EventResult;
-		let type_name = std::any::type_name::<EditorViewBevy>();
-		let editor_view : &mut EditorViewBevy = self
-			.compositor
-			.find(type_name)
-			.expect("expected at least one EditorView")
-			.downcast_mut()
-			.unwrap();
-
+	
+	pub async fn handle_idle_timeout(&mut self) {
 		let mut cx = helix_term::compositor::Context {
 			editor: &mut self.editor,
 			jobs: &mut self.jobs,
 			scroll: None,
 		};
-		if let EventResult::Consumed(_) = editor_view.handle_idle_timeout(&mut cx) {
-			println!("handle_idle_timeout event consumed");
-			// self.render();
-		}
+		let should_render = self.compositor.handle_event(&Event::IdleTimeout, &mut cx);
 	}
 
 	pub async fn handle_language_server_message(
@@ -384,13 +366,13 @@ impl Application {
 
 						// trigger textDocument/didOpen for docs that are already open
 						for doc in docs {
-							let language_id =
-								doc.language_id().map(ToOwned::to_owned).unwrap_or_default();
-
 							let url = match doc.url() {
 								Some(url) => url,
 								None => continue, // skip documents with no path
 							};
+
+							let language_id =
+								doc.language_id().map(ToOwned::to_owned).unwrap_or_default();
 
 							tokio::spawn(language_server.text_document_did_open(
 								url,
@@ -498,7 +480,8 @@ impl Application {
 										severity,
 										code,
 										tags,
-										source: diagnostic.source.clone()
+										source: diagnostic.source.clone(),
+										data: diagnostic.data.clone(),
 									})
 								})
 								.collect();
@@ -528,15 +511,12 @@ impl Application {
 					Notification::ProgressMessage(params)
 						if !self
 							.compositor
-							.has_component(std::any::type_name::<Prompt>()) =>
+							.has_component(std::any::type_name::<ui::Prompt>()) =>
 					{
-						let type_name = std::any::type_name::<EditorViewBevy>();
-						let editor_view : &mut EditorViewBevy = self
+						let editor_view = self
 							.compositor
-							.find(type_name)
-							.expect("expected at least one EditorViewBevy")
-							.downcast_mut()
-							.unwrap();
+							.find::<ui::EditorView>()
+							.expect("expected at least one EditorView");
 						let lsp::ProgressParams { token, value } = params;
 
 						let lsp::ProgressParamsValue::WorkDone(work) = value;
@@ -614,6 +594,32 @@ impl Application {
 					Notification::ProgressMessage(_params) => {
 						// do nothing
 					}
+					Notification::Exit => {
+						self.editor.set_status("Language server exited");
+
+						// Clear any diagnostics for documents with this server open.
+						let urls: Vec<_> = self
+							.editor
+							.documents_mut()
+							.filter_map(|doc| {
+								if doc.language_server().map(|server| server.id())
+									== Some(server_id)
+								{
+									doc.set_diagnostics(Vec::new());
+									doc.url()
+								} else {
+									None
+								}
+							})
+							.collect();
+
+						for url in urls {
+							self.editor.diagnostics.remove(&url);
+						}
+
+						// Remove the language server from the registry.
+						self.editor.language_servers.remove_by_id(server_id);
+					}
 				}
 			}
 			Call::MethodCall(helix_lsp::jsonrpc::MethodCall {
@@ -639,13 +645,10 @@ impl Application {
 					MethodCall::WorkDoneProgressCreate(params) => {
 						self.lsp_progress.create(server_id, params.token);
 
-						let type_name = std::any::type_name::<EditorViewBevy>();
-						let editor_view : &mut EditorViewBevy = self
+						let editor_view = self
 							.compositor
-							.find(type_name)
-							.expect("expected at least one EditorViewBevy")
-							.downcast_mut()
-							.unwrap();
+							.find::<ui::EditorView>()
+							.expect("expected at least one EditorView");
 						let spinner = editor_view.spinners_mut().get_or_create(server_id);
 						if spinner.is_stopped() {
 							spinner.start();

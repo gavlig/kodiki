@@ -8,9 +8,6 @@ use crate :: { game :: AppMode, bevy_ab_glyph :: StringWithFonts };
 
 mod application;
 use application :: *;
-mod editor;
-mod compositor;
-
 mod spawn;
 mod update;
 mod animate;

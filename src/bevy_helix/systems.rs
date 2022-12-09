@@ -13,7 +13,6 @@ use super :: application :: Application;
 use super :: spawn;
 use super :: update;
 use super :: animate;
-use super :: editor :: EditorViewBevy;
 use super :: input;
 use super :: TokioRuntime;
 
@@ -26,6 +25,7 @@ use helix_term  :: config		:: Config;
 use helix_term  :: args			:: Args;
 use helix_term	:: compositor	:: SurfaceContainer as SurfaceContainerHelix;
 use helix_term	:: compositor	:: SurfacePlacement as SurfacePlacementHelix;
+use helix_term	:: ui			:: EditorView;
 use helix_tui   :: buffer		:: Buffer as SurfaceHelix;
 use helix_view  :: graphics 	:: { Rect };
 
@@ -77,7 +77,7 @@ pub fn startup_app(
 
 	let surface_editor = SurfaceHelix::empty(rect);
 	surfaces_helix.insert(
-		String::from(EditorViewBevy::ID),
+		String::from(EditorView::ID),
 		SurfaceContainerHelix {
 			surface: surface_editor,
 			placement: SurfacePlacementHelix::Center,
@@ -142,7 +142,7 @@ pub fn startup_spawn(
 	mut material_assets	: ResMut<Assets<StandardMaterial>>,
 	mut commands        : Commands,
 ) {
-	let surface_editor_name = String::from(EditorViewBevy::ID);
+	let surface_editor_name = String::from(EditorView::ID);
 	
 	let used_fonts = UsedFonts{
 		main			: font_assets.get(&font_handles.main).unwrap(),
@@ -238,7 +238,7 @@ pub fn update_main(
 
 	// first let helix render into surface_helix
 	if old_style {
-		let surface_helix_editor = surfaces_helix.get_mut(&String::from(EditorViewBevy::ID)).unwrap();
+		let surface_helix_editor = surfaces_helix.get_mut(&String::from(EditorView::ID)).unwrap();
 		app.render(&mut surface_helix_editor.surface);
 	} else {
 		app.render_ext(editor_area, &mut surfaces_helix);
@@ -290,8 +290,8 @@ pub fn update_main(
 
 	// render and animate cursor
 	if app.editor_focused() { 
-		let mut surface_bevy_editor = surfaces_bevy.get_mut(&String::from(EditorViewBevy::ID)).unwrap();
-		let container_helix_editor = surfaces_helix.get(&String::from(EditorViewBevy::ID)).unwrap();
+		let mut surface_bevy_editor = surfaces_bevy.get_mut(&String::from(EditorView::ID)).unwrap();
+		let container_helix_editor = surfaces_helix.get(&String::from(EditorView::ID)).unwrap();
 
 		animate::cursor(
 			&mut cursor,
