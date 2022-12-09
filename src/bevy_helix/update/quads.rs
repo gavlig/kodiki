@@ -194,9 +194,7 @@ fn on_quad_ended(
 	
 	commands		: &mut Commands,
 ) -> Option<Entity>
-{
-	return None;
-	
+{	
 	let mut quad_entity : Option<Entity> = None;
 	
 	row_state.quad_started = false;
