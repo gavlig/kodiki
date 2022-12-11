@@ -6,6 +6,7 @@
 5.1. ✅ Words
 5.1. bug: sometimes symbols dont get cleaned up on deletion
 5.2. ✅ Quads
+5.2.1. ✅ bug: ":" panel doesnt clean up unused rows of background quads when changing size to smaller
 6. ✅ Panels/surfaces need to be placed and animated
 6.1. ✅Stale panels don't need to be animated
 6.2. ":" panel needs to be anchored to bottom

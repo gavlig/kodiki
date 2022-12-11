@@ -83,7 +83,7 @@ pub fn surface(
 		let new_rows_cnt = surface_helix.area.height as usize;
 		if new_rows_cnt < old_rows_cnt {
 			for i in new_rows_cnt .. old_rows_cnt {
-				despawn_row(&mut surface_bevy.word_rows[i], commands);
+				despawn_row(i, surface_bevy, commands);
 			}
 		}
 		
@@ -235,13 +235,20 @@ pub fn cursor(
 }
 
 fn despawn_row(
-	row_bevy			: &mut WordRowBevy,
-	commands			: &mut Commands
+	row_num			: usize,
+	surface_bevy	: &mut SurfaceBevy,
+	commands		: &mut Commands
 )
 {
-	let row_len			= row_bevy.len();
+	let row_len		= surface_bevy.word_rows[row_num].len();
 	for i in 0 .. row_len {
-		let word_bevy = &row_bevy[i];
+		let word_bevy = &mut surface_bevy.word_rows[row_num][i];
 		commands.entity(word_bevy.entity.unwrap()).despawn_recursive();
+	}
+	
+	let row_len		= surface_bevy.background_quad_rows[row_num].len();
+	for i in 0 .. row_len {
+		let quad_bevy = &mut surface_bevy.background_quad_rows[row_num][i];
+		commands.entity(quad_bevy.entity.unwrap()).despawn_recursive();
 	}
 }
