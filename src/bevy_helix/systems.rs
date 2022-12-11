@@ -32,35 +32,7 @@ use helix_view  :: graphics 	:: { Rect };
 use anyhow      :: { Context, Error, Result };
 
 use std :: path :: PathBuf;
-use std::time::Duration;
-
-fn setup_logging(logpath: PathBuf, verbosity: u64) -> Result<()> {
-	let mut base_config = fern::Dispatch::new();
-
-	base_config = match verbosity {
-		0 => base_config.level(log::LevelFilter::Warn),
-		1 => base_config.level(log::LevelFilter::Info),
-		2 => base_config.level(log::LevelFilter::Debug),
-		_3_or_more => base_config.level(log::LevelFilter::Trace),
-	};
-
-	// Separate file config so we can include year, month and day in file logs
-	let file_config = fern::Dispatch::new()
-		.format(|out, message, record| {
-			out.finish(format_args!(
-				"{} {} [{}] {}",
-				chrono::Local::now().format("%Y-%m-%dT%H:%M:%S%.3f"),
-				record.target(),
-				record.level(),
-				message
-			))
-		})
-		.chain(fern::log_file(logpath)?);
-
-	base_config.chain(file_config).apply()?;
-
-	Ok(())
-}
+use std :: time :: Duration;
 
 pub fn startup_app(
 	world: &mut World,
@@ -96,9 +68,6 @@ pub fn startup_app(
 
 async fn startup_impl(area: Rect) -> Result<Application, Error> {
 	let args = Args::parse_args().context("could not parse arguments").unwrap();
-
-	// let logpath = args.log_file.as_ref().cloned().unwrap_or(helix_loader::log_file());
-	// setup_logging(logpath, args.verbosity).context("failed to initialize logging").unwrap();
 
 	let config_dir = helix_loader::config_dir();
 	if !config_dir.exists() {
