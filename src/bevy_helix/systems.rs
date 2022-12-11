@@ -189,11 +189,6 @@ pub fn update_main(
 		fallback: font_assets.get(&font_handles.fallback).unwrap()
 	};
 
-	// will make sure we run this function only once
-	// if surfaces_bevy.len() > 1 {
-	//  	return;
-	// }
-
 	let mut app = app.unwrap();
 
 	let editor_area = app.area;
