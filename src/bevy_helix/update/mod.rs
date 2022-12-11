@@ -1,4 +1,5 @@
 use bevy				:: prelude :: { * };
+use bevy				:: render :: primitives :: { Sphere, Frustum };
 use bevy_contrib_colors	:: { Tailwind };
 
 use crate				:: bevy_ab_glyph::{ UsedFonts, TextMeshesCache };
@@ -63,6 +64,7 @@ pub fn surface(
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
 
+	camera_frustum	: &Frustum,
 	theme			: &Theme,
 	used_fonts		: &UsedFonts,
 
@@ -95,6 +97,15 @@ pub fn surface(
 
 	for y_cell in 0..height {
 		table_coords.y = -v_advance * table_coords.row as f32;
+		
+		let sphere = Sphere {
+			center: Vec3::new(table_coords.x, table_coords.y, 0.0).into(),
+			radius: used_fonts.main.vertical_advance(),
+		};
+		
+		if !camera_frustum.intersects_sphere(&sphere, false) {
+			continue;
+		}
 		
 		let mut word_row_state	= words::RowState::default();
 		let mut words			= words::Row::new();

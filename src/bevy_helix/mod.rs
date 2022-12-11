@@ -26,6 +26,13 @@ pub struct CursorBevy {
 	pub easing_accum : f32,
 }
 
+#[derive(Component, Clone, Debug)]
+pub struct WordDescription {
+	pub string	: String,
+	pub row		: u32,
+	pub column	: u32,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct WordBevy {
 	pub entity		: Option<Entity>,
@@ -153,12 +160,14 @@ impl Plugin for BevyHelixPlugin {
 				.with_system(systems::startup_spawn)
 				.into()
 			)
+			
 			.add_system_set(
 				ConditionSet::new()
 				.run_in_state(AppMode::Main)
 				.with_system(systems::update_main)
 				.with_system(systems::tokio_events)
 				.with_system(systems::input_keyboard)
+				.with_system(systems::despawn_culled_words)
 				.into()
 			)
 			.add_system_set(
@@ -166,6 +175,7 @@ impl Plugin for BevyHelixPlugin {
 				.run_in_state(AppMode::Reader)
 				.with_system(systems::update_main)
 				.with_system(systems::tokio_events)
+				.with_system(systems::despawn_culled_words)
 				.into()
 			)
 			.add_system_set(
@@ -173,6 +183,7 @@ impl Plugin for BevyHelixPlugin {
 				.run_in_state(AppMode::Fly)
 				.with_system(systems::update_main)
 				.with_system(systems::tokio_events)
+				.with_system(systems::despawn_culled_words)
 				.into()
 			)
  			;

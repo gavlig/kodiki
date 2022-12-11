@@ -42,13 +42,6 @@ pub struct RowState {
 	pub ended		: bool,
 }
 
-#[derive(Component, Clone, Debug)]
-pub struct WordDescription {
-	pub string	: String,
-	pub row		: u32,
-	pub column	: u32,
-}
-
 pub fn update<'a>(
 	table_coords	: &TableCoords,
 	row_bevy		: &mut WordRowBevy,

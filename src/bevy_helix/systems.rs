@@ -1,10 +1,13 @@
 use bevy :: prelude :: *;
 use bevy :: input :: keyboard :: *;
+use bevy::render::primitives::Aabb;
+use bevy :: render :: primitives :: { Sphere, Frustum };
 use bevy_tweening :: { lens :: *, * };
 
 use bevy_debug_text_overlay :: screen_print;
 use bevy_reader_camera :: ReaderCamera;
 
+use super :: WordDescription;
 use super :: SurfacesMapBevy;
 use super :: SurfacesMapHelix;
 use super :: CursorBevy;
@@ -174,6 +177,7 @@ pub fn update_main(
 	),
 		
 	mut	q_transform		: Query<&mut Transform>,
+	mut q_camera_frustum: Query<&Frustum, With<ReaderCamera>>,
 	
 	mut mesh_assets		: ResMut<Assets<Mesh>>,
 	mut material_assets	: ResMut<Assets<StandardMaterial>>,
@@ -231,6 +235,8 @@ pub fn update_main(
 		&mut mesh_assets,
 		&mut commands
 	);
+	
+	let camera_frustum = q_camera_frustum.single();
 
 	// render and animate surfaces
 	for (layer_name, container_helix) in surfaces_helix.iter_mut() {
@@ -241,6 +247,7 @@ pub fn update_main(
 			surface_helix,
 			surface_bevy,
 
+			camera_frustum,
 			&app.editor.theme,
 			&used_fonts,
 
@@ -448,4 +455,26 @@ pub fn tokio_events(
 	let mut app = app.unwrap();
 
 	tokio_runtime.block_on(app.handle_tokio_events());
+}
+
+pub fn despawn_culled_words(
+		q_camera_frustum: Query<&Frustum, With<ReaderCamera>>,
+		q_words			: Query<(Entity, &GlobalTransform, &Aabb), With<WordDescription>>,
+	mut commands		: Commands,
+) {
+	let camera_frustum = q_camera_frustum.single();
+	
+	for (word_entity, transform, aabb) in q_words.iter() {
+		let model = transform.compute_matrix();
+		let model_sphere = Sphere {
+			center: model.transform_point3a(aabb.center),
+			radius: transform.radius_vec3a(aabb.half_extents),
+		};
+		
+		if camera_frustum.intersects_sphere(&model_sphere, false) {
+			continue;
+		}
+		
+		commands.entity(word_entity).despawn_recursive();
+	}
 }
