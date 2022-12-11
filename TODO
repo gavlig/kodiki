@@ -2,9 +2,9 @@
 2. ✅ Symbols of diagnostic and spinner are missing
 3. Mouse support
 4. ✅ Some keycodes are missing
-5. Cache words and chunks of background quads
+5. ✅ Cache words and chunks of background quads
 5.1. ✅ Words
-5.1. bug: sometimes symbols dont get cleaned up on deletion
+5.1. ✅ bug: sometimes symbols dont get cleaned up on deletion
 5.2. ✅ Quads
 5.2.1. ✅ bug: ":" panel doesnt clean up unused rows of background quads when changing size to smaller
 6. ✅ Panels/surfaces need to be placed and animated

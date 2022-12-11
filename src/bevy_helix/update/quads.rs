@@ -169,12 +169,12 @@ pub fn update<'a>(
 			}
 		}
 
-		quad_row.push		(quad);
+		quad_row.push	(quad);
 	}
 	
-    if row_state.ended && (!row_state.synced || quad_row.len() == 0) {
-		let quad_index	= quad_row.len();
-		cleanup_desync_quad_row(quad_index, row_bevy, commands);
+	let quads_cnt		= quad_row.len();
+    if row_state.ended && (!row_state.synced || quad_row.len() == 0 || quads_cnt < row_bevy.len()) {
+		cleanup_desync_quad_row(quads_cnt, row_bevy, commands);
 	}
 	
 	return quad_entities;

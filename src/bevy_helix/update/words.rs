@@ -147,9 +147,9 @@ pub fn update<'a>(
 		words.push		(word);
 	}
 	
-    if row_state.ended && (!row_state.synced || words.len() == 0) {
-		let word_index	= words.len();
-		cleanup_desync_word_row(word_index, row_bevy, commands);
+	let words_cnt		= words.len();
+    if row_state.ended && (!row_state.synced || words_cnt == 0 || words_cnt < row_bevy.len()) {
+		cleanup_desync_word_row(words_cnt, row_bevy, commands);
 	}
 	
 	return word_entities;
