@@ -51,10 +51,10 @@ pub struct WordDescription {
 
 pub fn update<'a>(
 	table_coords	: &TableCoords,
-	row_bevy		: &mut Vec<WordBevy>,
+	row_bevy		: &mut WordRowBevy,
 	row_state		: &mut RowState,
 	
-	words			: &mut Vec<Word<'a>>,
+	words_row		: &mut Row<'a>,
 	cell_helix		: &CellHelix,
 	used_fonts		: &'a UsedFonts<'a>,
 	
@@ -74,8 +74,8 @@ pub fn update<'a>(
 	let glyph_with_fonts_current = GlyphWithFonts::new(cell_helix.symbol.clone(), used_fonts);
 	
     if row_state.word_started {
-		let word_index	= words.len() - 1;
-		let word		= words.last_mut().unwrap();
+		let word_index	= words_row.len() - 1;
+		let word		= words_row.last_mut().unwrap();
 	
 		let different_color = word.color != symbol_color;
 		let different_font	= if let Some(char_with_fonts) = word.string_with_fonts.first() {
@@ -127,7 +127,7 @@ pub fn update<'a>(
 	
 		if row_state.ended {
 			let entity = on_word_ended(
-				words.len(),
+				words_row.len(),
 				&word,
 				table_coords,
 				row_bevy,
@@ -144,10 +144,10 @@ pub fn update<'a>(
 			}
 		}
 
-		words.push		(word);
+		words_row.push		(word);
 	}
 	
-	let words_cnt		= words.len();
+	let words_cnt		= words_row.len();
     if row_state.ended && (!row_state.synced || words_cnt == 0 || words_cnt < row_bevy.len()) {
 		cleanup_desync_word_row(words_cnt, row_bevy, commands);
 	}
@@ -237,23 +237,23 @@ fn check_word_row_sync(
 }
 
 fn cleanup_desync_word_row(
-	word_index			: usize,
+	word_index_from		: usize,
 	row_bevy			: &mut WordRowBevy,
 	commands			: &mut Commands
 )
 {
 	let row_len			= row_bevy.len();
-	if word_index >= row_len {
+	if word_index_from >= row_len {
 		return;
 	}
 	
-	for i in word_index .. row_len {
-		let word_bevy = &row_bevy[i];
-		commands.entity(word_bevy.entity.unwrap()).despawn_recursive();
+	for i in word_index_from .. row_len {
+		let word_bevy	= &row_bevy[i];
+		commands.entity	(word_bevy.entity.unwrap()).despawn_recursive();
 	}
 	
-	assert!(word_index <= row_len);
-	row_bevy.truncate(word_index);
+	assert!(word_index_from <= row_len);
+	row_bevy.truncate(word_index_from);
 }
 
 fn update_word_mesh(

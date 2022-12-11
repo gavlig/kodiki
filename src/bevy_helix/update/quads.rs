@@ -80,7 +80,7 @@ pub fn update<'a>(
 	row_bevy		: &mut BackgroundQuadRowBevy,
 	row_state		: &mut RowState,
 	
-	quad_row		: &mut Row,
+	quads_row		: &mut Row,
 	cell_helix		: &CellHelix,
 	used_fonts		: &'a UsedFonts<'a>,
 	
@@ -99,8 +99,8 @@ pub fn update<'a>(
 	let mut quad_entities : Vec<Entity> = Vec::new();
 	
     if row_state.quad_started {
-		let quad_index	= quad_row.len() - 1;
-		let quad		= quad_row.last_mut().unwrap();
+		let quad_index	= quads_row.len() - 1;
+		let quad		= quads_row.last_mut().unwrap();
 	
 		// if word ended check if it's different from what we already have spawned and spawn it or re-use existing entity to attach a different mesh to it
 		let quad_ended	= is_space || row_state.ended;
@@ -153,7 +153,7 @@ pub fn update<'a>(
 	
 		if row_state.ended {
 			let entity = on_quad_ended(
-				quad_row.len(),
+				quads_row.len(),
 				&quad,
 				table_coords,
 				row_bevy,
@@ -169,11 +169,11 @@ pub fn update<'a>(
 			}
 		}
 
-		quad_row.push	(quad);
+		quads_row.push	(quad);
 	}
 	
-	let quads_cnt		= quad_row.len();
-    if row_state.ended && (!row_state.synced || quad_row.len() == 0 || quads_cnt < row_bevy.len()) {
+	let quads_cnt		= quads_row.len();
+    if row_state.ended && (!row_state.synced || quads_row.len() == 0 || quads_cnt < row_bevy.len()) {
 		cleanup_desync_quad_row(quads_cnt, row_bevy, commands);
 	}
 	
