@@ -78,18 +78,7 @@ pub fn surface(
 		return;
 	}
 	
-	{ // if new surface size is smaller we need to despawn old unused rows
-		let old_rows_cnt = surface_bevy.word_rows.len();
-		let new_rows_cnt = surface_helix.area.height as usize;
-		if new_rows_cnt < old_rows_cnt {
-			for i in new_rows_cnt .. old_rows_cnt {
-				despawn_row(i, surface_bevy, commands);
-			}
-		}
-		
-		surface_bevy.word_rows.resize_with(new_rows_cnt, || { WordRowBevy::new() });
-		surface_bevy.background_quad_rows.resize_with(new_rows_cnt, || { BackgroundQuadRowBevy::new() });
-	}
+	cleanup_unused_rows(surface_helix, surface_bevy, commands);
 	
 	let background_style = theme.get("ui.background");
 	
@@ -251,4 +240,21 @@ fn despawn_row(
 		let quad_bevy = &mut surface_bevy.background_quad_rows[row_num][i];
 		commands.entity(quad_bevy.entity.unwrap()).despawn_recursive();
 	}
+}
+
+fn cleanup_unused_rows(
+	surface_helix	: &SurfaceHelix,
+	surface_bevy	: &mut SurfaceBevy,
+	commands		: &mut Commands,
+) {
+	let old_rows_cnt = surface_bevy.word_rows.len();
+	let new_rows_cnt = surface_helix.area.height as usize;
+	if new_rows_cnt < old_rows_cnt {
+		for i in new_rows_cnt .. old_rows_cnt {
+			despawn_row(i, surface_bevy, commands);
+		}
+	}
+	
+	surface_bevy.word_rows.resize_with(new_rows_cnt, || { WordRowBevy::new() });
+	surface_bevy.background_quad_rows.resize_with(new_rows_cnt, || { BackgroundQuadRowBevy::new() });
 }
