@@ -214,8 +214,8 @@ pub fn update_main(
 
 	cleanup_unused_surfaces(&mut surfaces_helix, &mut surfaces_bevy, &mut despawn);
 	
-	// if surface area changed - refill it
-	refill_stale_surfaces(
+	// if surface area changed - respawn its background quad
+	respawn_stale_surface_quads(
 		&mut surfaces_helix,
 		&mut surfaces_bevy,
 		used_fonts.main,
@@ -344,7 +344,7 @@ fn cleanup_unused_surfaces(
 }
 
 // "stale" bevy surface is the one that has a size different from its helix counterpart
-fn refill_stale_surfaces(
+fn respawn_stale_surface_quads(
 	surfaces_helix	: &mut SurfacesMapHelix,
 	surfaces_bevy	: &mut SurfacesMapBevy,
 	
@@ -360,7 +360,7 @@ fn refill_stale_surfaces(
 
 		let container_helix = surfaces_helix.get(layer_name).unwrap();
 		if container_helix.surface.area != surface_bevy.area {
-			println!("refilling stale bevy surface: {} helix.area: {:?} bevy.area: {:?}", layer_name, container_helix.surface.area, surface_bevy.area);
+			println!("respawning stale bevy surface quad: {} helix.area: {:?} bevy.area: {:?}", layer_name, container_helix.surface.area, surface_bevy.area);
 			spawn::surface_quad(
 				layer_name,
 				surface_bevy,
