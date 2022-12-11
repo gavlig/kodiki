@@ -235,9 +235,10 @@ pub fn update_main(
 	// render and animate surfaces
 	for (layer_name, container_helix) in surfaces_helix.iter_mut() {
 		let surface_bevy = surfaces_bevy.get_mut(layer_name).unwrap();
+		let surface_helix = &mut container_helix.surface;
 
 		update::surface(
-			&mut container_helix.surface,
+			surface_helix,
 			surface_bevy,
 
 			&app.editor.theme,
@@ -298,8 +299,8 @@ fn screen_print_stats(
 	
 	let mut words_cnt = 0;
 	for (_name, surface) in surfaces_bevy.iter() {
-		for row in surface.word_rows.iter() {
-			words_cnt += row.len();
+		for row in surface.rows.iter() {
+			words_cnt += row.words.len();
 		}
 	}
 	stats.push_str(format!("words: {}", words_cnt).as_str());

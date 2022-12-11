@@ -48,13 +48,20 @@ pub struct BackgroundQuadBevy {
 pub type BackgroundQuadRowBevy = Vec<BackgroundQuadBevy>;
 pub type BackgroundQuadRowsBevy	= Vec<BackgroundQuadRowBevy>;
 
+#[derive(Clone, PartialEq, Default, Debug)]
+pub struct RowBevy {
+	pub words		: WordRowBevy,
+	pub quads		: BackgroundQuadRowBevy,
+}
+
+pub type RowsBevy = Vec<RowBevy>;
+
 // representation of helix_tui::buffer::Buffer in Bevy
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct SurfaceBevy {
 	pub entity  			: Option<Entity>,
 	pub background_entity	: Option<Entity>,
-	pub word_rows			: WordRowsBevy,
-	pub background_quad_rows: BackgroundQuadRowsBevy,
+	pub rows				: RowsBevy,
 	pub area				: helix_view::graphics::Rect,
 	
 	pub update				: bool,
@@ -65,8 +72,7 @@ impl Default for SurfaceBevy {
 		Self {
 			entity			: None,
 			background_entity : None,
-			word_rows		: WordRowsBevy::new(),
-			background_quad_rows : BackgroundQuadRowsBevy::new(),
+			rows		: RowsBevy::new(),
 			area			: helix_view::graphics::Rect::default(),
 			update			: true,
 		}

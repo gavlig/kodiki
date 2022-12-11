@@ -78,7 +78,8 @@ pub fn surface(
 		return;
 	}
 	
-	cleanup_unused_rows(surface_helix, surface_bevy, commands);
+	despawn_unused_rows(surface_helix, surface_bevy, commands);
+	surface_bevy.rows.resize_with(surface_helix.area.height as usize, || { RowBevy::default() });
 	
 	let background_style = theme.get("ui.background");
 	
@@ -107,8 +108,7 @@ pub fn surface(
 			
 			{
 				
-			let word_rows_bevy	= &mut surface_bevy.word_rows;
-			let word_row_bevy	= &mut word_rows_bevy[y_cell as usize];
+			let words_row_bevy	= &mut surface_bevy.rows[y_cell as usize].words;
 			
 			word_row_state.ended = x_cell == width - 1;
 			quad_row_state.ended = word_row_state.ended;
@@ -117,7 +117,7 @@ pub fn surface(
 			let mut new_word_entities =
 			words::update(
 				&table_coords,
-				word_row_bevy,
+				words_row_bevy,
 				&mut word_row_state,
 				
 				&mut words,
@@ -138,14 +138,13 @@ pub fn surface(
 			
 			{
 				
-			let quad_rows_bevy	= &mut surface_bevy.background_quad_rows;
-			let quad_row_bevy	= &mut quad_rows_bevy[y_cell as usize];
+			let quads_row_bevy	= &mut surface_bevy.rows[y_cell as usize].quads;
 			
 			let mut new_quad_entities =
 			quads::update(
 				&background_style,
 				&table_coords,
-				quad_row_bevy,
+				quads_row_bevy,
 				&mut quad_row_state,
 				
 				&mut quads,
@@ -229,32 +228,29 @@ fn despawn_row(
 	commands		: &mut Commands
 )
 {
-	let row_len		= surface_bevy.word_rows[row_num].len();
+	let row_len		= surface_bevy.rows[row_num].words.len();
 	for i in 0 .. row_len {
-		let word_bevy = &mut surface_bevy.word_rows[row_num][i];
+		let word_bevy = &mut surface_bevy.rows[row_num].words[i];
 		commands.entity(word_bevy.entity.unwrap()).despawn_recursive();
 	}
 	
-	let row_len		= surface_bevy.background_quad_rows[row_num].len();
+	let row_len		= surface_bevy.rows[row_num].quads.len();
 	for i in 0 .. row_len {
-		let quad_bevy = &mut surface_bevy.background_quad_rows[row_num][i];
+		let quad_bevy = &mut surface_bevy.rows[row_num].quads[i];
 		commands.entity(quad_bevy.entity.unwrap()).despawn_recursive();
 	}
 }
 
-fn cleanup_unused_rows(
+fn despawn_unused_rows(
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
 	commands		: &mut Commands,
 ) {
-	let old_rows_cnt = surface_bevy.word_rows.len();
+	let old_rows_cnt = surface_bevy.rows.len();
 	let new_rows_cnt = surface_helix.area.height as usize;
 	if new_rows_cnt < old_rows_cnt {
 		for i in new_rows_cnt .. old_rows_cnt {
 			despawn_row(i, surface_bevy, commands);
 		}
 	}
-	
-	surface_bevy.word_rows.resize_with(new_rows_cnt, || { WordRowBevy::new() });
-	surface_bevy.background_quad_rows.resize_with(new_rows_cnt, || { BackgroundQuadRowBevy::new() });
 }

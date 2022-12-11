@@ -149,7 +149,7 @@ pub fn update<'a>(
 	
 	let words_cnt		= words_row.len();
     if row_state.ended && (!row_state.synced || words_cnt == 0 || words_cnt < row_bevy.len()) {
-		cleanup_desync_word_row(words_cnt, row_bevy, commands);
+		cleanup_word_row_from(words_cnt, row_bevy, commands);
 	}
 	
 	return word_entities;
@@ -187,7 +187,7 @@ fn on_word_ended(
 
 	// now spawn new mesh if needed
 	if !row_state.synced {
-		word_entity = update_word_mesh(
+		word_entity = update_word(
 			word_index,
 			word,
 			&word_description,
@@ -236,7 +236,7 @@ fn check_word_row_sync(
 	return false;
 }
 
-fn cleanup_desync_word_row(
+fn cleanup_word_row_from(
 	word_index_from		: usize,
 	row_bevy			: &mut WordRowBevy,
 	commands			: &mut Commands
@@ -256,7 +256,7 @@ fn cleanup_desync_word_row(
 	row_bevy.truncate(word_index_from);
 }
 
-fn update_word_mesh(
+fn update_word(
 	word_index			: usize,
 	word 				: &Word,
 	word_description	: &WordDescription,
@@ -276,7 +276,7 @@ fn update_word_mesh(
 		material_assets
 	);
 	
-	// spawn new word if it doesnt exist in the row yet
+	// spawn new word if row doesnt have entity yet
 	if word_index >= row_bevy.len() {
 		let word_entity = spawn_word_mesh(
 			word,
@@ -294,6 +294,7 @@ fn update_word_mesh(
 		});
 		
 		return Some(word_entity);
+	// replace word mesh otherwise
 	} else {
 		let word_bevy = &mut row_bevy[word_index];
 		
@@ -302,7 +303,7 @@ fn update_word_mesh(
 		word_bevy.column = word.column;
 		
 		let entity = word_bevy.entity.unwrap();
-		fill_word_entity(entity, word, word_description, &word_mesh_handle, &material_handle, commands);
+		insert_word_mesh(entity, word, word_description, &word_mesh_handle, &material_handle, commands);
 		
 		return None;
 	}
@@ -333,7 +334,7 @@ fn spawn_word_mesh(
 	word_mesh_entity
 }
 
-fn fill_word_entity(
+fn insert_word_mesh(
 	entity			: Entity,
 	word 			: &Word,
 	word_description: &WordDescription,
