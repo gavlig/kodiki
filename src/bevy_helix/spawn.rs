@@ -124,7 +124,7 @@ pub fn surface_quad(
 	let v_down_offset = font.vertical_down_offset();
 	
 	let width		= surface_helix.area.width;
-	let height		= surface_helix.area.height;
+	let height		= 3000u16;//surface_helix.area.height;
 	
 	let quad_width	= h_advance * width as f32;
 	let quad_height	= v_advance * height as f32;

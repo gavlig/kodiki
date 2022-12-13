@@ -31,6 +31,7 @@ use helix_term	:: compositor	:: SurfacePlacement as SurfacePlacementHelix;
 use helix_term	:: ui			:: EditorView;
 use helix_tui   :: buffer		:: Buffer as SurfaceHelix;
 use helix_view  :: graphics 	:: { Rect };
+use helix_view					:: { View };
 
 use anyhow      :: { Context, Error, Result };
 
@@ -177,7 +178,8 @@ pub fn update_main(
 	),
 		
 	mut	q_transform		: Query<&mut Transform>,
-	mut q_camera_frustum: Query<&Frustum, With<ReaderCamera>>,
+	// mut q_camera_frustum: Query<&Frustum, With<ReaderCamera>>,
+	mut q_camera		: Query<&mut ReaderCamera>,
 	
 	mut mesh_assets		: ResMut<Assets<Mesh>>,
 	mut material_assets	: ResMut<Assets<StandardMaterial>>,
@@ -187,7 +189,7 @@ pub fn update_main(
 	if app.is_none() {
 		return;
 	}
-
+	
 	let used_fonts	= UsedFonts{
 		main	: font_assets.get(&font_handles.main).unwrap(),
 		fallback: font_assets.get(&font_handles.fallback).unwrap()
@@ -201,6 +203,18 @@ pub fn update_main(
 	for (_name, surface_container) in surfaces_helix.iter_mut() {
 		surface_container.surface.reset();
 	}
+	
+	let mut row_offset = 0 as u32;
+	for (view, is_focused) in app.editor.tree.views() {
+		if is_focused {
+			println!("{:?}", view.offset);
+			row_offset = view.offset.row as u32;
+		}
+	}
+	
+	let mut reader_camera = q_camera.single_mut();
+	reader_camera.row_offset = row_offset;
+
 
 	let old_style = false;
 
@@ -236,8 +250,8 @@ pub fn update_main(
 		&mut commands
 	);
 	
-	let camera_frustum = q_camera_frustum.single();
-
+	// let camera_frustum = q_camera_frustum.single();
+	
 	// render and animate surfaces
 	for (layer_name, container_helix) in surfaces_helix.iter_mut() {
 		let surface_bevy = surfaces_bevy.get_mut(layer_name).unwrap();
@@ -247,7 +261,8 @@ pub fn update_main(
 			surface_helix,
 			surface_bevy,
 
-			camera_frustum,
+			row_offset,
+			// camera_frustum,
 			&app.editor.theme,
 			&used_fonts,
 

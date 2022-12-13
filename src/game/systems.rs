@@ -240,7 +240,8 @@ pub fn stats_system(
 			(0.0, 0.0)
 		};
 
-		screen_print!("row: {}({:.1}) col: {}({:.1}) zoom: {:.1} pitch: {:.1} glyph_w: {:.1} glyph_h: {:.1}",
+		screen_print!("visible rows: {} row: {}({:.1}) col: {}({:.1}) zoom: {:.1} pitch: {:.1} glyph_w: {:.1} glyph_h: {:.1}",
+			camera.visible_rows,
 			camera.row,
 			camera.vertical_scroll,
 			camera.column,

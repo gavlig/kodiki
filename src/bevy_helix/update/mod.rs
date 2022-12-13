@@ -64,7 +64,7 @@ pub fn surface(
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
 
-	camera_frustum	: &Frustum,
+	row_offset		: u32,
 	theme			: &Theme,
 	used_fonts		: &UsedFonts,
 
@@ -96,7 +96,7 @@ pub fn surface(
 	let cells_helix = &surface_helix.content;
 
 	for y_cell in 0..height {
-		table_coords.y = -v_advance * table_coords.row as f32;
+		table_coords.y = -v_advance * (table_coords.row + row_offset) as f32;
 		
 		let sphere = Sphere {
 			center: Vec3::new(table_coords.x, table_coords.y, 0.0).into(),

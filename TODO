@@ -25,7 +25,7 @@
 15.1. follow cursor with camera
 15.1.1. when cursor reaches visible end with up/down arrows
 15.1.2. when cursor reaches visible end with pageup/pagedown
-15.2. Profile rendering all text to see if system is the culprit or rendering
+15.2. ✅ Profile rendering all text to see if system is the culprit or rendering: it's helix + the amount of entities, not update system
 16. Separate bevy update from helix update
 17. ✅ Figure out how logging works: bevy takes care of it with env_logging, can be controlled with RUST_LOG="error, warn, info, debug, trace"
 18. ✅ Update Helix to latest (20221210)
