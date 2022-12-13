@@ -218,12 +218,14 @@ fn check_word_row_sync(
 	// TODO: we can be smarter here and clean up only current word since next word can be valid just with wrong transform and/or material
 	for i in word_index .. row_len {
 		let word_bevy = &row_bevy[i];
-		commands.entity(word_bevy.entity.unwrap())
-		.remove::<Handle<Mesh>>()
-		.remove::<Handle<StandardMaterial>>()
-		.remove::<Transform>()
-		.remove::<WordDescription>()
-		;
+		if let Some(entity) = word_bevy.entity {
+			commands.entity(entity)
+				.remove::<Handle<Mesh>>()
+				.remove::<Handle<StandardMaterial>>()
+				.remove::<Transform>()
+				.remove::<WordDescription>()
+			;
+		}
 	}
 	
 	return false;
@@ -242,7 +244,9 @@ fn cleanup_word_row_from(
 	
 	for i in word_index_from .. row_len {
 		let word_bevy	= &row_bevy[i];
-		commands.entity	(word_bevy.entity.unwrap()).despawn_recursive();
+		if let Some(entity) = word_bevy.entity {
+			commands.entity(entity).despawn_recursive();	
+		}
 	}
 	
 	assert!(word_index_from <= row_len);
@@ -269,8 +273,10 @@ fn update_word(
 		material_assets
 	);
 	
-	// spawn new word if row doesnt have entity yet
-	if word_index >= row_bevy.len() {
+	// spawn new word if row doesnt have entity
+	let new_word		= word_index >= row_bevy.len();
+	let despawned_word	= !new_word && row_bevy[word_index].entity.is_none();
+	if new_word || despawned_word {
 		let word_entity = spawn_word_mesh(
 			word,
 			word_description,
@@ -279,12 +285,18 @@ fn update_word(
 			commands
 		);
 		
-		row_bevy.push(WordBevy {
+		let word_bevy = WordBevy {
 			entity		: Some(word_entity),
 			string		: word.string.clone(),
 			color		: word.color,
 			column		: word.column
-		});
+		};
+		
+		if new_word {
+			row_bevy.push(word_bevy);
+		} else {
+			row_bevy[word_index] = word_bevy;
+		}
 		
 		return Some(word_entity);
 	// replace word mesh otherwise

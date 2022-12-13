@@ -318,12 +318,14 @@ fn check_quad_row_sync(
 	// TODO: we can be smarter here and clean up only current word since next word can be valid just with wrong transform and/or material
 	for i in quad_index .. row_len {
 		let quad_bevy = &row_bevy[i];
-		commands.entity(quad_bevy.entity.unwrap())
-			.remove::<Handle<Mesh>>()
-			.remove::<Handle<StandardMaterial>>()
-			.remove::<Transform>()
-			.remove::<QuadDescription>()
-		;
+		if let Some(entity) = quad_bevy.entity {
+			commands.entity(entity)
+				.remove::<Handle<Mesh>>()
+				.remove::<Handle<StandardMaterial>>()
+				.remove::<Transform>()
+				.remove::<QuadDescription>()
+			;
+		}
 	}
 	
 	return false;
@@ -342,7 +344,9 @@ fn cleanup_desync_quad_row(
 	
 	for i in quad_index .. row_len {
 		let quad_bevy = &row_bevy[i];
-		commands.entity(quad_bevy.entity.unwrap()).despawn_recursive();
+		if let Some(entity) = quad_bevy.entity {
+			commands.entity(entity).despawn_recursive();
+		}
 	}
 	
 	assert!(quad_index <= row_len);

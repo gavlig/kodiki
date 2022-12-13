@@ -242,13 +242,19 @@ fn despawn_row(
 	let row_len		= surface_bevy.rows[row_num].words.len();
 	for i in 0 .. row_len {
 		let word_bevy = &mut surface_bevy.rows[row_num].words[i];
-		commands.entity(word_bevy.entity.unwrap()).despawn_recursive();
+		if let Some(entity) = word_bevy.entity {
+			commands.entity(entity).despawn_recursive();
+			word_bevy.entity = None;
+		}
 	}
 	
 	let row_len		= surface_bevy.rows[row_num].quads.len();
 	for i in 0 .. row_len {
 		let quad_bevy = &mut surface_bevy.rows[row_num].quads[i];
-		commands.entity(quad_bevy.entity.unwrap()).despawn_recursive();
+		if let Some(entity) = quad_bevy.entity {
+			commands.entity(entity).despawn_recursive();
+			quad_bevy.entity = None;
+		}
 	}
 }
 
