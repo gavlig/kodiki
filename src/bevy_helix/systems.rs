@@ -215,22 +215,44 @@ pub fn update_main(
 	let mut reader_camera = q_camera.single_mut();
 	reader_camera.row_offset = row_offset;
 
-
-	let old_style = false;
+	#[derive(PartialEq, Eq)]
+	enum RenderMode {
+		Vanilla,
+		Kodiki,
+		Benchmark
+	}
+	
+	let render_mode = RenderMode::Kodiki;
 
 	// first let helix render into surface_helix
-	if old_style {
-		let surface_helix_editor = surfaces_helix.get_mut(&String::from(EditorView::ID)).unwrap();
-		app.render(&mut surface_helix_editor.surface);
-	} else {
-		app.render_ext(editor_area, &mut surfaces_helix);
+	match render_mode {
+		RenderMode::Vanilla => {
+			let surface_helix_editor = surfaces_helix.get_mut(&String::from(EditorView::ID)).unwrap();
+			app.render(&mut surface_helix_editor.surface);
+		},
+		RenderMode::Kodiki => {
+			let surface_bevy_editor = surfaces_bevy.get_mut(&String::from(EditorView::ID)).unwrap();
+			app.render_ext(editor_area, &mut surfaces_helix);
+		},
+		RenderMode::Benchmark => {
+			let surface_bevy_editor = surfaces_bevy.get_mut(&String::from(EditorView::ID)).unwrap();
+			if surface_bevy_editor.update {
+				let surface_helix_editor = surfaces_helix.get_mut(&String::from(EditorView::ID)).unwrap();
+				for cell in surface_helix_editor.surface.content.iter_mut() {
+					cell.symbol = String::from("A");
+					cell.bg = app.editor.theme.get("ui.background").bg.unwrap();
+				}
+			}
+		}
 	}
-
+	
 	// show currently active helix layers with screen_print!
 	screen_print_active_layers(&surfaces_helix);
 	screen_print_stats(&surfaces_bevy);
 
-	cleanup_unused_surfaces(&mut surfaces_helix, &mut surfaces_bevy, &mut despawn);
+	if render_mode != RenderMode::Benchmark {
+		cleanup_unused_surfaces(&mut surfaces_helix, &mut surfaces_bevy, &mut despawn);
+	}
 	
 	// if surface area changed - respawn its background quad
 	respawn_stale_surface_quads(
