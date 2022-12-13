@@ -95,7 +95,7 @@ pub fn surface(
 	let height		= surface_helix.area.height;
 	let cells_helix = &surface_helix.content;
 
-	for y_cell in 0..height {
+	for row in 0..height {
 		table_coords.y = -v_advance * (table_coords.row + row_offset) as f32;
 		
 		let sphere = Sphere {
@@ -113,15 +113,15 @@ pub fn surface(
 		let mut quad_row_state	= quads::RowState::default();
 		let mut quads			= quads::Row::new();
 		
-		for x_cell in 0..width {
-			let content_index	= (y_cell * width + x_cell) as usize;
+		for column in 0..width {
+			let content_index	= (row * width + column) as usize;
 			let cell_helix		= &cells_helix[content_index];
 			
 			{
 				
-			let words_row_bevy	= &mut surface_bevy.rows[y_cell as usize].words;
+			let words_row_bevy	= &mut surface_bevy.rows[row as usize].words;
 			
-			word_row_state.ended = x_cell == width - 1;
+			word_row_state.ended = column == width - 1;
 			quad_row_state.ended = word_row_state.ended;
 			
 			// if word ended - spawn it, if not ended - add symbol to the word in progress, if space - do nothing
@@ -149,7 +149,7 @@ pub fn surface(
 			
 			{
 				
-			let quads_row_bevy	= &mut surface_bevy.rows[y_cell as usize].quads;
+			let quads_row_bevy	= &mut surface_bevy.rows[row as usize].quads;
 			
 			let mut new_quad_entities =
 			quads::update(
