@@ -65,8 +65,7 @@ impl TableCoords {
 pub fn surface(
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
-
-	reader_camera	: &ReaderCamera,
+	
 	row_offset_global : i32,
 	theme			: &Theme,
 	used_fonts		: &UsedFonts,
@@ -83,9 +82,6 @@ pub fn surface(
 		return;
 	}
 	
-	// this is only needed for auxiliary surfaces (":" prompt)
-	// despawn_unused_rows(surface_helix, surface_bevy, commands);
-	
 	let rows_helix		= surface_helix.area.height as i32;
 	let columns_helix	= surface_helix.area.width as i32;
 	
@@ -93,6 +89,8 @@ pub fn surface(
 	let rows_scrolling_half = rows_scrolling / 2;
 	
 	let rows_total		= rows_helix + rows_scrolling;
+	
+	despawn_unused_rows	(rows_total as usize, surface_bevy, commands);
 	
 	let row_offset_global_cache = surface_bevy.row_offset_global;
 	let row_offset_delta = row_offset_global - row_offset_global_cache;
@@ -299,12 +297,11 @@ fn despawn_row(
 }
 
 fn despawn_unused_rows(
-	surface_helix	: &SurfaceHelix,
+	new_rows_cnt	: usize,
 	surface_bevy	: &mut SurfaceBevy,
 	commands		: &mut Commands,
 ) {
 	let old_rows_cnt = surface_bevy.rows.len();
-	let new_rows_cnt = surface_helix.area.height as usize;
 	if new_rows_cnt < old_rows_cnt {
 		for i in new_rows_cnt .. old_rows_cnt {
 			despawn_row(i, surface_bevy, commands);

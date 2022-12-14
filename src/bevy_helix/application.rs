@@ -226,7 +226,7 @@ impl Application {
 		Ok(app)
 	}
 
-	pub fn render(&mut self, surface: &mut Surface) {
+	pub fn render(&mut self, area: Rect, surface: &mut Surface) {
 		let compositor = &mut self.compositor;
 
 		let mut cx = helix_term::compositor::Context {
@@ -234,8 +234,9 @@ impl Application {
 			 jobs: &mut self.jobs,
 			 scroll: None,
 		};
-
-		compositor.render(self.area, surface, &mut cx);
+		
+		compositor.resize(area);
+		compositor.render(area, surface, &mut cx);
 	}
 
 	pub fn render_ext(&mut self, area: Rect, surfaces: &mut SurfacesMap) {
@@ -247,10 +248,11 @@ impl Application {
 			 scroll: None,
 		};
 
+		compositor.resize(area);
 		compositor.render_ext(area, surfaces, &mut cx);
 	}
 
-	pub fn cursor(&mut self, area : helix_view::graphics::Rect) -> (Option<(u16, u16)>, helix_view::graphics::CursorKind) {
+	pub fn cursor(&mut self, area : Rect) -> (Option<(u16, u16)>, helix_view::graphics::CursorKind) {
 		let (pos, kind) = self.compositor.cursor(area, &self.editor);
 		(pos.map(|pos| (pos.col as u16, pos.row as u16)), kind)
 	}

@@ -28,9 +28,13 @@
 15.2. ✅ Profile rendering all text to see if system is the culprit or rendering: it's helix + the amount of entities, not update system
 15.3. ✅ Show extra two pages of text while hiding invisible parts when scrolling
 15.3.1. Bug: not everything gets cleaned up during this
-15.4. Make surface size depend on the amount of visible rows in camera
+15.4. ✅ Make surface size depend on the amount of visible rows in camera
 15.5. Determine size of background quad when opening file
 15.6. Separate logic for non-scrollable surfaces
+15.7. ✅ Bug: moving with pageup/pagedown too fast crashes kodiki -> that was happening due to camera.translate being desync with camera.frustum
+15.8. Bug: moving with pageup/pagedown too fast breaks test rendering
+15.9. Determine initial camera row 
 16. Separate bevy update from helix update
+16.1. maybe do event based update and listen to edit events from helix?
 17. ✅ Figure out how logging works: bevy takes care of it with env_logging, can be controlled with RUST_LOG="error, warn, info, debug, trace"
 18. ✅ Update Helix to latest (20221210)

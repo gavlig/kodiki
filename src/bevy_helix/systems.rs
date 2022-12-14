@@ -149,7 +149,7 @@ pub fn startup_spawn(
 	
 	let mut camera		= q_reader_camera.single_mut();
 	camera.target		= surface_bevy_editor.entity;
-	camera.row			= (surface_bevy_editor.area.height / 2) as u32;
+	camera.row			= 25u32;//(surface_bevy_editor.area.height / 2) as u32;
 	camera.column		= (surface_bevy_editor.area.width / 2) as u32;
 }
 
@@ -178,7 +178,6 @@ pub fn update_main(
 	),
 		
 	mut	q_transform		: Query<&mut Transform>,
-	// mut q_camera_frustum: Query<&Frustum, With<ReaderCamera>>,
 	mut q_camera		: Query<&mut ReaderCamera>,
 	
 	mut mesh_assets		: ResMut<Assets<Mesh>>,
@@ -196,11 +195,25 @@ pub fn update_main(
 	};
 
 	let mut app = app.unwrap();
+	
+	let mut row_offset = 0;
+	for (view, is_focused) in app.editor.tree.views() {
+		if is_focused {
+			row_offset = view.offset.row;
+		}
+	}
+	
+	let mut reader_camera = q_camera.single_mut();
+	reader_camera.row_offset = row_offset as u32;
 
-	let editor_area = app.area;
+	let mut editor_area = app.area;
+	editor_area.height = reader_camera.visible_rows as u16;
 
 	// erase previous frame
-	for (_name, surface_container) in surfaces_helix.iter_mut() {
+	for (name, surface_container) in surfaces_helix.iter_mut() {
+		if name == EditorView::ID {
+			surface_container.surface.resize(editor_area);
+		}
 		surface_container.surface.reset();
 	}
 	
@@ -217,7 +230,7 @@ pub fn update_main(
 	match render_mode {
 		RenderMode::Vanilla => {
 			let surface_helix_editor = surfaces_helix.get_mut(&String::from(EditorView::ID)).unwrap();
-			app.render(&mut surface_helix_editor.surface);
+			app.render(editor_area, &mut surface_helix_editor.surface);
 		},
 		RenderMode::Kodiki => {
 			let surface_bevy_editor = surfaces_bevy.get_mut(&String::from(EditorView::ID)).unwrap();
@@ -261,18 +274,6 @@ pub fn update_main(
 		&mut commands
 	);
 	
-	// let camera_frustum = q_camera_frustum.single();
-	
-	let mut row_offset = 0;
-	for (view, is_focused) in app.editor.tree.views() {
-		if is_focused {
-			row_offset = view.offset.row;
-		}
-	}
-	
-	let mut reader_camera = q_camera.single_mut();
-	reader_camera.row_offset = row_offset as u32;
-	
 	// render and animate surfaces
 	for (layer_name, container_helix) in surfaces_helix.iter_mut() {
 		let surface_bevy = surfaces_bevy.get_mut(layer_name).unwrap();
@@ -282,9 +283,7 @@ pub fn update_main(
 			surface_helix,
 			surface_bevy,
 
-			&reader_camera,
 			row_offset as i32,
-			// camera_frustum,
 			&app.editor.theme,
 			&used_fonts,
 
