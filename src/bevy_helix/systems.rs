@@ -204,17 +204,6 @@ pub fn update_main(
 		surface_container.surface.reset();
 	}
 	
-	let mut row_offset = 0 as u32;
-	for (view, is_focused) in app.editor.tree.views() {
-		if is_focused {
-			println!("{:?}", view.offset);
-			row_offset = view.offset.row as u32;
-		}
-	}
-	
-	let mut reader_camera = q_camera.single_mut();
-	reader_camera.row_offset = row_offset;
-
 	#[derive(PartialEq, Eq)]
 	enum RenderMode {
 		Vanilla,
@@ -274,6 +263,16 @@ pub fn update_main(
 	
 	// let camera_frustum = q_camera_frustum.single();
 	
+	let mut row_offset = 0;
+	for (view, is_focused) in app.editor.tree.views() {
+		if is_focused {
+			row_offset = view.offset.row;
+		}
+	}
+	
+	let mut reader_camera = q_camera.single_mut();
+	reader_camera.row_offset = row_offset as u32;
+	
 	// render and animate surfaces
 	for (layer_name, container_helix) in surfaces_helix.iter_mut() {
 		let surface_bevy = surfaces_bevy.get_mut(layer_name).unwrap();
@@ -283,7 +282,8 @@ pub fn update_main(
 			surface_helix,
 			surface_bevy,
 
-			row_offset,
+			&reader_camera,
+			row_offset as i32,
 			// camera_frustum,
 			&app.editor.theme,
 			&used_fonts,
@@ -307,6 +307,7 @@ pub fn update_main(
 			&mut q_transform,
 			used_fonts.main,
 			&time,
+			row_offset as u32,
 			&mut app
 		);
 

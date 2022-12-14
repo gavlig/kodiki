@@ -16,6 +16,7 @@ pub fn cursor(
 	font				: &ABGlyphFont,
 	time				: &Res<Time>,
 
+	row_offset			: u32,
     app					: &mut NonSendMut<Application>,
 )
 {
@@ -23,14 +24,14 @@ pub fn cursor(
     let (cursor_pos, cursor_kind) = app.cursor(editor_area);
     if let Some(cursor_pos) = cursor_pos {
         // cursor position changed so we reset easing timer
-        if cursor.x != cursor_pos.0
-        || cursor.y != cursor_pos.1
+        if cursor.x != cursor_pos.0 as u32
+        || cursor.y != cursor_pos.1 as u32
         {
             cursor.easing_accum = 0.0;
         }
 
-        cursor.x		= cursor_pos.0;
-        cursor.y		= cursor_pos.1;
+        cursor.x		= cursor_pos.0 as u32;
+        cursor.y		= cursor_pos.1 as u32 + row_offset;
         cursor.kind		= cursor_kind;
     }
 
@@ -46,7 +47,7 @@ pub fn cursor(
 	// move background quad
 	if cursor.entity.is_some() && cursor.easing_accum < 1.0 {
 		let column_offset = (cursor.x as f32) * h_advance;
-		let row_offset	= (cursor.y as f32) * -v_advance + v_advance; 
+		let row_offset	= ((cursor.y as f32) * -v_advance) + v_advance; 
 
 		let target_x 	= column_offset	+ (glyph_width / 2.0);
 		let target_y 	= row_offset	- (glyph_height / 2.0) - v_down_offset;

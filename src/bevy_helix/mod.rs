@@ -19,8 +19,8 @@ mod systems;
 pub struct CursorBevy {
 	pub entity  	: Option<Entity>,
 	pub color   	: Color,
-	pub x       	: u16,
-	pub y       	: u16,
+	pub x       	: u32,
+	pub y       	: u32,
 	pub kind    	: helix_view::graphics::CursorKind,
 
 	pub easing_accum : f32,
@@ -61,6 +61,13 @@ pub struct RowBevy {
 	pub quads		: BackgroundQuadRowBevy,
 }
 
+impl RowBevy {
+	pub fn clear(&mut self) {
+		self.words.clear();
+		self.quads.clear();
+	}
+}
+
 pub type RowsBevy = Vec<RowBevy>;
 
 // representation of helix_tui::buffer::Buffer in Bevy
@@ -69,6 +76,8 @@ pub struct SurfaceBevy {
 	pub entity  			: Option<Entity>,
 	pub background_entity	: Option<Entity>,
 	pub rows				: RowsBevy,
+	pub row_offset_global	: i32,
+	pub row_offset_local	: i32,
 	pub area				: helix_view::graphics::Rect,
 	
 	pub update				: bool,
@@ -77,11 +86,13 @@ pub struct SurfaceBevy {
 impl Default for SurfaceBevy {
 	fn default() -> Self {
 		Self {
-			entity			: None,
-			background_entity : None,
-			rows		: RowsBevy::new(),
-			area			: helix_view::graphics::Rect::default(),
-			update			: true,
+			entity				: None,
+			background_entity	: None,
+			rows				: RowsBevy::new(),
+			row_offset_global	: 0,
+			row_offset_local	: 0,
+			area				: helix_view::graphics::Rect::default(),
+			update				: true,
 		}
 	}
 }

@@ -2,6 +2,8 @@ use bevy				:: prelude :: { * };
 use bevy				:: render :: primitives :: { Sphere, Frustum };
 use bevy_contrib_colors	:: { Tailwind };
 
+use bevy_reader_camera	:: ReaderCamera;
+
 use crate				:: bevy_ab_glyph::{ UsedFonts, TextMeshesCache };
 
 use super				:: { * };
@@ -64,7 +66,8 @@ pub fn surface(
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
 
-	row_offset		: u32,
+	reader_camera	: &ReaderCamera,
+	row_offset_global : i32,
 	theme			: &Theme,
 	used_fonts		: &UsedFonts,
 
@@ -80,8 +83,53 @@ pub fn surface(
 		return;
 	}
 	
-	despawn_unused_rows(surface_helix, surface_bevy, commands);
-	surface_bevy.rows.resize_with(surface_helix.area.height as usize, || { RowBevy::default() });
+	// this is only needed for auxiliary surfaces (":" prompt)
+	// despawn_unused_rows(surface_helix, surface_bevy, commands);
+	
+	let rows_helix		= surface_helix.area.height as i32;
+	let columns_helix	= surface_helix.area.width as i32;
+	
+	let rows_scrolling	= rows_helix * 2; // 2 more pages: 1 on top of what came from helix and 1 below to show text when scrolling
+	let rows_scrolling_half = rows_scrolling / 2;
+	
+	let rows_total		= rows_helix + rows_scrolling;
+	
+	let row_offset_global_cache = surface_bevy.row_offset_global;
+	let row_offset_delta = row_offset_global - row_offset_global_cache;
+	let row_offset_delta_clamped = row_offset_delta.clamp(-rows_scrolling_half, rows_scrolling_half);
+	
+	let row_offset_local = (surface_bevy.row_offset_local + row_offset_delta).clamp(0, rows_scrolling_half as i32);
+	
+	surface_bevy.row_offset_local = row_offset_local;
+	surface_bevy.row_offset_global = row_offset_global;
+	surface_bevy.rows.resize_with(rows_total as usize, || { RowBevy::default() });
+	
+	if row_offset_local == rows_scrolling_half && row_offset_delta > 0 {
+		let row_offset_delta_clamped = row_offset_delta_clamped as usize; // it is guaranteed to be > 0
+		
+		for i in 0 .. row_offset_delta_clamped + rows_scrolling_half as usize {
+			if i < row_offset_delta_clamped as usize {
+				despawn_row(i, surface_bevy, commands);
+			}
+			
+			let i_offset = i + row_offset_delta_clamped;
+			surface_bevy.rows[i] = surface_bevy.rows[i_offset].clone();
+			surface_bevy.rows[i_offset].clear();
+		}
+	} else if row_offset_local == 0 && row_offset_delta_clamped < 0 {
+		let last_row = rows_total - 1;
+		let first_row_to_offset = last_row - rows_scrolling_half + row_offset_delta_clamped;
+		
+		for i in (first_row_to_offset as usize .. last_row as usize).rev() {
+			if i > (last_row + row_offset_delta_clamped) as usize {
+				despawn_row(i, surface_bevy, commands);
+			}
+			
+			let i_offset = (i as i32 + row_offset_delta_clamped) as usize;
+			surface_bevy.rows[i] = surface_bevy.rows[i_offset].clone();
+			surface_bevy.rows[i_offset].clear();
+		}
+	}
 	
 	let background_style = theme.get("ui.background");
 	
@@ -91,21 +139,13 @@ pub fn surface(
 	let mut table_coords = TableCoords::default();
 	let v_advance	= used_fonts.main.vertical_advance();
 	
-	let width		= surface_helix.area.width;
-	let height		= surface_helix.area.height;
 	let cells_helix = &surface_helix.content;
 
-	for row in 0..height {
-		table_coords.y = -v_advance * (table_coords.row + row_offset) as f32;
+	for row in 0 .. rows_helix {
+		let row_with_global_offset	= table_coords.row + row_offset_global as u32;
+		let row_with_local_offset	= table_coords.row + row_offset_local as u32;
 		
-		let sphere = Sphere {
-			center: Vec3::new(table_coords.x, table_coords.y, 0.0).into(),
-			radius: used_fonts.main.vertical_advance(),
-		};
-		
-		if !camera_frustum.intersects_sphere(&sphere, false) {
-			continue;
-		}
+		table_coords.y			= -v_advance * row_with_global_offset as f32;
 		
 		let mut word_row_state	= words::RowState::default();
 		let mut words			= words::Row::new();
@@ -113,15 +153,15 @@ pub fn surface(
 		let mut quad_row_state	= quads::RowState::default();
 		let mut quads			= quads::Row::new();
 		
-		for column in 0..width {
-			let content_index	= (row * width + column) as usize;
+		for column in 0 .. columns_helix {
+			let content_index	= (row * columns_helix + column) as usize;
 			let cell_helix		= &cells_helix[content_index];
 			
 			{
 				
-			let words_row_bevy	= &mut surface_bevy.rows[row as usize].words;
+			let words_row_bevy	= &mut surface_bevy.rows[row_with_local_offset as usize].words;
 			
-			word_row_state.ended = column == width - 1;
+			word_row_state.ended = column == columns_helix - 1;
 			quad_row_state.ended = word_row_state.ended;
 			
 			// if word ended - spawn it, if not ended - add symbol to the word in progress, if space - do nothing
@@ -149,7 +189,7 @@ pub fn surface(
 			
 			{
 				
-			let quads_row_bevy	= &mut surface_bevy.rows[row as usize].quads;
+			let quads_row_bevy	= &mut surface_bevy.rows[row_with_local_offset as usize].quads;
 			
 			let mut new_quad_entities =
 			quads::update(
