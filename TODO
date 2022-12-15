@@ -32,8 +32,10 @@
 15.5. Determine size of background quad when opening file
 15.6. Separate logic for non-scrollable surfaces
 15.7. ✅ Bug: moving with pageup/pagedown too fast crashes kodiki -> that was happening due to camera.translate being desync with camera.frustum
-15.8. Bug: moving with pageup/pagedown too fast breaks test rendering
+15.8. Bug: moving with pageup/pagedown too fast breaks text rendering
 15.9. Determine initial camera row 
+15.10. ✅ Bug: pagedown + pageup broken
+15.11. Bug: crash when row visibility number is jittery
 16. Separate bevy update from helix update
 16.1. maybe do event based update and listen to edit events from helix?
 17. ✅ Figure out how logging works: bevy takes care of it with env_logging, can be controlled with RUST_LOG="error, warn, info, debug, trace"

@@ -96,13 +96,14 @@ pub fn surface(
 	let row_offset_delta = row_offset_global - row_offset_global_cache;
 	let row_offset_delta_clamped = row_offset_delta.clamp(-rows_scrolling_half, rows_scrolling_half);
 	
+	let row_offset_local_cache = surface_bevy.row_offset_local;
 	let row_offset_local = (surface_bevy.row_offset_local + row_offset_delta).clamp(0, rows_scrolling_half as i32);
 	
 	surface_bevy.row_offset_local = row_offset_local;
 	surface_bevy.row_offset_global = row_offset_global;
 	surface_bevy.rows.resize_with(rows_total as usize, || { RowBevy::default() });
 	
-	if row_offset_local == rows_scrolling_half && row_offset_delta > 0 {
+	if (row_offset_local_cache + row_offset_delta_clamped) > rows_scrolling_half {
 		let row_offset_delta_clamped = row_offset_delta_clamped as usize; // it is guaranteed to be > 0
 		
 		for i in 0 .. row_offset_delta_clamped + rows_scrolling_half as usize {
@@ -114,7 +115,7 @@ pub fn surface(
 			surface_bevy.rows[i] = surface_bevy.rows[i_offset].clone();
 			surface_bevy.rows[i_offset].clear();
 		}
-	} else if row_offset_local == 0 && row_offset_delta_clamped < 0 {
+	} else if (row_offset_local_cache + row_offset_delta_clamped) < 0 {
 		let last_row = rows_total - 1;
 		let first_row_to_offset = last_row - rows_scrolling_half + row_offset_delta_clamped;
 		
