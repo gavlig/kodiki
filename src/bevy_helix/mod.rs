@@ -76,8 +76,8 @@ pub struct SurfaceBevy {
 	pub entity  			: Option<Entity>,
 	pub background_entity	: Option<Entity>,
 	pub rows				: RowsBevy,
-	pub row_offset_global	: i32,
-	pub row_offset_local	: i32,
+	pub row_offset			: i32,
+	pub rows_cached			: i32,
 	pub area				: helix_view::graphics::Rect,
 	
 	pub update				: bool,
@@ -89,8 +89,8 @@ impl Default for SurfaceBevy {
 			entity				: None,
 			background_entity	: None,
 			rows				: RowsBevy::new(),
-			row_offset_global	: 0,
-			row_offset_local	: 0,
+			row_offset			: 0,
+			rows_cached			: 0,
 			area				: helix_view::graphics::Rect::default(),
 			update				: true,
 		}

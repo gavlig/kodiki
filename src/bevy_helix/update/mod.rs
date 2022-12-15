@@ -66,7 +66,7 @@ pub fn surface(
 	surface_helix	: &SurfaceHelix,
 	surface_bevy	: &mut SurfaceBevy,
 	
-	row_offset_global : i32,
+	row_offset		: i32,
 	theme			: &Theme,
 	used_fonts		: &UsedFonts,
 
@@ -82,69 +82,101 @@ pub fn surface(
 		return;
 	}
 	
-	let rows_helix		= surface_helix.area.height as i32;
-	let columns_helix	= surface_helix.area.width as i32;
+	let rows_in_page	= surface_helix.area.height as i32;
+	let columns_in_page	= surface_helix.area.width as i32;
 	
-	let rows_scrolling	= rows_helix * 2; // 2 more pages: 1 on top of what came from helix and 1 below to show text when scrolling
-	let rows_scrolling_half = rows_scrolling / 2;
+	let rows_cache_capacity	= rows_in_page * 2; // 2 more pages: 1 on top of what came from helix and 1 below to show text when scrolling
+	let rows_cache_capacity_half = rows_cache_capacity / 2;
 	
-	let rows_total		= rows_helix + rows_scrolling;
+	let rows_total		= rows_in_page + rows_cache_capacity;
 	
 	despawn_unused_rows	(rows_total as usize, surface_bevy, commands);
-	
-	let row_offset_global_cache = surface_bevy.row_offset_global;
-	let row_offset_delta = row_offset_global - row_offset_global_cache;
-	let row_offset_delta_clamped = row_offset_delta.clamp(-rows_scrolling_half, rows_scrolling_half);
-	
-	let row_offset_local_cache = surface_bevy.row_offset_local;
-	let row_offset_local = (surface_bevy.row_offset_local + row_offset_delta).clamp(0, rows_scrolling_half as i32);
-	
-	surface_bevy.row_offset_local = row_offset_local;
-	surface_bevy.row_offset_global = row_offset_global;
 	surface_bevy.rows.resize_with(rows_total as usize, || { RowBevy::default() });
 	
-	if (row_offset_local_cache + row_offset_delta_clamped) > rows_scrolling_half {
-		let row_offset_delta_clamped = row_offset_delta_clamped as usize; // it is guaranteed to be > 0
+	let row_offset_prev = surface_bevy.row_offset;
+	let row_offset_delta = row_offset - row_offset_prev;
+	let row_offset_delta_clamped = row_offset_delta.clamp(-rows_cache_capacity_half, rows_cache_capacity_half);
+	
+	surface_bevy.row_offset = row_offset;
+	
+	let rows_cached		= surface_bevy.rows_cached;
+	let rows_spawned	= rows_in_page + rows_cached;
+	surface_bevy.rows_cached = (surface_bevy.rows_cached + row_offset_delta).clamp(0, rows_cache_capacity as i32);
+	
+	let mut sss = String::new();
+	
+	//
+	//
+	//
+	
+	if row_offset_delta > 0 && (rows_cached + row_offset_delta) > rows_cache_capacity {
+		sss.push_str("DOWN");
 		
-		for i in 0 .. row_offset_delta_clamped + rows_scrolling_half as usize {
-			if i < row_offset_delta_clamped as usize {
+		let rows_to_despawn = ((rows_cached + row_offset_delta) - rows_cache_capacity).min(rows_spawned);
+		let rows_to_offset	= (rows_spawned - rows_to_despawn) as usize;
+		println!("spawned: {rows_spawned} to_offset: {rows_to_offset} to_despawn: {rows_to_despawn}");
+		
+		for i in 0 .. rows_to_offset {
+			if i < rows_to_despawn as usize {
 				despawn_row(i, surface_bevy, commands);
 			}
 			
-			let i_offset = i + row_offset_delta_clamped;
+			let i_offset = i + rows_to_despawn as usize;
 			surface_bevy.rows[i] = surface_bevy.rows[i_offset].clone();
 			surface_bevy.rows[i_offset].clear();
 		}
-	} else if (row_offset_local_cache + row_offset_delta_clamped) < 0 {
-		let last_row = rows_total - 1;
-		let first_row_to_offset = last_row - rows_scrolling_half + row_offset_delta_clamped;
+	} else if row_offset_delta < 0 && (rows_cached + row_offset_delta) < 0 {
+		sss.push_str("UP");
 		
-		for i in (first_row_to_offset as usize .. last_row as usize).rev() {
-			if i > (last_row + row_offset_delta_clamped) as usize {
+		// let row_to_offset_from = row_offset_delta_clamped.abs() as usize;
+		// let last_row_to_offset = (rows_in_page + rows_cached) as usize;
+		// println!("to_offset: {}", last_row_to_offset - row_to_offset_from);
+		
+		let rows_to_despawn = ((rows_cached + row_offset_delta).abs()).min(rows_spawned);
+		let rows_to_offset	= (rows_spawned - rows_to_despawn) as usize;
+		println!("spawned: {rows_spawned} to_offset: {rows_to_offset} to_despawn: {rows_to_despawn}");
+		
+		// for i in (row_to_offset_from .. last_row_to_offset).rev() {
+			
+		let from	= rows_to_despawn as usize;
+		let to		= rows_spawned as usize;
+			
+		for i in (from .. to).rev() {
+			if i > (rows_spawned - rows_to_despawn) as usize {
 				despawn_row(i, surface_bevy, commands);
 			}
 			
-			let i_offset = (i as i32 + row_offset_delta_clamped) as usize;
+			let i_offset = i - rows_to_despawn as usize;
+			// println!("i: {i} i_offset: {i_offset}");
 			surface_bevy.rows[i] = surface_bevy.rows[i_offset].clone();
 			surface_bevy.rows[i_offset].clear();
 		}
+	} else if row_offset_delta != 0 {
+		sss.push_str("HMMM");
 	}
 	
-	let background_style = theme.get("ui.background");
+	if row_offset_delta != 0 {
+		// println!("{sss} global: {row_offset_global} local: {row_offset_local} cache: {row_offset_local_cache} delta: {row_offset_delta} clamped: {row_offset_delta_clamped} page: {rows_num_cached_half}");
+		println!("{sss} offset: {row_offset} cached : {rows_cached} delta: {row_offset_delta} clamped: {row_offset_delta_clamped} page: {rows_in_page}");
+	}
 	
-	let surface_entity = surface_bevy.entity.unwrap();
+	let rows_cached				= surface_bevy.rows_cached;
+	
+	let background_style 		= theme.get("ui.background");
+	
+	let surface_entity			= surface_bevy.entity.unwrap();
 	let mut surface_children : Vec<Entity> = Vec::new();
 
-	let mut table_coords = TableCoords::default();
-	let v_advance	= used_fonts.main.vertical_advance();
+	let mut table_coords 		= TableCoords::default();
+	let v_advance				= used_fonts.main.vertical_advance();
 	
-	let cells_helix = &surface_helix.content;
+	let cells_helix				= &surface_helix.content;
 
-	for row in 0 .. rows_helix {
-		let row_with_global_offset	= table_coords.row + row_offset_global as u32;
-		let row_with_local_offset	= table_coords.row + row_offset_local as u32;
+	for row in 0 .. rows_in_page {
+		let row_global			= table_coords.row + row_offset as u32;
+		let row_local			= table_coords.row + rows_cached as u32;
 		
-		table_coords.y			= -v_advance * row_with_global_offset as f32;
+		table_coords.y			= -v_advance * row_global as f32;
 		
 		let mut word_row_state	= words::RowState::default();
 		let mut words			= words::Row::new();
@@ -152,15 +184,15 @@ pub fn surface(
 		let mut quad_row_state	= quads::RowState::default();
 		let mut quads			= quads::Row::new();
 		
-		for column in 0 .. columns_helix {
-			let content_index	= (row * columns_helix + column) as usize;
+		for column in 0 .. columns_in_page {
+			let content_index	= (row * columns_in_page + column) as usize;
 			let cell_helix		= &cells_helix[content_index];
 			
 			{
 				
-			let words_row_bevy	= &mut surface_bevy.rows[row_with_local_offset as usize].words;
+			let words_row_bevy	= &mut surface_bevy.rows[row_local as usize].words;
 			
-			word_row_state.ended = column == columns_helix - 1;
+			word_row_state.ended = column == columns_in_page - 1;
 			quad_row_state.ended = word_row_state.ended;
 			
 			// if word ended - spawn it, if not ended - add symbol to the word in progress, if space - do nothing
@@ -188,7 +220,7 @@ pub fn surface(
 			
 			{
 				
-			let quads_row_bevy	= &mut surface_bevy.rows[row_with_local_offset as usize].quads;
+			let quads_row_bevy	= &mut surface_bevy.rows[row_local as usize].quads;
 			
 			let mut new_quad_entities =
 			quads::update(
