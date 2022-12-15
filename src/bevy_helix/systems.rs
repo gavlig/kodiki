@@ -47,8 +47,8 @@ pub fn startup_app(
 	let rect = Rect {
 		x : 0,
 		y : 0,
-		width : 100,
-		height : 40,
+		width : 130,
+		height : 60,
 	};
 
 	let surface_editor = SurfaceHelix::empty(rect);
@@ -149,7 +149,7 @@ pub fn startup_spawn(
 	
 	let mut camera		= q_reader_camera.single_mut();
 	camera.target		= surface_bevy_editor.entity;
-	camera.row			= 25u32;//(surface_bevy_editor.area.height / 2) as u32;
+	camera.row			= 25u32;
 	camera.column		= (surface_bevy_editor.area.width / 2) as u32;
 }
 
@@ -205,6 +205,7 @@ pub fn update_main(
 	
 	let mut reader_camera = q_camera.single_mut();
 	reader_camera.row_offset = row_offset as u32;
+	reader_camera.row	= reader_camera.visible_rows / 2; // camera always looks at the center of page
 
 	let mut editor_area = app.area;
 	editor_area.height = reader_camera.visible_rows as u16;

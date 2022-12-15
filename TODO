@@ -4,7 +4,7 @@
 4. ✅ Some keycodes are missing
 5. ✅ Cache words and chunks of background quads
 5.1. ✅ Words
-5.1. ✅ bug: sometimes symbols dont get cleaned up on deletion
+5.1.1. ✅ bug: sometimes symbols dont get cleaned up on deletion
 5.2. ✅ Quads
 5.2.1. ✅ bug: ":" panel doesnt clean up unused rows of background quads when changing size to smaller
 6. ✅ Panels/surfaces need to be placed and animated
@@ -22,20 +22,24 @@
 13. ✅ bevy 0.9 because it has a fix for alt+symbol keyboard event not generating
 14. ✅ refactor: spawn helix related stuff inside bevy_helix
 15. "Real scroll": make it look like all text is rendered to scroll over it with smooth camera
-15.1. follow cursor with camera
-15.1.1. when cursor reaches visible end with up/down arrows
-15.1.2. when cursor reaches visible end with pageup/pagedown
+15.1. ✅ follow cursor with camera
+15.1.1. ✅ when cursor reaches visible end with up/down arrows
+15.1.2. ✅ when cursor reaches visible end with pageup/pagedown
 15.2. ✅ Profile rendering all text to see if system is the culprit or rendering: it's helix + the amount of entities, not update system
 15.3. ✅ Show extra two pages of text while hiding invisible parts when scrolling
-15.3.1. Bug: not everything gets cleaned up during this
-15.4. ✅ Make surface size depend on the amount of visible rows in camera
-15.5. Determine size of background quad when opening file
-15.6. Separate logic for non-scrollable surfaces
-15.7. ✅ Bug: moving with pageup/pagedown too fast crashes kodiki -> that was happening due to camera.translate being desync with camera.frustum
-15.8. Bug: moving with pageup/pagedown too fast breaks text rendering
-15.9. Determine initial camera row 
-15.10. ✅ Bug: pagedown + pageup broken
-15.11. Bug: crash when row visibility number is jittery
+15.4. Bugs
+15.4.1. not everything gets cleaned up during scrolling
+15.4.2 ✅ moving with pageup/pagedown too fast crashes kodiki -> that was happening due to camera.translate being desync with camera.frustum
+15.4.3 ✅ pagedown + pageup broken
+15.4.4. moving with pageup/pagedown too fast breaks text rendering
+15.4.5. crash when row visibility number is jittery
+15.4.6. weird hitch when using pageup/pagedown
+15.4.7. when scrolling up with arrow page caching doesnt work
+15.5. ✅ Make surface size depend on the amount of visible rows in camera
+15.6. Determine size of background quad when opening file
+15.7. Separate logic for non-scrollable surfaces
+15.8. ✅ Determine initial camera row 
+15.9. Separate EditorView panels and show them at the top/bottom of camera
 16. Separate bevy update from helix update
 16.1. maybe do event based update and listen to edit events from helix?
 17. ✅ Figure out how logging works: bevy takes care of it with env_logging, can be controlled with RUST_LOG="error, warn, info, debug, trace"
