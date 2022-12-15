@@ -36,12 +36,14 @@
 15.4.6. weird hitch when using pageup/pagedown
 15.4.7. when scrolling up with arrow page caching doesnt work
 15.4.8. two rows on top and one on bottom are not visible 
+15.4.9. pageup does not cleanup
+15.4.10. ✅ pageup/pagedown also considers statusline thus -1 in height
 15.5. ✅ Make surface size depend on the amount of visible rows in camera
 15.6. Determine size of background quad when opening file
 15.7. Separate logic for non-scrollable surfaces
 15.8. ✅ Determine initial camera row 
 15.9. Separate EditorView panels and show them at the top/bottom of camera
-15.10. scrolling with mouse doesnt work
+15.10. Scrolling with mouse
 16. Separate bevy update from helix update
 16.1. maybe do event based update and listen to edit events from helix?
 17. ✅ Figure out how logging works: bevy takes care of it with env_logging, can be controlled with RUST_LOG="error, warn, info, debug, trace"
