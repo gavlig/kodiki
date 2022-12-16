@@ -28,17 +28,18 @@
 15.2. ✅ Profile rendering all text to see if system is the culprit or rendering: it's helix + the amount of entities, not update system
 15.3. ✅ Show extra two pages of text while hiding invisible parts when scrolling
 15.4. Bugs
-15.4.1. not everything gets cleaned up during scrolling
+15.4.1. ✅ not everything gets cleaned up during scrolling
 15.4.2 ✅ moving with pageup/pagedown too fast crashes kodiki -> that was happening due to camera.translate being desync with camera.frustum
 15.4.3 ✅ pagedown + pageup broken
-15.4.4. moving with pageup/pagedown too fast breaks text rendering
-15.4.5. crash when row visibility number is jittery
-15.4.6. weird hitch when using pageup/pagedown
-15.4.7. when scrolling up with arrow page caching doesnt work
+15.4.4. ✅ moving with pageup/pagedown too fast breaks text rendering
+15.4.5. ✅ crash when row visibility number is jittery
+15.4.6. ✅ weird hitch when using pageup/pagedown
+15.4.7. ✅ when scrolling up with arrow page caching doesnt work
 15.4.8. two rows on top and one on bottom are not visible 
-15.4.9. pageup does not cleanup
+15.4.9. ✅ pageup does not cleanup
 15.4.10. ✅ pageup/pagedown also considers statusline thus -1 in height
 15.4.11. cleanup cursor quad when doing pageup/pagedown
+15.4.12. pageup/pagedown on hold doesnt work with smooth camera
 15.5. ✅ Make surface size depend on the amount of visible rows in camera
 15.6. Determine size of background quad when opening file
 15.7. Separate logic for non-scrollable surfaces

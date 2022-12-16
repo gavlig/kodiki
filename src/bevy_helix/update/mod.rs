@@ -100,8 +100,11 @@ pub fn surface(
 	surface_bevy.row_offset = row_offset;
 	
 	let rows_cached		= surface_bevy.rows_cached;
+	let row_offset_local= surface_bevy.row_offset_local;
 	let rows_spawned	= rows_in_page + rows_cached;
-	surface_bevy.rows_cached = (surface_bevy.rows_cached + row_offset_delta).clamp(0, rows_cache_capacity as i32);
+	
+	surface_bevy.row_offset_local = (surface_bevy.row_offset_local + row_offset_delta).clamp(0, rows_cache_capacity as i32);
+	surface_bevy.rows_cached = (surface_bevy.rows_cached + row_offset_delta).max(surface_bevy.rows_cached).clamp(0, rows_cache_capacity as i32);
 	
 	let mut sss = String::new();
 	
@@ -109,7 +112,7 @@ pub fn surface(
 	//
 	//
 	
-	if row_offset_delta > 0 && (rows_cached + row_offset_delta) > rows_cache_capacity {
+	if row_offset_delta > 0 && (row_offset_local + row_offset_delta) > rows_cache_capacity {
 		sss.push_str("DOWN");
 		
 		let rows_to_despawn = ((rows_cached + row_offset_delta) - rows_cache_capacity).min(rows_spawned);
@@ -125,42 +128,37 @@ pub fn surface(
 			surface_bevy.rows[i] = surface_bevy.rows[i_offset].clone();
 			surface_bevy.rows[i_offset].clear();
 		}
-	} else if row_offset_delta < 0 && (rows_cached + row_offset_delta) < 0 {
+	} else if row_offset_delta < 0 && (row_offset_local + row_offset_delta) < 0 {
 		sss.push_str("UP");
 		
-		// let row_to_offset_from = row_offset_delta_clamped.abs() as usize;
-		// let last_row_to_offset = (rows_in_page + rows_cached) as usize;
-		// println!("to_offset: {}", last_row_to_offset - row_to_offset_from);
+		let rows_to_despawn = ((row_offset_local + row_offset_delta).abs()).min(rows_spawned);
 		
-		let rows_to_despawn = ((rows_cached + row_offset_delta).abs()).min(rows_spawned);
-		let rows_to_offset	= (rows_spawned - rows_to_despawn) as usize;
-		println!("spawned: {rows_spawned} to_offset: {rows_to_offset} to_despawn: {rows_to_despawn}");
-		
-		// for i in (row_to_offset_from .. last_row_to_offset).rev() {
-			
 		let from	= rows_to_despawn as usize;
 		let to		= rows_spawned as usize;
+		
+		println!("from: {from} to: {to} spawned: {rows_spawned} to_despawn: {rows_to_despawn} despawn_until: {}", rows_spawned - rows_to_despawn);
 			
 		for i in (from .. to).rev() {
-			if i > (rows_spawned - rows_to_despawn) as usize {
+			if i >= (rows_spawned - rows_to_despawn) as usize {
 				despawn_row(i, surface_bevy, commands);
-			}
+				println!("despawned {}", i as usize);
+			}                     
 			
 			let i_offset = i - rows_to_despawn as usize;
-			// println!("i: {i} i_offset: {i_offset}");
 			surface_bevy.rows[i] = surface_bevy.rows[i_offset].clone();
 			surface_bevy.rows[i_offset].clear();
+			
+			println!("moved {} to {}", i_offset as usize, i);
 		}
 	} else if row_offset_delta != 0 {
 		sss.push_str("HMMM");
 	}
 	
 	if row_offset_delta != 0 {
-		// println!("{sss} global: {row_offset_global} local: {row_offset_local} cache: {row_offset_local_cache} delta: {row_offset_delta} clamped: {row_offset_delta_clamped} page: {rows_num_cached_half}");
 		println!("{sss} offset: {row_offset} cached : {rows_cached} delta: {row_offset_delta} clamped: {row_offset_delta_clamped} page: {rows_in_page}");
 	}
 	
-	let rows_cached				= surface_bevy.rows_cached;
+	let row_offset_local		= surface_bevy.row_offset_local;
 	
 	let background_style 		= theme.get("ui.background");
 	
@@ -174,7 +172,7 @@ pub fn surface(
 
 	for row in 0 .. rows_in_page {
 		let row_global			= table_coords.row + row_offset as u32;
-		let row_local			= table_coords.row + rows_cached as u32;
+		let row_local			= table_coords.row + row_offset_local as u32;
 		
 		table_coords.y			= -v_advance * row_global as f32;
 		
