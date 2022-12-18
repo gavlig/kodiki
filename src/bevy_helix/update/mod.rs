@@ -106,18 +106,13 @@ pub fn surface(
 	surface_bevy.row_offset_local = (surface_bevy.row_offset_local + row_offset_delta).clamp(0, rows_cache_capacity as i32);
 	surface_bevy.rows_cached = (surface_bevy.rows_cached + row_offset_delta).max(surface_bevy.rows_cached).clamp(0, rows_cache_capacity as i32);
 	
-	let mut sss = String::new();
-	
 	//
 	//
 	//
 	
 	if row_offset_delta > 0 && (row_offset_local + row_offset_delta) > rows_cache_capacity {
-		sss.push_str("DOWN");
-		
 		let rows_to_despawn = ((rows_cached + row_offset_delta) - rows_cache_capacity).min(rows_spawned);
 		let rows_to_offset	= (rows_spawned - rows_to_despawn) as usize;
-		println!("spawned: {rows_spawned} to_offset: {rows_to_offset} to_despawn: {rows_to_despawn}");
 		
 		for i in 0 .. rows_to_offset {
 			if i < rows_to_despawn as usize {
@@ -129,33 +124,24 @@ pub fn surface(
 			surface_bevy.rows[i_offset].clear();
 		}
 	} else if row_offset_delta < 0 && (row_offset_local + row_offset_delta) < 0 {
-		sss.push_str("UP");
-		
 		let rows_to_despawn = ((row_offset_local + row_offset_delta).abs()).min(rows_spawned);
 		
 		let from	= rows_to_despawn as usize;
 		let to		= rows_spawned as usize;
 		
-		println!("from: {from} to: {to} spawned: {rows_spawned} to_despawn: {rows_to_despawn} despawn_until: {}", rows_spawned - rows_to_despawn);
-			
 		for i in (from .. to).rev() {
 			if i >= (rows_spawned - rows_to_despawn) as usize {
 				despawn_row(i, surface_bevy, commands);
-				println!("despawned {}", i as usize);
 			}                     
 			
 			let i_offset = i - rows_to_despawn as usize;
 			surface_bevy.rows[i] = surface_bevy.rows[i_offset].clone();
 			surface_bevy.rows[i_offset].clear();
-			
-			println!("moved {} to {}", i_offset as usize, i);
 		}
-	} else if row_offset_delta != 0 {
-		sss.push_str("HMMM");
 	}
 	
 	if row_offset_delta != 0 {
-		println!("{sss} offset: {row_offset} cached : {rows_cached} delta: {row_offset_delta} clamped: {row_offset_delta_clamped} page: {rows_in_page}");
+		println!("offset: {row_offset} cached : {rows_cached} delta: {row_offset_delta} clamped: {row_offset_delta_clamped} page: {rows_in_page}");
 	}
 	
 	let row_offset_local		= surface_bevy.row_offset_local;
