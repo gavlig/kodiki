@@ -205,7 +205,7 @@ pub fn update_main(
 	
 	let mut reader_camera = q_camera.single_mut();
 	reader_camera.row_offset = row_offset as u32;
-	reader_camera.row	= reader_camera.visible_rows / 2; // camera always looks at the center of page
+	reader_camera.row	= reader_camera.visible_rows / 2 - 1; // camera always looks at the center of page 
 
 	let mut editor_area = app.area;
 	editor_area.height = reader_camera.visible_rows as u16;
