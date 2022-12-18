@@ -1,1 +1,1 @@
-RUST_LOG="warn" RUST_BACKTRACE=full HELIX_RUNTIME=/home/gavlig/Workspace/project_kodiki/kodiki/third_party/helix-editor/runtime cargo run -r -- /home/gavlig/Workspace/project_kodiki/kodiki/src/bevy_helix/update/mod.rs
+RUST_LOG="warn" RUST_BACKTRACE=full HELIX_RUNTIME=/home/gavlig/Workspace/project_kodiki/kodiki/third_party/helix-editor/runtime cargo run -r -- /home/gavlig/Workspace/project_kodiki/kodiki/playground/rustc_ast.rs
