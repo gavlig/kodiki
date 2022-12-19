@@ -22,7 +22,7 @@ use super :: TokioRuntime;
 use crate :: game :: DespawnResource;
 use crate :: game :: FontAssetHandles;
 
-use crate :: bevy_ab_glyph :: { ABGlyphFont, UsedFonts, TextMeshesCache };
+use crate :: bevy_ab_glyph :: { ABGlyphFont, UsedFonts, GlyphMeshesCache, TextMeshesCache };
 
 use helix_term  :: config		:: Config;
 use helix_term  :: args			:: Args;
@@ -160,6 +160,7 @@ pub fn update_main(
 	(
 		mut surfaces_helix,
 		mut surfaces_bevy,
+		mut glyph_meshes_cache,
 		mut text_meshes_cache,
 		mut helix_colors_cache,
 		mut cursor,
@@ -170,6 +171,7 @@ pub fn update_main(
 	(
 		ResMut<SurfacesMapHelix>,
 		ResMut<SurfacesMapBevy>,
+		ResMut<GlyphMeshesCache>,
 		ResMut<TextMeshesCache>,
 		ResMut<HelixColorsCache>,
 		ResMut<CursorBevy>,
@@ -288,6 +290,7 @@ pub fn update_main(
 			&app.editor.theme,
 			&used_fonts,
 
+			&mut glyph_meshes_cache,
 			&mut text_meshes_cache,
 			&mut helix_colors_cache,
 

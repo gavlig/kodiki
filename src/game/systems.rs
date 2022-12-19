@@ -57,7 +57,7 @@ pub fn setup_ab_glyph_tests(
 		string_with_fonts.push(char_with_fonts);
 	}
 	
-	let mesh = generate_string_mesh(&string_with_fonts);
+	let mesh = generate_string_mesh(&string_with_fonts, None);
 	let mesh_handle = mesh_assets.add(mesh);
 	let material_handle = material_assets.add(Color::WHITE.into());
 	

@@ -4,7 +4,7 @@ use bevy_contrib_colors	:: { Tailwind };
 
 use bevy_reader_camera	:: ReaderCamera;
 
-use crate				:: bevy_ab_glyph::{ UsedFonts, TextMeshesCache };
+use crate				:: bevy_ab_glyph::{ UsedFonts, GlyphMeshesCache, TextMeshesCache };
 
 use super				:: { * };
 
@@ -70,8 +70,9 @@ pub fn surface(
 	theme			: &Theme,
 	used_fonts		: &UsedFonts,
 
-	text_meshes_cache : &mut TextMeshesCache,
-	helix_colors_cache : &mut HelixColorsCache,
+	glyph_meshes_cache	: &mut GlyphMeshesCache,
+	text_meshes_cache	: &mut TextMeshesCache,
+	helix_colors_cache	: &mut HelixColorsCache,
 
 	mesh_assets		: &mut Assets<Mesh>,
 	material_assets	: &mut Assets<StandardMaterial>,
@@ -190,6 +191,7 @@ pub fn surface(
 				cell_helix,
 				
 				used_fonts,
+				glyph_meshes_cache,
 				text_meshes_cache,
 				helix_colors_cache,
 				

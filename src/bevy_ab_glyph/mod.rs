@@ -147,6 +147,13 @@ impl GlyphWithFonts<'_> {
 
 pub type StringWithFonts<'a> = Vec<GlyphWithFonts<'a>>;
 
+pub type GlyphMeshesMap = HashMap<String, mesh_generator::MeshInternal>;
+
+#[derive(Resource, Default)]
+pub struct GlyphMeshesCache {
+	pub meshes: GlyphMeshesMap,
+}
+
 pub type TextMeshesMap = HashMap<String, Handle<Mesh>>;
 
 #[derive(Resource, Default)]
@@ -162,6 +169,7 @@ pub struct ABGlyphPlugin;
 impl Plugin for ABGlyphPlugin {
 	fn build(&self, app: &mut App) {
 		app
+			.insert_resource	(GlyphMeshesCache::default())
 			.insert_resource	(TextMeshesCache::default())
 			.add_asset          :: <ABGlyphFont>()
 			.init_asset_loader  :: <font_loader::FontLoader>()

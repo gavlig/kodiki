@@ -1,6 +1,6 @@
 use bevy				:: prelude :: { * };
 
-use crate				:: bevy_ab_glyph::{ UsedFonts, GlyphWithFonts, TextMeshesCache };
+use crate				:: bevy_ab_glyph::{ UsedFonts, GlyphWithFonts, TextMeshesCache, GlyphMeshesCache };
 use crate				:: bevy_ab_glyph :: mesh_generator :: { generate_string_mesh_wcache };
 
 use super				:: { * };
@@ -51,8 +51,9 @@ pub fn update<'a>(
 	cell_helix		: &CellHelix,
 	used_fonts		: &'a UsedFonts<'a>,
 	
-	text_meshes_cache: &mut TextMeshesCache,
-	helix_colors_cache: &mut HelixColorsCache,
+	glyph_meshes_cache	: &mut GlyphMeshesCache,
+	text_meshes_cache	: &mut TextMeshesCache,
+	helix_colors_cache	: &mut HelixColorsCache,
 	
 	mesh_assets		: &mut Assets<Mesh>,
 	material_assets	: &mut Assets<StandardMaterial>,
@@ -92,6 +93,7 @@ pub fn update<'a>(
 				table_coords,
 				row_bevy,
 				row_state,
+				glyph_meshes_cache,
 				text_meshes_cache,
 				helix_colors_cache,
 				mesh_assets,
@@ -125,6 +127,7 @@ pub fn update<'a>(
 				table_coords,
 				row_bevy,
 				row_state,
+				glyph_meshes_cache,
 				text_meshes_cache,
 				helix_colors_cache,
 				mesh_assets,
@@ -155,8 +158,9 @@ fn on_word_ended(
 	row_bevy		: &mut WordRowBevy,
 	row_state		: &mut RowState,
 	
-	text_meshes_cache: &mut TextMeshesCache,
-	helix_colors_cache: &mut HelixColorsCache,
+	glyph_meshes_cache	: &mut GlyphMeshesCache,
+	text_meshes_cache	: &mut TextMeshesCache,
+	helix_colors_cache	: &mut HelixColorsCache,
 	
 	mesh_assets		: &mut Assets<Mesh>,
 	material_assets	: &mut Assets<StandardMaterial>,
@@ -185,6 +189,7 @@ fn on_word_ended(
 			word,
 			&word_description,
 			row_bevy,
+			glyph_meshes_cache,
 			text_meshes_cache,
 			helix_colors_cache,
 			mesh_assets,
@@ -258,6 +263,7 @@ fn update_word(
 	word 				: &Word,
 	word_description	: &WordDescription,
 	row_bevy			: &mut WordRowBevy,
+	glyph_meshes_cache	: &mut GlyphMeshesCache,
 	text_meshes_cache	: &mut TextMeshesCache,
 	helix_colors_cache	: &mut HelixColorsCache,
 	mesh_assets			: &mut Assets<Mesh>,
@@ -265,7 +271,7 @@ fn update_word(
 	commands			: &mut Commands
 ) -> Option<Entity>
 {
-	let word_mesh_handle = generate_string_mesh_wcache(&word.string_with_fonts, mesh_assets, text_meshes_cache);
+	let word_mesh_handle = generate_string_mesh_wcache(&word.string_with_fonts, mesh_assets, glyph_meshes_cache, text_meshes_cache);
 	let color			= color_from_helix(word.color);
 	let material_handle = get_helix_color_material_handle(
 		color,
