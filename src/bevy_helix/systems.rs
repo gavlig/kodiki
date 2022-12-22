@@ -259,15 +259,6 @@ pub fn update_main(
 		cleanup_unused_surfaces(&mut surfaces_helix, &mut surfaces_bevy, &mut despawn);
 	}
 	
-	// if surface area changed - respawn its background quad
-	respawn_stale_surface_quads(
-		&mut surfaces_helix,
-		&mut surfaces_bevy,
-		used_fonts.main,
-		&mut mesh_assets,
-		&mut commands
-	);
-
 	// create bevy surfaces for every helix surface
 	spawn_bevy_surfaces(
 		&mut surfaces_helix,
@@ -392,36 +383,6 @@ fn cleanup_unused_surfaces(
 	}
 }
 
-// "stale" bevy surface is the one that has a size different from its helix counterpart
-fn respawn_stale_surface_quads(
-	surfaces_helix	: &mut SurfacesMapHelix,
-	surfaces_bevy	: &mut SurfacesMapBevy,
-	
-	font			: &ABGlyphFont,
-
-	mesh_assets		: &mut Assets<Mesh>,
-	commands		: &mut Commands,
-) {
-    for (layer_name, surface_bevy) in surfaces_bevy.iter_mut() {
-		if !surfaces_helix.contains_key(layer_name) {
-			continue;
-		}
-
-		let container_helix = surfaces_helix.get(layer_name).unwrap();
-		if container_helix.surface.area != surface_bevy.area {
-			println!("respawning stale bevy surface quad: {} helix.area: {:?} bevy.area: {:?}", layer_name, container_helix.surface.area, surface_bevy.area);
-			spawn::surface_quad(
-				layer_name,
-				surface_bevy,
-				&container_helix.surface,
-				font,
-				mesh_assets,
-				commands
-			);
-		}
-	}
-}
-
 fn spawn_bevy_surfaces(
 	surfaces_helix		: &mut SurfacesMapHelix,
 	surfaces_bevy		: &mut SurfacesMapBevy,
@@ -496,4 +457,21 @@ pub fn tokio_events(
 	let mut app = app.unwrap();
 
 	tokio_runtime.block_on(app.handle_tokio_events());
+}
+
+pub fn update_background_quad(
+		surfaces_bevy	: Res<SurfacesMapBevy>,
+		q_camera		: Query<(&ReaderCamera, &Transform)>,
+	mut	q_transform		: Query<&mut Transform, Without<ReaderCamera>>,
+)
+{
+	let surface_bevy_editor = surfaces_bevy.get(&String::from(EditorView::ID)).unwrap();
+
+	let (reader_camera, camera_transform) = q_camera.single();
+
+	let bg_quad_entity = surface_bevy_editor.background_quad_entity.unwrap();
+	let mut bg_quad_transform = q_transform.get_mut(bg_quad_entity).unwrap();
+
+	bg_quad_transform.scale.y = (reader_camera.visible_rows * 2) as f32;
+	bg_quad_transform.translation.y = camera_transform.translation.y;
 }

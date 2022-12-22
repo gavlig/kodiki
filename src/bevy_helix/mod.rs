@@ -74,7 +74,7 @@ pub type RowsBevy = Vec<RowBevy>;
 #[derive(Clone, PartialEq, Debug)]
 pub struct SurfaceBevy {
 	pub entity  			: Option<Entity>,
-	pub background_entity	: Option<Entity>,
+	pub background_quad_entity : Option<Entity>,
 	pub rows				: RowsBevy,
 	pub row_offset			: i32,
 	pub row_offset_local	: i32,
@@ -88,7 +88,7 @@ impl Default for SurfaceBevy {
 	fn default() -> Self {
 		Self {
 			entity				: None,
-			background_entity	: None,
+			background_quad_entity : None,
 			rows				: RowsBevy::new(),
 			row_offset			: 0,
 			row_offset_local	: 0,
@@ -180,6 +180,7 @@ impl Plugin for BevyHelixPlugin {
 				.with_system(systems::update_main)
 				.with_system(systems::tokio_events)
 				.with_system(systems::input_keyboard)
+				.with_system(systems::update_background_quad)
 				.into()
 			)
 			.add_system_set(
@@ -187,6 +188,7 @@ impl Plugin for BevyHelixPlugin {
 				.run_in_state(AppMode::Reader)
 				.with_system(systems::update_main)
 				.with_system(systems::tokio_events)
+				.with_system(systems::update_background_quad)
 				.into()
 			)
 			.add_system_set(

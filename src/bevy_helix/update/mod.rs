@@ -253,8 +253,8 @@ pub fn surface(
 		);
 
 		// replace material to reflect changed color
-		if let Some(background_entity) = surface_bevy.background_entity {
-			commands.entity		(background_entity)
+		if let Some(background_entity) = surface_bevy.background_quad_entity {
+			commands.entity	(background_entity)
 			.remove::<Handle<StandardMaterial>>()
 			.insert(background_quad_material_handle.clone_weak())
 			;

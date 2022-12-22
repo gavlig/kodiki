@@ -112,7 +112,7 @@ pub fn surface_quad(
 	commands		: &mut Commands
 )
 {
-	if let Some(background_entity) = surface_bevy.background_entity {
+	if let Some(background_entity) = surface_bevy.background_quad_entity {
 		commands.entity(background_entity).despawn();
 	}
 	
@@ -124,7 +124,7 @@ pub fn surface_quad(
 	let v_down_offset = font.vertical_down_offset();
 	
 	let width		= surface_helix.area.width;
-	let height		= 3000u16;//surface_helix.area.height;
+	let height		= 1; // we use scale to stretch it to camera visibility limits so here it's just 1 row of text
 	
 	let quad_width	= h_advance * width as f32;
 	let quad_height	= v_advance * height as f32;
@@ -148,7 +148,7 @@ pub fn surface_quad(
 		commands
 	);
 	
-	surface_bevy.background_entity = Some(quad_entity_id);
+	surface_bevy.background_quad_entity = Some(quad_entity_id);
 	
 	commands.entity(surface_entity).add_child(quad_entity_id);
 }
