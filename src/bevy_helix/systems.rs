@@ -208,7 +208,7 @@ pub fn update_main(
 	let mut reader_camera = q_camera.single_mut();
 	reader_camera.row_offset = row_offset as u32;
 	reader_camera.row	= reader_camera.visible_rows / 2 - 1; // camera always looks at the center of page 
-
+	
 	let mut editor_area = app.area;
 	editor_area.height = reader_camera.visible_rows as u16;
 
@@ -277,7 +277,7 @@ pub fn update_main(
 		&mut commands
 	);
 	
-	// render and animate surfaces
+	// render surfaces
 	for (layer_name, container_helix) in surfaces_helix.iter_mut() {
 		let surface_bevy = surfaces_bevy.get_mut(layer_name).unwrap();
 		let surface_helix = &mut container_helix.surface;
@@ -496,26 +496,4 @@ pub fn tokio_events(
 	let mut app = app.unwrap();
 
 	tokio_runtime.block_on(app.handle_tokio_events());
-}
-
-pub fn despawn_culled_words(
-		q_camera_frustum: Query<&Frustum, With<ReaderCamera>>,
-		q_words			: Query<(Entity, &GlobalTransform, &Aabb), With<WordDescription>>,
-	mut commands		: Commands,
-) {
-	let camera_frustum = q_camera_frustum.single();
-	
-	for (word_entity, transform, aabb) in q_words.iter() {
-		let model = transform.compute_matrix();
-		let model_sphere = Sphere {
-			center: model.transform_point3a(aabb.center),
-			radius: transform.radius_vec3a(aabb.half_extents),
-		};
-		
-		if camera_frustum.intersects_sphere(&model_sphere, false) {
-			continue;
-		}
-		
-		commands.entity(word_entity).despawn_recursive();
-	}
 }

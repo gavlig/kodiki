@@ -180,7 +180,6 @@ impl Plugin for BevyHelixPlugin {
 				.with_system(systems::update_main)
 				.with_system(systems::tokio_events)
 				.with_system(systems::input_keyboard)
-				// .with_system(systems::despawn_culled_words)
 				.into()
 			)
 			.add_system_set(
@@ -188,7 +187,6 @@ impl Plugin for BevyHelixPlugin {
 				.run_in_state(AppMode::Reader)
 				.with_system(systems::update_main)
 				.with_system(systems::tokio_events)
-				// .with_system(systems::despawn_culled_words)
 				.into()
 			)
 			.add_system_set(
@@ -196,7 +194,6 @@ impl Plugin for BevyHelixPlugin {
 				.run_in_state(AppMode::Fly)
 				.with_system(systems::update_main)
 				.with_system(systems::tokio_events)
-				// .with_system(systems::despawn_culled_words)
 				.into()
 			)
  			;
