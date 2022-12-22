@@ -29,7 +29,8 @@ fn main() {
 				width					: 2560.,
 				height					: 1440.,
 				cursor_visible			: true,
-				present_mode			: PresentMode::Mailbox,
+				// FIXME: memory leaks with this mode
+				// present_mode			: PresentMode::Mailbox,
 				monitor					: MonitorSelection::Current,
 				position				: WindowPosition::Centered,
 				mode					: WindowMode::Windowed,
@@ -45,7 +46,8 @@ fn main() {
 		.add_plugin(BevyHelixPlugin)
 
 		.add_plugin(ReaderCameraPlugin)
-		.add_plugin(ShadertoyPlugin)
+		// FIXME: memory leaks with shadertoy on
+		// .add_plugin(ShadertoyPlugin)
 		.add_plugin(TweeningPlugin)
 
 		.add_plugin(OverlayPlugin { font_size: 16.0, fallback_color: Color::rgb(0.8, 0.8, 0.8), ..default() })

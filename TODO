@@ -41,7 +41,7 @@
 15.4.11. cleanup cursor quad when doing pageup/pagedown
 15.4.12. pageup/pagedown on hold doesnt work with smooth camera
 15.4.13. shadertoy on background introduces microstutter when moving camera smoothly
-15.4.14. there is a big memory leak in idle state
+15.4.14. ✅ there is a big memory leak in idle state: it's mailbox present mode and shadertoy. They will be addessed later
 15.5. ✅ Make surface size depend on the amount of visible rows in camera
 15.6. ✅ Determine size of background quad when opening file: instead i'm making it dependent on visible amount of rows in camera and make it follow camera on y axis
 15.7. Separate logic for non-scrollable surfaces

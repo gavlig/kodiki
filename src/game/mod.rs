@@ -111,7 +111,7 @@ impl Plugin for AppPlugin {
 				active:		true,
 			})
 
-			.add_startup_system(setup_shadertoy)
+			// .add_startup_system(setup_shadertoy)
 			.add_startup_system(load_assets)
 
 			.add_system		(asset_loading_events.run_in_state(AppMode::AssetLoading))
