@@ -122,6 +122,8 @@ pub fn startup_spawn(
 	let surface_bevy_editor = SurfaceBevy::spawn(
 		&surface_editor_name,
 		None,
+		true, /* scroll_enabled */
+		true, /* cache_enabled */
 		&container_helix_editor.surface,
 		used_fonts.main,
 		&mut mesh_assets,
@@ -186,25 +188,25 @@ pub fn update_main(
 	}
 	
 	let used_fonts	= UsedFonts{
-		main	: font_assets.get(&font_handles.main).unwrap(),
-		fallback: font_assets.get(&font_handles.fallback).unwrap()
+		main		: font_assets.get(&font_handles.main).unwrap(),
+		fallback	: font_assets.get(&font_handles.fallback).unwrap()
 	};
 
-	let mut app = app.unwrap();
+	let mut app					= app.unwrap();
 	
-	let mut row_offset = 0;
+	let mut row_offset			= 0;
 	for (view, is_focused) in app.editor.tree.views() {
 		if is_focused {
-			row_offset = view.offset.row;
+			row_offset			= view.offset.row;
 		}
 	}
 	
-	let mut reader_camera = q_camera.single_mut();
-	reader_camera.row_offset = row_offset as u32;
-	reader_camera.row	= reader_camera.visible_rows / 2 - 1; // camera always looks at the center of page 
+	let mut reader_camera		= q_camera.single_mut();
+	reader_camera.row_offset	= row_offset as u32;
+	reader_camera.row			= reader_camera.visible_rows / 2 - 1; // camera always looks at the center of page 
 	
-	let mut editor_area = app.area;
-	editor_area.height = reader_camera.visible_rows as u16;
+	let mut editor_area			= app.area;
+	editor_area.height			= reader_camera.visible_rows as u16;
 
 	// erase previous frame
 	for (name, surface_container) in surfaces_helix.iter_mut() {
@@ -252,10 +254,14 @@ pub fn update_main(
 		cleanup_unused_surfaces(&mut surfaces_helix, &mut surfaces_bevy, &mut despawn);
 	}
 	
+	let camera_transform = q_transform.get(reader_camera.entity).unwrap();
+	
 	// create bevy surfaces for every helix surface
 	spawn_bevy_surfaces(
 		&mut surfaces_helix,
 		&mut surfaces_bevy,
+		&reader_camera,
+		&camera_transform,
 		used_fonts.main,
 		&mut mesh_assets,
 		&mut commands
@@ -374,6 +380,8 @@ fn spawn_bevy_surfaces(
 	surfaces_helix		: &mut SurfacesMapHelix,
 	surfaces_bevy		: &mut SurfacesMapBevy,
 
+	reader_camera		: &ReaderCamera,
+	camera_transform	: &Transform,
 	font				: &ABGlyphFont,
 
 	mut mesh_assets		: &mut Assets<Mesh>,
@@ -384,11 +392,18 @@ fn spawn_bevy_surfaces(
 		if surfaces_bevy.contains_key(surface_name) {
 			continue;
 		}
+		
+		let row_height	= font.vertical_advance();
+		let camera_y	= camera_transform.translation.y;
 
-		let start_pos = Vec3::new(0.0, 0.0, -0.5);
+		let start_y = camera_y + row_height * (reader_camera.visible_rows - 1) as f32;
+		let start_pos = Vec3::new(0.0, start_y, -0.5);
+		
 		let surface_bevy = SurfaceBevy::spawn(
 			surface_name,
 			Some(start_pos),
+			false, /* scroll_enabled */
+			false, /* cache_enabled */
 			&container_helix.surface,
 			&font,
 			
@@ -397,9 +412,15 @@ fn spawn_bevy_surfaces(
 		);
 		
 		let target_pos = match container_helix.placement {
-			SurfacePlacementHelix::Top => Vec3::new(0.0, -0.0, 0.3),
-			SurfacePlacementHelix::Center => Vec3::new(0.7, -1.2, 0.5),
-			_ => Vec3::new(0.0, 0.0, 0.3),
+			SurfacePlacementHelix::Top => {
+				let y = camera_y + row_height * (reader_camera.visible_rows - 1) as f32;
+				Vec3::new(0.0, y, 0.3)
+			},
+			SurfacePlacementHelix::Center => {
+				let y = camera_y + row_height * (container_helix.surface.area.height as f32 / 2.0);
+				Vec3::new(0.7, y, 0.5)
+			},
+			_ => panic!(),
 		};
 		
 		let tween_point = animate::TweenPoint {

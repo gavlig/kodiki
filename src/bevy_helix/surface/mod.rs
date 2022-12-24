@@ -64,16 +64,42 @@ impl RowBevy {
 
 pub type RowsBevy = Vec<RowBevy>;
 
+#[derive(Default, Clone, PartialEq, Debug)]
+struct SurfaceBevyScrollInfo {
+	pub enabled				: bool,
+	pub offset				: i32,
+}
+
+impl SurfaceBevyScrollInfo {
+	pub fn offset(&self) -> i32 {
+		if self.enabled { self.offset } else { 0 }
+	}
+}
+
+#[derive(Default, Clone, PartialEq, Debug)]
+struct SurfaceBevyCacheInfo {
+	pub enabled				: bool,
+	pub offset				: i32,
+	pub rows_cached			: i32,
+}
+
+impl SurfaceBevyCacheInfo {
+	pub fn offset(&self) -> i32 {
+		if self.enabled { self.offset } else { 0 }
+	}
+}
+
 // representation of helix_tui::buffer::Buffer in Bevy
 #[derive(Clone, PartialEq, Debug)]
 pub struct SurfaceBevy {
 	pub entity  			: Option<Entity>,
 	pub background_quad_entity : Option<Entity>,
+	
 	pub rows				: RowsBevy,
-	pub row_offset			: i32,
-	pub row_offset_local	: i32,
-	pub rows_cached			: i32,
 	pub area				: helix_view::graphics::Rect,
+	
+	scroll_info				: SurfaceBevyScrollInfo,
+	cache_info				: SurfaceBevyCacheInfo,
 	
 	pub update				: bool,
 }
@@ -84,10 +110,9 @@ impl Default for SurfaceBevy {
 			entity				: None,
 			background_quad_entity : None,
 			rows				: RowsBevy::new(),
-			row_offset			: 0,
-			row_offset_local	: 0,
-			rows_cached			: 0,
 			area				: helix_view::graphics::Rect::default(),
+			scroll_info			: SurfaceBevyScrollInfo::default(),
+			cache_info			: SurfaceBevyCacheInfo::default(),
 			update				: true,
 		}
 	}
@@ -128,6 +153,8 @@ impl SurfaceBevy {
 	pub fn spawn(
 		surface_name	: &String,
 		world_position	: Option<Vec3>,
+		scroll_enabled	: bool,
+		cache_enabled	: bool,
 		surface_helix	: &SurfaceHelix,
 		font			: &ABGlyphFont,
 		mesh_assets		: &mut Assets<Mesh>,
@@ -149,9 +176,13 @@ impl SurfaceBevy {
 		
 		let mut surface_bevy = SurfaceBevy::new_with_entity(surface_entity);
 		
+		surface_bevy.area = surface_helix.area;
+		surface_bevy.scroll_info.enabled = scroll_enabled;
+		surface_bevy.cache_info.enabled = cache_enabled;
+		
 		surface_bevy.spawn_surface_quad(surface_name, surface_helix, font, mesh_assets, commands);
 		
-		surface_bevy.insert_text_descriptor(surface_helix, font, commands);
+		surface_bevy.insert_text_descriptor(font, commands);
 	
 		surface_bevy
 	}
@@ -173,8 +204,6 @@ impl SurfaceBevy {
 			commands.entity(background_entity).despawn();
 		}
 		
-		self.area		= surface_helix.area;
-	
 		let v_advance	= font.vertical_advance();
 		let h_advance	= font.horizontal_advance(&String::from("a")); // in monospace font every letter should be of the same width so we pick 'a'
 		let v_down_offset = font.vertical_down_offset();
@@ -212,7 +241,6 @@ impl SurfaceBevy {
 	
 	fn insert_text_descriptor(
 		&mut self,
-		surface_helix	: &SurfaceHelix,
 		font			: &ABGlyphFont,
 		commands		: &mut Commands
 	)
@@ -220,8 +248,8 @@ impl SurfaceBevy {
 		let v_advance	= font.vertical_advance();
 		let h_advance	= font.horizontal_advance(&String::from("a")); // in monospace font every letter should be of the same width so we pick 'a'
 		
-		let width		= surface_helix.area.width;
-		let height		= surface_helix.area.height;
+		let width		= self.area.width;
+		let height		= self.area.height;
 		
 		let text_descriptor = TextDescriptor {
 			rows		: height as u32,
@@ -232,6 +260,22 @@ impl SurfaceBevy {
 		
 		let surface_entity = self.entity.unwrap();
 		commands.entity(surface_entity).insert(text_descriptor);
+	}
+	
+	fn columns_in_page(&self) -> i32 {
+		self.area.width as i32
+	}
+	
+	fn rows_in_page(&self) -> i32 {
+		self.area.height as i32
+	}
+	
+	fn rows_cache_capacity(&self) -> i32 {
+		self.rows_in_page() * 2 // 2 more pages: 1 on top of what came from helix and 1 below to show text when scrolling
+	}
+	
+	fn rows_total(&self) -> i32 {
+		self.rows_in_page() + if self.cache_info.enabled { self.rows_cache_capacity() } else { 0 }
 	}
 	
 	pub fn update(
@@ -255,21 +299,19 @@ impl SurfaceBevy {
 			return;
 		}
 		
-		let rows_in_page = surface_helix.area.height as i32;
-		let rows_cache_capacity	= rows_in_page * 2; // 2 more pages: 1 on top of what came from helix and 1 below to show text when scrolling
-		let rows_total = rows_in_page + rows_cache_capacity;
+		self.area = surface_helix.area; // syncing area size first because everything else depends on it
+		let rows_total = self.rows_total();
 		
 		self.despawn_unused_rows(rows_total as usize, commands);
-		self.rows.resize_with(rows_total as usize, || { RowBevy::default() });
+		self.rows.resize_with	(rows_total as usize, || { RowBevy::default() });
 		
-		self.offset_cached_rows(surface_helix, row_offset, commands);
+		self.offset_cached_rows(row_offset, commands);
 		
 		let background_style = theme.get("ui.background");
 		
 		self.update_rows(
 			surface_helix,
 			
-			row_offset,
 			&background_style,
 			used_fonts,
 			
@@ -288,48 +330,48 @@ impl SurfaceBevy {
 
 	fn offset_cached_rows(
 		&mut self,
-		surface_helix	: &SurfaceHelix,
 		row_offset		: i32,
 		commands		: &mut Commands,
 	)
 	{
-		let rows_in_page	= surface_helix.area.height as i32;
+		if !self.cache_info.enabled {
+			return;
+		}
 		
-		let rows_cache_capacity	= rows_in_page * 2; // 2 more pages: 1 on top of what came from helix and 1 below to show text when scrolling
+		let rows_in_page			= self.rows_in_page();
+		
+		let rows_cache_capacity		= self.rows_cache_capacity();
 		let rows_cache_capacity_half = rows_cache_capacity / 2;
 		
-		let row_offset_prev = self.row_offset;
-		let row_offset_delta = row_offset - row_offset_prev;
+		let row_offset_prev 		= self.scroll_info.offset;
+		let row_offset_delta 		= row_offset - row_offset_prev;
 		let _row_offset_delta_clamped = row_offset_delta.clamp(-rows_cache_capacity_half, rows_cache_capacity_half);
 		
-		self.row_offset		= row_offset;
+		let rows_cached				= self.cache_info.rows_cached;
+		let cache_offset			= self.cache_info.offset;
+		let rows_spawned			= rows_in_page + rows_cached;
 		
-		let rows_cached		= self.rows_cached;
-		let row_offset_local= self.row_offset_local;
-		let rows_spawned	= rows_in_page + rows_cached;
-		
-		self.row_offset_local = (self.row_offset_local + row_offset_delta).clamp(0, rows_cache_capacity as i32);
-		self.rows_cached	= (rows_cached + row_offset_delta).max(rows_cached).clamp(0, rows_cache_capacity as i32);
+		self.scroll_info.offset		= row_offset;
+		self.cache_info.offset		= (self.cache_info.offset + row_offset_delta).clamp(0, rows_cache_capacity as i32);
+		self.cache_info.rows_cached	= (rows_cached + row_offset_delta).max(rows_cached).clamp(0, rows_cache_capacity as i32);
 		
 		//
-		//
-		//
 		
-		if row_offset_delta > 0 && (row_offset_local + row_offset_delta) > rows_cache_capacity {
-			let rows_to_despawn = ((rows_cached + row_offset_delta) - rows_cache_capacity).min(rows_spawned);
-			let rows_to_offset	= (rows_spawned - rows_to_despawn) as usize;
+		if row_offset_delta > 0 && (cache_offset + row_offset_delta) > rows_cache_capacity {
+			let rows_to_despawn 	= ((rows_cached + row_offset_delta) - rows_cache_capacity).min(rows_spawned);
+			let rows_to_offset		= (rows_spawned - rows_to_despawn) as usize;
 			
 			for i in 0 .. rows_to_offset {
 				if i < rows_to_despawn as usize {
 					self.despawn_row(i, commands);
 				}
 				
-				let i_offset = i + rows_to_despawn as usize;
-				self.rows[i] = self.rows[i_offset].clone();
+				let i_offset		= i + rows_to_despawn as usize;
+				self.rows[i]		= self.rows[i_offset].clone();
 				self.rows[i_offset].clear();
 			}
-		} else if row_offset_delta < 0 && (row_offset_local + row_offset_delta) < 0 {
-			let rows_to_despawn = ((row_offset_local + row_offset_delta).abs()).min(rows_spawned);
+		} else if row_offset_delta < 0 && (cache_offset + row_offset_delta) < 0 {
+			let rows_to_despawn = ((cache_offset + row_offset_delta).abs()).min(rows_spawned);
 			
 			let from	= rows_to_despawn as usize;
 			let to		= rows_spawned as usize;
@@ -354,7 +396,6 @@ impl SurfaceBevy {
 		&mut self,
 		surface_helix	: &SurfaceHelix,
 		
-		row_offset		: i32,
 		background_style: &Style,
 		used_fonts		: &UsedFonts,
 
@@ -367,10 +408,11 @@ impl SurfaceBevy {
 		commands		: &mut Commands,
 	)
 	{
-		let rows_in_page			= surface_helix.area.height as i32;
-		let columns_in_page			= surface_helix.area.width as i32;
+		let rows_in_page			= self.rows_in_page();
+		let columns_in_page			= self.columns_in_page();
 		
-		let row_offset_local		= self.row_offset_local;
+		let scroll_offset			= self.scroll_info.offset();
+		let cache_offset			= self.cache_info.offset();
 		
 		let surface_entity			= self.entity.unwrap();
 		let mut surface_children : Vec<Entity> = Vec::new();
@@ -381,10 +423,10 @@ impl SurfaceBevy {
 		let cells_helix				= &surface_helix.content;
 
 		for row in 0 .. rows_in_page {
-			let row_global			= table_coords.row + row_offset as u32;
-			let row_local			= table_coords.row + row_offset_local as u32;
+			let row_scroll			= table_coords.row + scroll_offset as u32;
+			let row_cache			= table_coords.row + cache_offset as u32;
 			
-			table_coords.y			= -v_advance * row_global as f32;
+			table_coords.y			= -v_advance * row_scroll as f32;
 			
 			let mut word_row_state	= words::RowState::default();
 			let mut words			= words::Row::new();
@@ -398,7 +440,7 @@ impl SurfaceBevy {
 				
 				{
 					
-				let words_row_bevy	= &mut self.rows[row_local as usize].words;
+				let words_row_bevy	= &mut self.rows[row_cache as usize].words;
 				
 				word_row_state.ended = column == columns_in_page - 1;
 				quad_row_state.ended = word_row_state.ended;
@@ -429,7 +471,7 @@ impl SurfaceBevy {
 				
 				{
 					
-				let quads_row_bevy	= &mut self.rows[row_local as usize].quads;
+				let quads_row_bevy	= &mut self.rows[row_cache as usize].quads;
 				
 				let mut new_quad_entities =
 				quads::update(

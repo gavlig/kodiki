@@ -33,24 +33,26 @@ pub fn camera(
 			},
 			..default()
 		})
-		.insert(
-			ReaderCamera {
-				yaw				: 0.0,
-				pitch			: 0.0,
-				mode			: CameraMode::Reader,
-				enabled_zoom	: false,
-				enabled_rotation: false,
-				enabled_translation : false,
-				max_speed		: 0.07,
-				target			: target_entity,
-				..default()
-			}
-		)
 		.insert			(PickingCameraBundle::default())
 		.id				();
 
 	camera_ids.camera2d = Some(camera2d);
 	camera_ids.camera3d = Some(camera3d);
+	
+	commands.entity(camera3d).insert(
+		ReaderCamera {
+			yaw				: 0.0,
+			pitch			: 0.0,
+			mode			: CameraMode::Reader,
+			enabled_zoom	: false,
+			enabled_rotation: false,
+			enabled_translation : false,
+			max_speed		: 0.07,
+			entity			: camera3d,
+			target			: target_entity,
+			..default()
+		}
+	);
 }
 
 pub fn ground(
