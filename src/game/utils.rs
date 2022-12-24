@@ -1,6 +1,4 @@
-use std :: io		:: { prelude :: * };
-use std :: fs		:: { File };
-use std :: path		:: { Path, PathBuf };
+use std :: path		:: { PathBuf };
 
 use bevy			:: { prelude :: * };
 use bevy_mod_picking:: { * };

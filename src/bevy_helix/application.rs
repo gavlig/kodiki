@@ -1,17 +1,14 @@
 use bevy            :: { prelude :: * };
 
-use bevy_debug_text_overlay::screen_print;
-
 use arc_swap        :: { access::Map, ArcSwap };
-use futures_util    :: { Stream };
 use helix_core      :: {
 	config          :: { default_syntax_loader, user_syntax_loader },
 	diagnostic      :: { NumberOrString, DiagnosticTag },
 	pos_at_coords, syntax, Selection,
 };
 use helix_lsp       :: { lsp, util :: lsp_pos_to_pos, LspProgressMap };
-use helix_view      :: { align_view, editor :: ConfigEvent, theme, tree :: Layout, Align, Editor, graphics :: Rect, input :: Event };
-use helix_term      :: { config::Config, job :: Jobs, args::Args, keymap::Keymaps, compositor::Compositor, compositor::SurfacesMap, ui, ui::EditorView, ui::Prompt };
+use helix_view      :: { align_view, theme, tree :: Layout, Align, Editor, graphics :: Rect, input :: Event };
+use helix_term      :: { config::Config, job :: Jobs, args::Args, keymap::Keymaps, compositor::Compositor, compositor::SurfacesMap, ui };
 use helix_tui 		:: { buffer :: Buffer as Surface };
 use serde_json      :: { json };
 use helix_term		:: { commands :: apply_workspace_edit };
@@ -321,7 +318,7 @@ impl Application {
 			jobs: &mut self.jobs,
 			scroll: None,
 		};
-		let should_render = self.compositor.handle_event(&Event::IdleTimeout, &mut cx);
+		let _should_render = self.compositor.handle_event(&Event::IdleTimeout, &mut cx);
 	}
 
 	pub async fn handle_language_server_message(

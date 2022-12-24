@@ -1,119 +1,48 @@
-use bevy :: prelude :: *;
-use bevy :: utils :: HashMap;
-use iyes_loopless :: { prelude :: * };
+use bevy :: prelude :: { * };
+use bevy :: utils :: { HashMap };
+use iyes_loopless :: prelude :: { * };
+use bevy_contrib_colors	:: { Tailwind };
 
-use helix_term :: compositor :: SurfaceContainer as SurfaceContainerHelix;
+use helix_view::graphics::Color as HelixColor;
 
-use crate :: { game :: AppMode, bevy_ab_glyph :: StringWithFonts };
+use crate :: game :: AppMode;
 
 mod application;
 use application :: *;
+mod surface;
+use surface :: *;
+mod cursor;
+use cursor :: *;
 mod spawn;
-mod update;
 mod animate;
 mod input;
 
 mod systems;
 
-#[derive(Default, Resource)]
-pub struct CursorBevy {
-	pub entity  	: Option<Entity>,
-	pub color   	: Color,
-	pub x       	: u32,
-	pub y       	: u32,
-	pub kind    	: helix_view::graphics::CursorKind,
-
-	pub easing_accum : f32,
-}
-
-#[derive(Component, Clone, Debug)]
-pub struct WordDescription {
-	pub string	: String,
-	pub row		: u32,
-	pub column	: u32,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct WordBevy {
-	pub entity		: Option<Entity>,
-	pub string		: String,
-	pub color		: helix_view::graphics::Color,
-	pub column		: u32,
-}
-
-pub type WordRowBevy	= Vec<WordBevy>;
-pub type WordRowsBevy	= Vec<WordRowBevy>;
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct BackgroundQuadBevy {
-	pub entity		: Option<Entity>,
-	pub color		: helix_view::graphics::Color,
-	pub column		: u32,
-	pub length		: u32,
-}
-
-pub type BackgroundQuadRowBevy = Vec<BackgroundQuadBevy>;
-pub type BackgroundQuadRowsBevy	= Vec<BackgroundQuadRowBevy>;
-
-#[derive(Clone, PartialEq, Default, Debug)]
-pub struct RowBevy {
-	pub words		: WordRowBevy,
-	pub quads		: BackgroundQuadRowBevy,
-}
-
-impl RowBevy {
-	pub fn clear(&mut self) {
-		self.words.clear();
-		self.quads.clear();
+fn color_from_helix(helix_color: HelixColor) -> Color {
+	match helix_color {
+		HelixColor::Reset		=> Color::WHITE,
+		HelixColor::Black		=> Color::BLACK,
+		HelixColor::Red			=> Tailwind::RED600,
+		HelixColor::Green		=> Tailwind::GREEN600,
+		HelixColor::Yellow		=> Tailwind::YELLOW600,
+		HelixColor::Blue		=> Tailwind::BLUE600,
+		HelixColor::Magenta		=> Tailwind::PURPLE600,
+		HelixColor::Cyan		=> Color::rgb(0.0, 0.5, 0.5),
+		HelixColor::Gray		=> Tailwind::GRAY600,
+		HelixColor::LightRed	=> Tailwind::RED300,
+		HelixColor::LightGreen	=> Tailwind::GREEN300,
+		HelixColor::LightBlue	=> Tailwind::BLUE300,
+		HelixColor::LightYellow => Tailwind::YELLOW300,
+		HelixColor::LightMagenta => Tailwind::PURPLE300,
+		HelixColor::LightCyan	=> Color::rgb(0.0, 0.7, 0.7),
+		HelixColor::LightGray	=> Tailwind::GRAY300,
+		HelixColor::White		=> Color::WHITE,
+		// An ANSI color. See [256 colors - cheat sheet](https://jonasjacek.github.io/colors/) for more info.
+		HelixColor::Indexed(_i) => { panic!("Indexed color is not supported!"); }, // Color::AnsiValue(i), 
+		HelixColor::Rgb(r, g, b) => Color::rgb_u8(r, g, b),
 	}
 }
-
-pub type RowsBevy = Vec<RowBevy>;
-
-// representation of helix_tui::buffer::Buffer in Bevy
-#[derive(Clone, PartialEq, Debug)]
-pub struct SurfaceBevy {
-	pub entity  			: Option<Entity>,
-	pub background_quad_entity : Option<Entity>,
-	pub rows				: RowsBevy,
-	pub row_offset			: i32,
-	pub row_offset_local	: i32,
-	pub rows_cached			: i32,
-	pub area				: helix_view::graphics::Rect,
-	
-	pub update				: bool,
-}
-
-impl Default for SurfaceBevy {
-	fn default() -> Self {
-		Self {
-			entity				: None,
-			background_quad_entity : None,
-			rows				: RowsBevy::new(),
-			row_offset			: 0,
-			row_offset_local	: 0,
-			rows_cached			: 0,
-			area				: helix_view::graphics::Rect::default(),
-			update				: true,
-		}
-	}
-}
-
-impl SurfaceBevy {
-	pub fn new_with_entity(surface_entity: Entity) -> SurfaceBevy {
-		SurfaceBevy { entity: Some(surface_entity), ..default() }
-	}
-}
-
-pub type SurfacesMapBevyInner = HashMap<String, SurfaceBevy>;
-
-#[derive(Resource, Deref, DerefMut, Default)]
-pub struct SurfacesMapBevy(SurfacesMapBevyInner);
-
-pub type SurfacesMapHelixInner = HashMap<String, SurfaceContainerHelix>;
-
-#[derive(Resource, Deref, DerefMut, Default)]
-pub struct SurfacesMapHelix(SurfacesMapHelixInner);
 
 pub type MaterialsMap = HashMap<String, Handle<StandardMaterial>>;
 
@@ -180,7 +109,7 @@ impl Plugin for BevyHelixPlugin {
 				.with_system(systems::update_main)
 				.with_system(systems::tokio_events)
 				.with_system(systems::input_keyboard)
-				.with_system(systems::update_background_quad)
+				.with_system(systems::update_editor_background_quad)
 				.into()
 			)
 			.add_system_set(
@@ -188,7 +117,7 @@ impl Plugin for BevyHelixPlugin {
 				.run_in_state(AppMode::Reader)
 				.with_system(systems::update_main)
 				.with_system(systems::tokio_events)
-				.with_system(systems::update_background_quad)
+				.with_system(systems::update_editor_background_quad)
 				.into()
 			)
 			.add_system_set(

@@ -8,7 +8,6 @@ use iyes_loopless		:: { prelude :: * };
 use bevy_shadertoy_wgsl	:: { * };
 
 use bevy_debug_text_overlay :: { screen_print };
-use bevy_polyline	:: prelude :: { * };
 
 use crate :: bevy_ab_glyph :: ABGlyphFont;
 use crate :: bevy_ab_glyph :: mesh_generator :: generate_string_mesh;
@@ -123,11 +122,8 @@ fn toggle_picking_mode(v: bool, mut picking: &mut PickingPluginsState) {
 }
 
 pub fn input_system(
-		btn			: Res<Input<MouseButton>>,
 		key			: Res<Input<KeyCode>>,
-		mouse_state	: Res<MouseCursorState>,
-		time		: Res<Time>,
-	mut camera_ids	: ResMut<CameraIDs>,
+		camera_ids	: Res<CameraIDs>,
 	mut shadertoy_canvas : ResMut<ShadertoyCanvas>,
 	mut exit		: EventWriter<AppExit>,
 	mut q_camera	: Query<&mut Camera>,
@@ -137,8 +133,6 @@ pub fn input_system(
 	mut windows		: ResMut<Windows>,
 	mut	commands	: Commands
 ) {
-	let delta_seconds = time.delta_seconds();
-
 	let window 		= windows.get_primary_mut();
 	if window.is_none() {
 		return;

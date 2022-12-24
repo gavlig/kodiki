@@ -4,7 +4,6 @@ use bevy_reader_camera :: { * };
 use super:: { * };
 
 pub fn caret_system(
-		btn		: Res<Input<MouseButton>>,
 		key		: Res<Input<KeyCode>>,
 		time	: Res<Time>,
 		q_text_descriptor : Query<&TextDescriptor>,

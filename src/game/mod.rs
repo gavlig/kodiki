@@ -1,5 +1,4 @@
 use bevy				:: { prelude :: * };
-use bevy_mod_picking	:: { * };
 use iyes_loopless		:: { prelude :: * };
 use bevy_shadertoy_wgsl :: { * };
 

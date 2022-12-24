@@ -20,7 +20,6 @@ pub struct Quad {
 	pub column		: u32,
 	pub color		: HelixColor,
 	pub length		: u32,
-	// pub glyph_width		: String,
 }
 
 impl Default for Quad {

@@ -4,7 +4,6 @@ pub mod spawn;
 pub mod systems;
 pub use systems			:: *;
 mod utils;
-use utils				:: *;
 
 #[derive(Component)]
 pub struct Caret {

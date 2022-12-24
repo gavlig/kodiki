@@ -1,6 +1,6 @@
 use bevy				:: prelude :: { * };
 
-use crate				:: bevy_ab_glyph::{ UsedFonts, GlyphWithFonts, TextMeshesCache, GlyphMeshesCache };
+use crate				:: bevy_ab_glyph::{ UsedFonts, StringWithFonts, GlyphWithFonts, TextMeshesCache, GlyphMeshesCache };
 use crate				:: bevy_ab_glyph :: mesh_generator :: { generate_string_mesh_wcache };
 
 use super				:: { * };

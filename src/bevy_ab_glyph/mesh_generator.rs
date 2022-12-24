@@ -382,9 +382,9 @@ pub fn generate_glyph_mesh_inner(
 
 	// geometry of a glyph's front face
 	let unit_scale			= 1.0 / font.f.units_per_em().unwrap();
-	let mut vertices		= generate_vertices_from_path(path, unit_scale, font.tolerance);
+	let vertices			= generate_vertices_from_path(path, unit_scale, font.tolerance);
 	let vertices_cnt		= vertices.vertices.len();
-	let mut normals: NormalBuffer = vec![[0.0, 0.0, 1.0]; vertices_cnt];
+	let normals: NormalBuffer = vec![[0.0, 0.0, 1.0]; vertices_cnt];
 
 	// Now to "extrude" the said geometry to get a 3d glyph first we need to find the edges that are not adjacent with others. 
 	// Or in other words we need to find the contour edges
@@ -594,7 +594,6 @@ fn spawn_sphere2(
 }
 
 fn spawn_line(
-	i: usize,
 	p0: Vec3,
 	p1: Vec3,
 	polylines: &mut Assets<Polyline>,

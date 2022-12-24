@@ -1,20 +1,15 @@
 use bevy :: prelude :: *;
 use bevy :: input :: keyboard :: *;
-use bevy::render::primitives::Aabb;
-use bevy :: render :: primitives :: { Sphere, Frustum };
-use bevy_tweening :: { lens :: *, * };
+use bevy_tweening :: { * };
 
 use bevy_debug_text_overlay :: screen_print;
 use bevy_reader_camera :: ReaderCamera;
 
-use super :: WordDescription;
-use super :: SurfacesMapBevy;
-use super :: SurfacesMapHelix;
-use super :: CursorBevy;
 use super :: HelixColorsCache;
 use super :: application :: Application;
-use super :: spawn;
-use super :: update;
+use super :: surface :: *;
+use super :: cursor :: *;
+
 use super :: animate;
 use super :: input;
 use super :: TokioRuntime;
@@ -24,25 +19,25 @@ use crate :: game :: FontAssetHandles;
 
 use crate :: bevy_ab_glyph :: { ABGlyphFont, UsedFonts, GlyphMeshesCache, TextMeshesCache };
 
-use helix_term  :: config		:: Config;
-use helix_term  :: args			:: Args;
+use helix_term  :: config		:: { Config };
+use helix_term  :: args			:: { Args };
+use helix_term	:: ui			:: { EditorView };
+use helix_view  :: graphics 	:: { Rect };
+
 use helix_term	:: compositor	:: SurfaceContainer as SurfaceContainerHelix;
 use helix_term	:: compositor	:: SurfacePlacement as SurfacePlacementHelix;
-use helix_term	:: ui			:: EditorView;
 use helix_tui   :: buffer		:: Buffer as SurfaceHelix;
-use helix_view  :: graphics 	:: { Rect };
-use helix_view					:: { View };
 
 use anyhow      :: { Context, Error, Result };
 
-use std :: path :: PathBuf;
 use std :: time :: Duration;
 
 pub fn startup_app(
 	world: &mut World,
-) {
-	let mut surfaces_helix = SurfacesMapHelix::default();
-	let 	surfaces_bevy = SurfacesMapBevy::default();
+)
+{
+	let mut surfaces_helix	= SurfacesMapHelix::default();
+	let 	surfaces_bevy	= SurfacesMapBevy::default();
 	
 	let rect = Rect {
 		x : 0,
@@ -100,7 +95,7 @@ async fn startup_impl(area: Rect) -> Result<Application, Error> {
 }
 
 pub fn startup_spawn(
-	mut surfaces_helix	: ResMut<SurfacesMapHelix>,
+		surfaces_helix	: Res<SurfacesMapHelix>,
 	mut surfaces_bevy	: ResMut<SurfacesMapBevy>,
 		font_assets		: Res<Assets<ABGlyphFont>>,
 		font_handles    : Res<FontAssetHandles>,
@@ -124,19 +119,16 @@ pub fn startup_spawn(
 	
 	let container_helix_editor = surfaces_helix.get(&surface_editor_name).unwrap();
 	
-	spawn::surface(
+	let surface_bevy_editor = SurfaceBevy::spawn(
 		&surface_editor_name,
 		None,
-		&mut surfaces_bevy,
 		&container_helix_editor.surface,
 		used_fonts.main,
 		&mut mesh_assets,
 		&mut commands
 	);
 	
-	let surface_bevy_editor = surfaces_bevy.get(&surface_editor_name).unwrap();
-	
-	spawn::cursor(
+	CursorBevy::spawn(
 		&mut cursor,
 		surface_bevy_editor.entity.unwrap(),
 		used_fonts.main,
@@ -151,6 +143,8 @@ pub fn startup_spawn(
 	camera.target		= surface_bevy_editor.entity;
 	camera.row			= 25u32;
 	camera.column		= (surface_bevy_editor.area.width / 2) as u32;
+	
+	surfaces_bevy.insert(surface_editor_name.clone(), surface_bevy_editor);
 }
 
 pub fn update_main(
@@ -236,7 +230,6 @@ pub fn update_main(
 			app.render(editor_area, &mut surface_helix_editor.surface);
 		},
 		RenderMode::Kodiki => {
-			let surface_bevy_editor = surfaces_bevy.get_mut(&String::from(EditorView::ID)).unwrap();
 			app.render_ext(editor_area, &mut surfaces_helix);
 		},
 		RenderMode::Benchmark => {
@@ -273,9 +266,8 @@ pub fn update_main(
 		let surface_bevy = surfaces_bevy.get_mut(layer_name).unwrap();
 		let surface_helix = &mut container_helix.surface;
 
-		update::surface(
+		surface_bevy.update(
 			surface_helix,
-			surface_bevy,
 
 			row_offset as i32,
 			&app.editor.theme,
@@ -293,11 +285,7 @@ pub fn update_main(
 
 	// render and animate cursor
 	if app.editor_focused() { 
-		let mut surface_bevy_editor = surfaces_bevy.get_mut(&String::from(EditorView::ID)).unwrap();
-		let container_helix_editor = surfaces_helix.get(&String::from(EditorView::ID)).unwrap();
-
-		animate::cursor(
-			&mut cursor,
+		cursor.animate(
 			&mut q_transform,
 			used_fonts.main,
 			&time,
@@ -305,8 +293,7 @@ pub fn update_main(
 			&mut app
 		);
 
-		update::cursor(
-			&mut cursor,
+		cursor.update(
 			&app.editor.theme,
 			&mut helix_colors_cache,
 			&mut material_assets,
@@ -399,10 +386,9 @@ fn spawn_bevy_surfaces(
 		}
 
 		let start_pos = Vec3::new(0.0, 0.0, -0.5);
-		let surface_entity = spawn::surface(
+		let surface_bevy = SurfaceBevy::spawn(
 			surface_name,
 			Some(start_pos),
-			surfaces_bevy,
 			&container_helix.surface,
 			&font,
 			
@@ -422,12 +408,13 @@ fn spawn_bevy_surfaces(
 			delay: Duration::from_millis(450),
 		};
 		
-		animate::surface(
+		surface_bevy.animate(
 			start_pos,
 			Vec::from([tween_point]),
-			surface_entity,
 			commands
 		);
+		
+		surfaces_bevy.insert(surface_name.clone(), surface_bevy);
 
 		println!("new bevy surface created: {}", surface_name);
 	}
@@ -459,7 +446,7 @@ pub fn tokio_events(
 	tokio_runtime.block_on(app.handle_tokio_events());
 }
 
-pub fn update_background_quad(
+pub fn update_editor_background_quad(
 		surfaces_bevy	: Res<SurfacesMapBevy>,
 		q_camera		: Query<(&ReaderCamera, &Transform)>,
 	mut	q_transform		: Query<&mut Transform, Without<ReaderCamera>>,

@@ -2,9 +2,9 @@
 #![allow(non_snake_case, dead_code)]
 
 use bevy					::  prelude :: *;
-use bevy :: window			:: { PresentMode, WindowMode };
+use bevy :: window			:: { WindowMode };
 use bevy_reader_camera		:: { ReaderCameraPlugin };
-use bevy_shadertoy_wgsl		:: { * };
+// use bevy_shadertoy_wgsl		:: { * };
 use bevy_mod_picking		:: { * };
 use bevy_tweening			:: { * };
 

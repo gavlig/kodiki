@@ -136,7 +136,7 @@ pub fn world_axis(
 }
 
 pub fn infinite_grid(
-	commands			: &mut Commands,
+	_commands			: &mut Commands,
 ) {
 	// commands.spawn_bundle(InfiniteGridBundle::default());
 }
