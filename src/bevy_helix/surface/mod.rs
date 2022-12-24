@@ -283,26 +283,7 @@ impl SurfaceBevy {
 			commands
 		);
 		
-		//
-		//
-		// Background quad color
-		
-		if background_style.bg.is_some() {
-			let color			= color_from_helix(background_style.bg.unwrap());
-			let background_quad_material_handle = get_helix_color_material_handle(
-				color,
-				helix_colors_cache,
-				material_assets
-			);
-	
-			// replace material to reflect changed color
-			if let Some(background_entity) = self.background_quad_entity {
-				commands.entity	(background_entity)
-				.remove::<Handle<StandardMaterial>>()
-				.insert(background_quad_material_handle.clone_weak())
-				;
-			}
-		}
+		self.update_background_quad(&background_style, helix_colors_cache, material_assets, commands);
 	}
 
 	fn offset_cached_rows(
@@ -480,6 +461,34 @@ impl SurfaceBevy {
 		
 		if surface_children.len() > 0 {
 			commands.entity(surface_entity).push_children(surface_children.as_slice());
+		}
+	}
+	
+	fn update_background_quad(
+		&mut self,
+		background_style	: &Style,
+		helix_colors_cache	: &mut HelixColorsCache,
+		material_assets		: &mut Assets<StandardMaterial>,
+		commands			: &mut Commands,
+	)
+	{
+		if background_style.bg.is_none() {
+			return;
+		}
+		
+		let color			= color_from_helix(background_style.bg.unwrap());
+		let background_quad_material_handle = get_helix_color_material_handle(
+			color,
+			helix_colors_cache,
+			material_assets
+		);
+
+		// replace material to reflect changed color
+		if let Some(background_entity) = self.background_quad_entity {
+			commands.entity	(background_entity)
+				.remove::<Handle<StandardMaterial>>()
+				.insert(background_quad_material_handle.clone_weak())
+			;
 		}
 	}
 
