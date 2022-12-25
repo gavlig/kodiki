@@ -10,12 +10,10 @@ use crate				:: bevy_ab_glyph::{ ABGlyphFont, UsedFonts, GlyphMeshesCache, TextM
 use super				:: { * };
 use super				:: animate :: TweenPoint;
 
-use helix_tui 			:: { buffer :: Buffer as SurfaceHelix };
+use helix_tui 			:: buffer :: { Buffer as SurfaceHelix, SurfaceAnchor };
 
 use helix_view			:: { Theme };
 use helix_view			:: graphics :: { Style };
-
-use helix_term::compositor::SurfaceContainer as SurfaceContainerHelix;
 
 mod words;
 mod quads;
@@ -123,10 +121,17 @@ pub type SurfacesMapBevyInner = HashMap<String, SurfaceBevy>;
 #[derive(Resource, Deref, DerefMut, Default)]
 pub struct SurfacesMapBevy(SurfacesMapBevyInner);
 
-pub type SurfacesMapHelixInner = HashMap<String, SurfaceContainerHelix>;
+pub type SurfacesMapHelixInner = HashMap<String, SurfaceHelix>;
 
 #[derive(Resource, Deref, DerefMut, Default)]
 pub struct SurfacesMapHelix(SurfacesMapHelixInner);
+
+#[derive(Default, PartialEq, Eq, Clone, Copy)]
+pub enum RowOffsetDirection {
+	Up,
+	#[default]
+	Down
+}
 
 #[derive(Default)]
 pub struct TableCoords {
@@ -134,13 +139,37 @@ pub struct TableCoords {
 	pub y		: f32,
 	pub column	: u32,
 	pub row		: u32,
+	
+	row_offset_dir	: RowOffsetDirection,
+	row_height		: f32,
+	scroll_offset	: i32,
+	cache_offset	: i32,
 }
 
 impl TableCoords {
+	pub fn new(row_offset_dir: RowOffsetDirection, row_height: f32, scroll_offset: i32, cache_offset: i32) -> Self {
+		Self {
+			row_offset_dir,
+			row_height,
+			scroll_offset,
+			cache_offset,
+			..default()
+		}
+	}
+	
 	pub fn next_row(&mut self) {
 		self.x			= 0.0;
 		self.column		= 0;
 		self.row		+= 1;
+		
+		let row_wscroll	= self.row + self.scroll_offset as u32;
+		let row_height_wdir = match self.row_offset_dir {
+			RowOffsetDirection::Down	=> -self.row_height,
+			RowOffsetDirection::Up		=> self.row_height,
+		};
+		
+		self.y			= row_height_wdir * row_wscroll as f32;
+		
 	}
 	
 	pub fn next_column(&mut self, glyph: &String, used_fonts: &UsedFonts) {
@@ -417,16 +446,22 @@ impl SurfaceBevy {
 		let surface_entity			= self.entity.unwrap();
 		let mut surface_children : Vec<Entity> = Vec::new();
 
-		let mut table_coords 		= TableCoords::default();
-		let v_advance				= used_fonts.main.vertical_advance();
-		
 		let cells_helix				= &surface_helix.content;
+		
+		let row_height				= used_fonts.main.vertical_advance();
+		let row_offset_dir			= match surface_helix.anchor {
+			SurfaceAnchor::Unknown	=> RowOffsetDirection::Down,
+			SurfaceAnchor::Top		=> RowOffsetDirection::Down,
+			SurfaceAnchor::Bottom	=> RowOffsetDirection::Up,
+		};
+		
+		let mut table_coords 		= TableCoords::new(row_offset_dir, row_height, scroll_offset, cache_offset);
+		
+		let reverse_range			= row_offset_dir == RowOffsetDirection::Up;
+		let row_range				= utils::create_range(0 .. rows_in_page, reverse_range);
 
-		for row in 0 .. rows_in_page {
-			let row_scroll			= table_coords.row + scroll_offset as u32;
+		for row in row_range {
 			let row_cache			= table_coords.row + cache_offset as u32;
-			
-			table_coords.y			= -v_advance * row_scroll as f32;
 			
 			let mut word_row_state	= words::RowState::default();
 			let mut words			= words::Row::new();

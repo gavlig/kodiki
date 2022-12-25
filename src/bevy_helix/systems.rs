@@ -24,9 +24,7 @@ use helix_term  :: args			:: { Args };
 use helix_term	:: ui			:: { EditorView };
 use helix_view  :: graphics 	:: { Rect };
 
-use helix_term	:: compositor	:: SurfaceContainer as SurfaceContainerHelix;
-use helix_term	:: compositor	:: SurfacePlacement as SurfacePlacementHelix;
-use helix_tui   :: buffer		:: Buffer as SurfaceHelix;
+use helix_tui   :: buffer		:: { Buffer as SurfaceHelix, SurfaceSpatialFlags, SurfaceAnchor, SurfacePlacement };
 
 use anyhow      :: { Context, Error, Result };
 
@@ -46,14 +44,8 @@ pub fn startup_app(
 		height : 60,
 	};
 
-	let surface_editor = SurfaceHelix::empty(rect);
-	surfaces_helix.insert(
-		String::from(EditorView::ID),
-		SurfaceContainerHelix {
-			surface: surface_editor,
-			placement: SurfacePlacementHelix::Center,
-		}
-	);
+	let surface_editor = SurfaceHelix::empty_with_spatial(rect, SurfaceSpatialFlags::default());
+	surfaces_helix.insert(String::from(EditorView::ID),	surface_editor);
 
 	world.insert_resource(surfaces_helix);
 	world.insert_resource(surfaces_bevy);
@@ -117,14 +109,14 @@ pub fn startup_spawn(
 		fallback		: font_assets.get(&font_handles.fallback).unwrap()
 	};
 	
-	let container_helix_editor = surfaces_helix.get(&surface_editor_name).unwrap();
+	let surface_helix_editor = surfaces_helix.get(&surface_editor_name).unwrap();
 	
 	let surface_bevy_editor = SurfaceBevy::spawn(
 		&surface_editor_name,
 		None,
 		true, /* scroll_enabled */
 		true, /* cache_enabled */
-		&container_helix_editor.surface,
+		&surface_helix_editor,
 		used_fonts.main,
 		&mut mesh_assets,
 		&mut commands
@@ -209,11 +201,11 @@ pub fn update_main(
 	editor_area.height			= reader_camera.visible_rows as u16;
 
 	// erase previous frame
-	for (name, surface_container) in surfaces_helix.iter_mut() {
+	for (name, surface_helix) in surfaces_helix.iter_mut() {
 		if name == EditorView::ID {
-			surface_container.surface.resize(editor_area);
+			surface_helix.resize(editor_area);
 		}
-		surface_container.surface.reset();
+		surface_helix.reset();
 	}
 	
 	#[derive(PartialEq, Eq)]
@@ -229,7 +221,7 @@ pub fn update_main(
 	match render_mode {
 		RenderMode::Vanilla => {
 			let surface_helix_editor = surfaces_helix.get_mut(&String::from(EditorView::ID)).unwrap();
-			app.render(editor_area, &mut surface_helix_editor.surface);
+			app.render(editor_area, surface_helix_editor);
 		},
 		RenderMode::Kodiki => {
 			app.render_ext(editor_area, &mut surfaces_helix);
@@ -238,7 +230,7 @@ pub fn update_main(
 			let surface_bevy_editor = surfaces_bevy.get_mut(&String::from(EditorView::ID)).unwrap();
 			if surface_bevy_editor.update {
 				let surface_helix_editor = surfaces_helix.get_mut(&String::from(EditorView::ID)).unwrap();
-				for cell in surface_helix_editor.surface.content.iter_mut() {
+				for cell in surface_helix_editor.content.iter_mut() {
 					cell.symbol = String::from("A");
 					cell.bg = app.editor.theme.get("ui.background").bg.unwrap();
 				}
@@ -268,9 +260,8 @@ pub fn update_main(
 	);
 	
 	// render surfaces
-	for (layer_name, container_helix) in surfaces_helix.iter_mut() {
+	for (layer_name, surface_helix) in surfaces_helix.iter_mut() {
 		let surface_bevy = surfaces_bevy.get_mut(layer_name).unwrap();
-		let surface_helix = &mut container_helix.surface;
 
 		surface_bevy.update(
 			surface_helix,
@@ -314,9 +305,9 @@ fn screen_print_active_layers(
 {
 	let mut surface_names_str = String::default();
 	surface_names_str.push_str(format!("{} helix layers:\n", surfaces_helix.len()).as_str());
-	for (name, container) in surfaces_helix.iter() {
+	for (name, surface) in surfaces_helix.iter() {
 		surface_names_str.push_str(" - ");
-		surface_names_str.push_str(format!("{} len: {} w: {} h: {}", name, container.surface.content.len(), container.surface.area.width, container.surface.area.height).as_str());
+		surface_names_str.push_str(format!("{} len: {} w: {} h: {}", name, surface.content.len(), surface.area.width, surface.area.height).as_str());
 		surface_names_str.push('\n');
 	}
 	screen_print!("\n{}", surface_names_str);
@@ -347,9 +338,9 @@ fn cleanup_unused_surfaces(
     let mut to_remove = Vec::<String>::default();
 
 	// surfaces helix
-    for (layer_name, container_helix) in surfaces_helix.iter_mut() {
+    for (layer_name, surface_helix) in surfaces_helix.iter_mut() {
 		// if "dirty" is false it means that during render surface wasn't modified/filled up, meaning it's not longer used
-		if container_helix.surface.dirty {
+		if surface_helix.dirty {
 			continue;
 		}
 				
@@ -388,7 +379,7 @@ fn spawn_bevy_surfaces(
 	mut commands		: &mut Commands,
 )
 {
-	for (surface_name, container_helix) in surfaces_helix.iter() {
+	for (surface_name, surface_helix) in surfaces_helix.iter() {
 		if surfaces_bevy.contains_key(surface_name) {
 			continue;
 		}
@@ -404,20 +395,24 @@ fn spawn_bevy_surfaces(
 			Some(start_pos),
 			false, /* scroll_enabled */
 			false, /* cache_enabled */
-			&container_helix.surface,
+			&surface_helix,
 			&font,
 			
 			&mut mesh_assets,
 			&mut commands
 		);
 		
-		let target_pos = match container_helix.placement {
-			SurfacePlacementHelix::Top => {
+		let target_pos = match surface_helix.placement {
+			SurfacePlacement::Top => {
 				let y = camera_y + row_height * (reader_camera.visible_rows - 1) as f32;
 				Vec3::new(0.0, y, 0.3)
 			},
-			SurfacePlacementHelix::Center => {
-				let y = camera_y + row_height * (container_helix.surface.area.height as f32 / 2.0);
+			SurfacePlacement::Center => {
+				let mut offset = row_height * (surface_helix.area.height as f32 / 2.0);
+				if surface_helix.anchor == SurfaceAnchor::Bottom {
+					offset *= -1.0;
+				}
+				let y = camera_y + offset;
 				Vec3::new(0.7, y, 0.5)
 			},
 			_ => panic!(),

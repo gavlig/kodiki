@@ -16,6 +16,7 @@ use cursor :: *;
 mod spawn;
 mod animate;
 mod input;
+mod utils;
 
 mod systems;
 

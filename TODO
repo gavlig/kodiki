@@ -9,7 +9,7 @@
 5.2.1. ✅ bug: ":" panel doesnt clean up unused rows of background quads when changing size to smaller
 6. ✅ Panels/surfaces need to be placed and animated
 6.1. ✅Stale panels don't need to be animated
-6.2. ":" panel needs to be anchored to bottom
+6.2. ✅ ":" panel needs to be anchored to bottom
 6.3. Proper positioning of panels probably attached to cursor or camera
 7. ✅ Other fonts (not ubuntu_mono) have wrong background quad size
 7.1. ✅ that's because i have to make sure i have same font used everywhere 
@@ -44,7 +44,7 @@
 15.4.14. ✅ there is a big memory leak in idle state: it's mailbox present mode and shadertoy. They will be addessed later
 15.5. ✅ Make surface size depend on the amount of visible rows in camera
 15.6. ✅ Determine size of background quad when opening file: instead i'm making it dependent on visible amount of rows in camera and make it follow camera on y axis
-15.7. Separate logic for non-scrollable surfaces
+15.7. ✅ Separate logic for non-scrollable surfaces
 15.7.1. ✅ Refactor 'update' module for that
 15.8. ✅ Determine initial camera row 
 15.9. Separate EditorView panels and show them at the top/bottom of camera
