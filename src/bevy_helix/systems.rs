@@ -507,6 +507,17 @@ pub fn update_permanent_surfaces_position(
 		}
 		
 		if let Some(surface_bevy) = surfaces_bevy.get(surface_name) {
+			if surface_bevy.entity.is_none() {
+				continue;
+			}
+			let surface_entity = surface_bevy.entity.unwrap();
+			
+			let surface_transform = q_transform.get_mut(surface_entity);
+			if surface_transform.is_err() {
+				continue;
+			} 
+			let mut surface_transform = surface_transform.unwrap();	
+			
 			let reader_camera = q_camera.single();
 			let z = -reader_camera.zoom + 0.05;
 			let target_pos = match surface_helix.placement {
@@ -528,10 +539,8 @@ pub fn update_permanent_surfaces_position(
 				},
 				_ => panic!(),
 			};
-			if let Some(surface_entity) = surface_bevy.entity {
-				let mut surface_transform = q_transform.get_mut(surface_entity).unwrap();
-				surface_transform.translation = target_pos;
-			}
+			
+			surface_transform.translation = target_pos;
 		}
 	}
 }

@@ -43,7 +43,7 @@
 15.4.13. shadertoy on background introduces microstutter when moving camera smoothly
 15.4.14. ✅ there is a big memory leak in idle state: it's mailbox present mode and shadertoy. They will be addessed later
 15.4.15. background in file picker is broken/gone
-15.4.16. sometimes sufrace_entity doesnt have entity yet in update_permanent_surfaces_position
+15.4.16. ✅ sometimes sufrace_entity doesnt have entity yet in update_permanent_surfaces_position: it is a valid situation, we just need to add safety checks
 15.4.17. with added statusline first line in editor is corrupted (maybe after scrolling)
 15.5. ✅ Make surface size depend on the amount of visible rows in camera
 15.6. ✅ Determine size of background quad when opening file: instead i'm making it dependent on visible amount of rows in camera and make it follow camera on y axis
