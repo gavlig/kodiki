@@ -81,13 +81,13 @@ pub fn ground(
 	println!			("ground Entity ID {:?}", ground);
 }
 
-pub struct WorldAxisDesc {
+pub struct AxisDesc {
 	pub min_dim : f32,
 	pub max_dim : f32,
 	pub offset	: f32,
 }
 
-impl Default for WorldAxisDesc {
+impl Default for AxisDesc {
 	fn default() -> Self {
 		Self {
 			min_dim : 0.02,
@@ -97,13 +97,14 @@ impl Default for WorldAxisDesc {
 	}
 }
 
-pub fn world_axis(
+pub fn axis(
 	transform_in	: Transform,
-	world_axis_desc	: WorldAxisDesc,
-	meshes			: &mut ResMut<Assets<Mesh>>,
-	materials		: &mut ResMut<Assets<StandardMaterial>>,
+	world_axis_desc	: AxisDesc,
+	meshes			: &mut Assets<Mesh>,
+	materials		: &mut Assets<StandardMaterial>,
 	commands		: &mut Commands,
-) {
+) -> Entity
+{
 	let min_dim		= world_axis_desc.min_dim;
 	let max_dim		= world_axis_desc.max_dim;
 	let offset		= world_axis_desc.offset;
@@ -114,31 +115,47 @@ pub fn world_axis(
 	let offset_z	= Vec3::new(0.0, 0.0, offset);
 
 	let mut transform = transform_in.clone();
+	
+	let root_entity = commands.spawn(TransformBundle {
+		local		: transform_in,
+		..default()
+	})
+	.insert(VisibilityBundle {
+		visibility	: Visibility { is_visible: true },
+		..default()
+	})
+	.id();
 
 	// X
 	transform.translation = transform_in.translation + offset_x;
-	commands.spawn(PbrBundle {
+	let x_entity = commands.spawn(PbrBundle {
 		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(max_dim, min_dim, min_dim))),
 		material	: materials.add			(Color::rgb(max_color, min_color, min_color).into()),
 		transform	: transform,
 		..Default::default()
-	});
+	}).id();
 	// Y
 	transform.translation = transform_in.translation + offset_y;
-	commands.spawn(PbrBundle {
+	let y_entity = commands.spawn(PbrBundle {
 		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(min_dim, max_dim, min_dim))),
 		material	: materials.add			(Color::rgb(min_color, max_color, min_color).into()),
 		transform	: transform,
 		..Default::default()
-	});
+	}).id();
 	// Z
 	transform.translation = transform_in.translation + offset_z;
-	commands.spawn(PbrBundle {
+	let z_entity = commands.spawn(PbrBundle {
 		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(min_dim, min_dim, max_dim))),
 		material	: materials.add			(Color::rgb(min_color, min_color, max_color).into()),
 		transform	: transform,
 		..Default::default()
-	});
+	}).id();
+	
+	commands.entity(root_entity).add_child(x_entity);
+	commands.entity(root_entity).add_child(y_entity);
+	commands.entity(root_entity).add_child(z_entity);
+	
+	root_entity
 }
 
 pub fn infinite_grid(

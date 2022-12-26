@@ -12,7 +12,7 @@ use bevy_debug_text_overlay :: { screen_print };
 use crate :: bevy_ab_glyph :: ABGlyphFont;
 use crate :: bevy_ab_glyph :: mesh_generator :: generate_string_mesh;
 
-use super :: spawn :: WorldAxisDesc;
+use super :: spawn :: AxisDesc;
 use super :: { * };
 
 pub fn setup_world_system(
@@ -24,7 +24,7 @@ pub fn setup_world_system(
 ) {
 	// spawn::infinite_grid(&mut commands);
 
-	spawn::world_axis	(Transform::default(), WorldAxisDesc::default(), &mut mesh_assets, &mut material_assets, &mut commands);
+	spawn::axis	(Transform::default(), AxisDesc::default(), &mut mesh_assets, &mut material_assets, &mut commands);
 
 	spawn::fixed_sphere	(Transform::default(), 0.02, Color::SEA_GREEN, &mut mesh_assets, &mut material_assets, &mut commands);
 
