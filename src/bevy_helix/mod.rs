@@ -111,6 +111,7 @@ impl Plugin for BevyHelixPlugin {
 				.with_system(systems::tokio_events)
 				.with_system(systems::input_keyboard)
 				.with_system(systems::update_editor_background_quad)
+				.with_system(systems::update_permanent_surfaces_position)
 				.into()
 			)
 			.add_system_set(
@@ -119,6 +120,7 @@ impl Plugin for BevyHelixPlugin {
 				.with_system(systems::update_main)
 				.with_system(systems::tokio_events)
 				.with_system(systems::update_editor_background_quad)
+				.with_system(systems::update_permanent_surfaces_position)
 				.into()
 			)
 			.add_system_set(

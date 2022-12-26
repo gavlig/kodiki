@@ -34,6 +34,10 @@ pub fn camera(
 			..default()
 		})
 		.insert			(PickingCameraBundle::default())
+		.insert(VisibilityBundle {
+			visibility	: Visibility { is_visible: true },
+			..default()
+		})
 		.id				();
 
 	camera_ids.camera2d = Some(camera2d);

@@ -24,7 +24,7 @@ use helix_term  :: args			:: { Args };
 use helix_term	:: ui			:: { EditorView };
 use helix_view  :: graphics 	:: { Rect };
 
-use helix_tui   :: buffer		:: { Buffer as SurfaceHelix, SurfaceSpatialFlags, SurfaceAnchor, SurfacePlacement };
+use helix_tui   :: buffer		:: { Buffer as SurfaceHelix, SurfaceFlags, SurfaceAnchor, SurfacePlacement, SurfaceLifetime };
 
 use anyhow      :: { Context, Error, Result };
 
@@ -44,7 +44,7 @@ pub fn startup_app(
 		height : 60,
 	};
 
-	let surface_editor = SurfaceHelix::empty_with_spatial(rect, SurfaceSpatialFlags::default());
+	let surface_editor = SurfaceHelix::empty_with_spatial(rect, SurfaceFlags::default());
 	surfaces_helix.insert(String::from(EditorView::ID),	surface_editor);
 
 	world.insert_resource(surfaces_helix);
@@ -253,9 +253,9 @@ pub fn update_main(
 		&mut surfaces_helix,
 		&mut surfaces_bevy,
 		&reader_camera,
-		&camera_transform,
 		used_fonts.main,
 		&mut mesh_assets,
+		&mut material_assets,
 		&mut commands
 	);
 	
@@ -372,10 +372,10 @@ fn spawn_bevy_surfaces(
 	surfaces_bevy		: &mut SurfacesMapBevy,
 
 	reader_camera		: &ReaderCamera,
-	camera_transform	: &Transform,
 	font				: &ABGlyphFont,
 
 	mut mesh_assets		: &mut Assets<Mesh>,
+	mut material_assets	: &mut Assets<StandardMaterial>,
 	mut commands		: &mut Commands,
 )
 {
@@ -384,11 +384,10 @@ fn spawn_bevy_surfaces(
 			continue;
 		}
 		
-		let row_height	= font.vertical_advance();
-		let camera_y	= camera_transform.translation.y;
+		let row_height		= font.vertical_advance();
+		let column_width	= font.horizontal_advance_char('a');
 
-		let start_y = camera_y + row_height * (reader_camera.visible_rows - 1) as f32;
-		let start_pos = Vec3::new(0.0, start_y, -0.5);
+		let start_pos = Vec3::new(0.0, 0.0, -reader_camera.zoom - 1.0);
 		
 		let surface_bevy = SurfaceBevy::spawn(
 			surface_name,
@@ -402,33 +401,39 @@ fn spawn_bevy_surfaces(
 			&mut commands
 		);
 		
-		let target_pos = match surface_helix.placement {
-			SurfacePlacement::Top => {
-				let y = camera_y + row_height * (reader_camera.visible_rows - 1) as f32;
-				Vec3::new(0.0, y, 0.3)
-			},
-			SurfacePlacement::Center => {
-				let mut offset = row_height * (surface_helix.area.height as f32 / 2.0);
-				if surface_helix.anchor == SurfaceAnchor::Bottom {
-					offset *= -1.0;
-				}
-				let y = camera_y + offset;
-				Vec3::new(0.7, y, 0.5)
-			},
-			_ => panic!(),
-		};
+		let surface_entity = surface_bevy.entity.unwrap();
+		commands.entity(reader_camera.entity).add_child(surface_entity);
 		
-		let tween_point = animate::TweenPoint {
-			pos: target_pos,
-			ease_function: EaseFunction::ExponentialOut,
-			delay: Duration::from_millis(450),
-		};
-		
-		surface_bevy.animate(
-			start_pos,
-			Vec::from([tween_point]),
-			commands
-		);
+		if surface_helix.lifetime == SurfaceLifetime::Temporary {
+			let target_pos = match surface_helix.placement {
+				SurfacePlacement::Top => {
+					let x = -column_width * surface_helix.area.width as f32 / 2.0;
+					let y = row_height * ((reader_camera.visible_rows / 2) as f32);
+					let z = -reader_camera.zoom + 0.01;
+					Vec3::new(x, y, z)
+				},
+				SurfacePlacement::Center => {
+					let mut y = row_height * (surface_helix.area.height as f32 / 2.0);
+					if surface_helix.anchor == SurfaceAnchor::Bottom {
+						y *= -1.0;
+					}
+					Vec3::new(0.7, y, -reader_camera.zoom + 0.5)
+				},
+				_ => panic!(),
+			};
+			
+			let tween_point = animate::TweenPoint {
+				pos: target_pos,
+				ease_function: EaseFunction::ExponentialOut,
+				delay: Duration::from_millis(250),
+			};
+			
+			surface_bevy.animate(
+				start_pos,
+				Vec::from([tween_point]),
+				commands
+			);
+		}
 		
 		surfaces_bevy.insert(surface_name.clone(), surface_bevy);
 
@@ -477,4 +482,56 @@ pub fn update_editor_background_quad(
 
 	bg_quad_transform.scale.y = (reader_camera.visible_rows * 2) as f32;
 	bg_quad_transform.translation.y = camera_transform.translation.y;
+}
+
+pub fn update_permanent_surfaces_position(
+		surfaces_bevy	: Res<SurfacesMapBevy>,
+		surfaces_helix	: Res<SurfacesMapHelix>,
+		font_assets		: Res<Assets<ABGlyphFont>>,
+		font_handles	: Res<FontAssetHandles>,
+		q_camera		: Query<&ReaderCamera>,
+	mut	q_transform		: Query<&mut Transform>,
+)
+{
+	let used_fonts = UsedFonts {
+		main			: font_assets.get(&font_handles.main).unwrap(),
+		fallback		: font_assets.get(&font_handles.fallback).unwrap()
+	};
+	
+	let row_height		= used_fonts.main.vertical_advance();
+	let column_width	= used_fonts.main.horizontal_advance_char('a');
+	
+	for (surface_name, surface_helix) in surfaces_helix.iter() {
+		if surface_name == EditorView::ID {
+			continue;
+		}
+		
+		if let Some(surface_bevy) = surfaces_bevy.get(surface_name) {
+			let reader_camera = q_camera.single();
+			let z = -reader_camera.zoom + 0.05;
+			let target_pos = match surface_helix.placement {
+				SurfacePlacement::Top => {
+					let x = -column_width * (surface_helix.area.width as f32 / 2.0);
+					let y = row_height * ((reader_camera.visible_rows as f32 - 1.5)  / 2.0);
+					Vec3::new(x, y, z)
+				},
+				SurfacePlacement::Center => {
+					let mut y = row_height * (surface_helix.area.height as f32 / 2.0);
+					if surface_helix.anchor == SurfaceAnchor::Bottom {
+						y *= -1.0;
+					}
+					Vec3::new(0.7, y, z)
+				},
+				SurfacePlacement::Bottom => {
+					let mut y = -row_height * ((reader_camera.visible_rows as f32 + 1.5) / 2.0);
+					Vec3::new(0.7, y, z)
+				},
+				_ => panic!(),
+			};
+			if let Some(surface_entity) = surface_bevy.entity {
+				let mut surface_transform = q_transform.get_mut(surface_entity).unwrap();
+				surface_transform.translation = target_pos;
+			}
+		}
+	}
 }
