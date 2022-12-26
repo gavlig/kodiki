@@ -210,7 +210,7 @@ pub fn update_main(
 	
 	#[derive(PartialEq, Eq)]
 	enum RenderMode {
-		Vanilla,
+		// Vanilla, BROKEN MOST LIKELY FOREVER
 		Kodiki,
 		Benchmark
 	}
@@ -219,10 +219,10 @@ pub fn update_main(
 
 	// first let helix render into surface_helix
 	match render_mode {
-		RenderMode::Vanilla => {
-			let surface_helix_editor = surfaces_helix.get_mut(&String::from(EditorView::ID)).unwrap();
-			app.render(editor_area, surface_helix_editor);
-		},
+		// RenderMode::Vanilla => {
+		// 	let surface_helix_editor = surfaces_helix.get_mut(&String::from(EditorView::ID)).unwrap();
+		// 	app.render(editor_area, surface_helix_editor);
+		// },
 		RenderMode::Kodiki => {
 			app.render_ext(editor_area, &mut surfaces_helix);
 		},
