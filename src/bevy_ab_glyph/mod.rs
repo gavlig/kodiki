@@ -123,7 +123,7 @@ impl GlyphWithFonts<'_> {
 		let use_fallback = glyph_id == GlyphId(0);
 		if use_fallback {
 			let glyph_id = char_with_fonts.fallback.glyph_id(&char_with_fonts.glyph_str);
-			assert!(glyph_id != GlyphId(0));
+			assert!(glyph_id != GlyphId(0), "couldnt find glyph for {:?}!", char_with_fonts.glyph_str);
 		}
 	
 		use_fallback
