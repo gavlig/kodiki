@@ -91,7 +91,9 @@ impl SurfaceBevyCacheInfo {
 #[derive(Clone, PartialEq, Debug)]
 pub struct SurfaceBevy {
 	pub entity  			: Option<Entity>,
-	pub background_quad_entity : Option<Entity>,
+	
+	pub background_quad_entity	: Option<Entity>,
+	pub background_quad_color	: Color,
 	
 	pub rows				: RowsBevy,
 	pub area				: helix_view::graphics::Rect,
@@ -106,7 +108,8 @@ impl Default for SurfaceBevy {
 	fn default() -> Self {
 		Self {
 			entity				: None,
-			background_quad_entity : None,
+			background_quad_entity	: None,
+			background_quad_color	: Color::CYAN,
 			rows				: RowsBevy::new(),
 			area				: helix_view::graphics::Rect::default(),
 			scroll_info			: SurfaceBevyScrollInfo::default(),
@@ -360,7 +363,7 @@ impl SurfaceBevy {
 			commands
 		);
 		
-		self.update_background_quad(&background_style, helix_colors_cache, material_assets, commands);
+		self.update_background_quad_color(&background_style, helix_colors_cache, material_assets, commands);
 	}
 
 	fn offset_cached_rows(
@@ -547,7 +550,7 @@ impl SurfaceBevy {
 		}
 	}
 	
-	fn update_background_quad(
+	fn update_background_quad_color(
 		&mut self,
 		background_style	: &Style,
 		helix_colors_cache	: &mut HelixColorsCache,
@@ -560,6 +563,11 @@ impl SurfaceBevy {
 		}
 		
 		let color			= color_from_helix(background_style.bg.unwrap());
+		if self.background_quad_color == color {
+			return;
+		}
+		
+		self.background_quad_color = color;
 		let background_quad_material_handle = get_helix_color_material_handle(
 			color,
 			helix_colors_cache,
