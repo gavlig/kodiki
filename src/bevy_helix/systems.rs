@@ -402,10 +402,10 @@ fn spawn_bevy_surfaces(
 		
 		if surface_helix.lifetime == SurfaceLifetime::Temporary {
 			let x = -column_width * surface_helix.area.width as f32 / 2.0;
+			let z = -reader_camera.zoom + 0.5;
 			let target_pos = match surface_helix.placement {
 				SurfacePlacement::Top => {
-					let y = row_height * ((reader_camera.visible_rows / 2) as f32);
-					let z = -reader_camera.zoom + 0.01;
+					let y = row_height * ((reader_camera.visible_rows as f32 - 1.5)  / 2.0);
 					Vec3::new(x, y, z)
 				},
 				SurfacePlacement::Center => {
@@ -413,7 +413,11 @@ fn spawn_bevy_surfaces(
 					if surface_helix.anchor == SurfaceAnchor::Bottom {
 						y *= -1.0;
 					}
-					Vec3::new(x, y, -reader_camera.zoom + 0.5)
+					Vec3::new(x, y, z)
+				},
+				SurfacePlacement::Bottom => {
+					let y = -row_height * ((reader_camera.visible_rows as f32 - 0.5) / 2.0);
+					Vec3::new(x, y, z)
 				},
 				_ => panic!(),
 			};
@@ -568,7 +572,7 @@ pub fn update_permanent_surfaces_position(
 					Vec3::new(x, y, z)
 				},
 				SurfacePlacement::Bottom => {
-					let y = -row_height * ((reader_camera.visible_rows as f32 + 1.5) / 2.0);
+					let y = -row_height * ((reader_camera.visible_rows as f32 - 0.5) / 2.0);
 					Vec3::new(x, y, z)
 				},
 				_ => panic!(),
