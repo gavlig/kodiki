@@ -246,8 +246,6 @@ pub fn update_main(
 		cleanup_unused_surfaces(&mut surfaces_helix, &mut surfaces_bevy, &mut despawn);
 	}
 	
-	let camera_transform = q_transform.get(reader_camera.entity).unwrap();
-	
 	// create bevy surfaces for every helix surface
 	spawn_bevy_surfaces(
 		&mut surfaces_helix,
@@ -255,7 +253,6 @@ pub fn update_main(
 		&reader_camera,
 		used_fonts.main,
 		&mut mesh_assets,
-		&mut material_assets,
 		&mut commands
 	);
 	
@@ -375,7 +372,6 @@ fn spawn_bevy_surfaces(
 	font				: &ABGlyphFont,
 
 	mut mesh_assets		: &mut Assets<Mesh>,
-	mut material_assets	: &mut Assets<StandardMaterial>,
 	mut commands		: &mut Commands,
 )
 {
@@ -534,7 +530,7 @@ pub fn update_permanent_surfaces_position(
 					Vec3::new(0.7, y, z)
 				},
 				SurfacePlacement::Bottom => {
-					let mut y = -row_height * ((reader_camera.visible_rows as f32 + 1.5) / 2.0);
+					let y = -row_height * ((reader_camera.visible_rows as f32 + 1.5) / 2.0);
 					Vec3::new(0.7, y, z)
 				},
 				_ => panic!(),
