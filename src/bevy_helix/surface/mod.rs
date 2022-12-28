@@ -140,7 +140,7 @@ pub struct TableCoords {
 	pub column	: u32,
 	pub row		: u32,
 	
-	row_offset_dir	: RowOffsetDirection,
+	row_offset_sign	: f32,
 	row_height		: f32,
 	scroll_offset	: i32,
 	cache_offset	: i32,
@@ -148,8 +148,16 @@ pub struct TableCoords {
 
 impl TableCoords {
 	pub fn new(row_offset_dir: RowOffsetDirection, row_height: f32, scroll_offset: i32, cache_offset: i32) -> Self {
+		let row_offset_sign = match row_offset_dir {
+			RowOffsetDirection::Down	=> -1.0,
+			RowOffsetDirection::Up		=> 1.0,
+		};
+		
+		let y = row_height * row_offset_sign * scroll_offset as f32;
+		
 		Self {
-			row_offset_dir,
+			y,
+			row_offset_sign,
 			row_height,
 			scroll_offset,
 			cache_offset,
@@ -163,13 +171,7 @@ impl TableCoords {
 		self.row		+= 1;
 		
 		let row_wscroll	= self.row + self.scroll_offset as u32;
-		let row_height_wdir = match self.row_offset_dir {
-			RowOffsetDirection::Down	=> -self.row_height,
-			RowOffsetDirection::Up		=> self.row_height,
-		};
-		
-		self.y			= row_height_wdir * row_wscroll as f32;
-		
+		self.y			= self.row_height * self.row_offset_sign * row_wscroll as f32;
 	}
 	
 	pub fn next_column(&mut self, glyph: &String, used_fonts: &UsedFonts) {
