@@ -242,24 +242,24 @@ impl SurfaceBevy {
 			commands.entity(background_entity).despawn();
 		}
 		
-		let v_advance	= font.vertical_advance();
-		let h_advance	= font.horizontal_advance(&String::from("a")); // in monospace font every letter should be of the same width so we pick 'a'
+		let row_height	= font.vertical_advance();
+		let column_width = font.horizontal_advance(&String::from("a")); // in monospace font every letter should be of the same width so we pick 'a'
 		let v_down_offset = font.vertical_down_offset();
 		
 		let width		= surface_helix.area.width;
 		let height		= 1; // we use scale to stretch it to camera visibility limits so here it's just 1 row of text
 		
-		let quad_width	= h_advance * width as f32;
-		let quad_height	= v_advance * height as f32;
+		let quad_width	= column_width * width as f32;
+		let quad_height	= row_height * height as f32;
 		
-		let quad_x		= h_advance * width as f32 / 2.0;
-		let mut quad_y	= -v_advance * height as f32 / 2.0;
+		let quad_x		= column_width * width as f32 / 2.0;
+		let mut quad_y	= -row_height * height as f32 / 2.0;
 		// + v_advance because we need to cover row 0 with background quads too
-		quad_y 			+= v_advance;
+		quad_y 			+= row_height;
 		// add offset downwards to cover glyphs with vertical advance (y, g, _ etc)
 		quad_y			-= v_down_offset;
 		
-		println!("filling surface {} len {} w {} h {}", surface_name, surface_helix.content.len(), width, height);
+		println!("spawning surface background quad {} w {} h {} x {:.3} y {:.3}", surface_name, width, height, quad_x, quad_y);
 		
 		let quad_pos		= Vec3::new(quad_x, quad_y, -font.depth_scaled());
 		let quad_entity_id	= 
