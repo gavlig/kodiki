@@ -502,6 +502,10 @@ pub fn update_permanent_surfaces_position(
 			continue;
 		}
 		
+		if surface_helix.lifetime != SurfaceLifetime::Permanent {
+			continue;
+		}
+		
 		if let Some(surface_bevy) = surfaces_bevy.get(surface_name) {
 			if surface_bevy.entity.is_none() {
 				continue;
