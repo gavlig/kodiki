@@ -178,6 +178,10 @@ impl TableCoords {
 		self.x += used_fonts.main.horizontal_advance(glyph);
 		self.column += 1;
 	}
+	
+	pub fn row_wcache(&self) -> u32 {
+		self.row + self.cache_offset as u32
+	}
 }
 
 impl SurfaceBevy {
@@ -463,7 +467,7 @@ impl SurfaceBevy {
 		let row_range				= utils::create_range(0 .. rows_in_page, reverse_range);
 
 		for row in row_range {
-			let row_cache			= table_coords.row + cache_offset as u32;
+			let row_cache			= table_coords.row_wcache();
 			
 			let mut word_row_state	= words::RowState::default();
 			let mut words			= words::Row::new();
