@@ -92,8 +92,8 @@ pub fn update<'a>(
 ) -> Vec<Entity>
 {
 	let background_color = background_style.bg.unwrap();
-	let quad_color	= cell_helix.bg;
-	let is_space	= quad_color == background_color;
+	let quad_color_helix = cell_helix.bg;
+	let is_space	= quad_color_helix == background_color;
 	
 	let mut quad_entities : Vec<Entity> = Vec::new();
 	
@@ -102,7 +102,8 @@ pub fn update<'a>(
 		let quad		= quads_row.last_mut().unwrap();
 	
 		// if word ended check if it's different from what we already have spawned and spawn it or re-use existing entity to attach a different mesh to it
-		let quad_ended	= is_space || row_state.ended;
+		let different_color = quad_color_helix != quad.color;
+		let quad_ended	= is_space || row_state.ended || different_color;
 		
 		if (quad_ended && row_state.ended) || !quad_ended {
 			quad.length += 1;
@@ -146,7 +147,7 @@ pub fn update<'a>(
 		
 		quad.row		= table_coords.row;
 		quad.column		= table_coords.column;
-		quad.color		= quad_color;
+		quad.color		= quad_color_helix;
 	
 		quad.length		+= 1;
 	
