@@ -75,7 +75,7 @@ pub struct QuadDescription {
 pub fn update<'a>(
 	background_style: &HelixStyle,
 	
-	table_coords	: &TableCoords,
+	table_coords	: &SurfaceCoords,
 	row_bevy		: &mut BackgroundQuadRowBevy,
 	row_state		: &mut RowState,
 	
@@ -183,7 +183,7 @@ pub fn update<'a>(
 fn on_quad_ended(
 	quad_index		: usize,	
 	quad 			: &Quad,
-	table_coords	: &TableCoords,
+	table_coords	: &SurfaceCoords,
 	row_bevy		: &mut BackgroundQuadRowBevy,
 	row_state		: &mut RowState,
 	

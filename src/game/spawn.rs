@@ -34,7 +34,7 @@ pub fn camera(
 			..default()
 		})
 		.insert			(PickingCameraBundle::default())
-		.insert(VisibilityBundle {
+		.insert			(VisibilityBundle {
 			visibility	: Visibility { is_visible: true },
 			..default()
 		})

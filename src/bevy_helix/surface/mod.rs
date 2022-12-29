@@ -63,7 +63,7 @@ impl RowBevy {
 pub type RowsBevy = Vec<RowBevy>;
 
 #[derive(Default, Clone, PartialEq, Debug)]
-struct SurfaceBevyScrollInfo {
+pub struct SurfaceBevyScrollInfo {
 	pub enabled				: bool,
 	pub offset				: i32,
 }
@@ -75,7 +75,7 @@ impl SurfaceBevyScrollInfo {
 }
 
 #[derive(Default, Clone, PartialEq, Debug)]
-struct SurfaceBevyCacheInfo {
+pub struct SurfaceBevyCacheInfo {
 	pub enabled				: bool,
 	pub offset				: i32,
 	pub rows_cached			: i32,
@@ -98,8 +98,8 @@ pub struct SurfaceBevy {
 	pub rows				: RowsBevy,
 	pub area				: helix_view::graphics::Rect,
 	
-	scroll_info				: SurfaceBevyScrollInfo,
-	cache_info				: SurfaceBevyCacheInfo,
+	pub scroll_info			: SurfaceBevyScrollInfo,
+	pub cache_info			: SurfaceBevyCacheInfo,
 	
 	pub update				: bool,
 }
@@ -137,7 +137,7 @@ pub enum RowOffsetDirection {
 }
 
 #[derive(Default)]
-pub struct TableCoords {
+pub struct SurfaceCoords {
 	pub x		: f32,
 	pub y		: f32,
 	pub column	: u32,
@@ -149,7 +149,7 @@ pub struct TableCoords {
 	cache_offset	: i32,
 }
 
-impl TableCoords {
+impl SurfaceCoords {
 	pub fn new(row_offset_dir: RowOffsetDirection, row_height: f32, scroll_offset: i32, cache_offset: i32) -> Self {
 		let row_offset_sign = match row_offset_dir {
 			RowOffsetDirection::Down	=> -1.0,
@@ -343,7 +343,9 @@ impl SurfaceBevy {
 		self.despawn_unused_rows(rows_total as usize, commands);
 		self.rows.resize_with	(rows_total as usize, || { RowBevy::default() });
 		
-		self.offset_cached_rows(row_offset, commands);
+		let scroll_offset_prev	= self.scroll_info.offset;
+		self.scroll_info.offset	= row_offset;
+		self.offset_cached_rows(row_offset, scroll_offset_prev, commands);
 		
 		let background_style = theme.get("ui.background");
 		
@@ -369,6 +371,7 @@ impl SurfaceBevy {
 	fn offset_cached_rows(
 		&mut self,
 		row_offset		: i32,
+		row_offset_prev	: i32,
 		commands		: &mut Commands,
 	)
 	{
@@ -381,7 +384,6 @@ impl SurfaceBevy {
 		let rows_cache_capacity		= self.rows_cache_capacity();
 		let rows_cache_capacity_half = rows_cache_capacity / 2;
 		
-		let row_offset_prev 		= self.scroll_info.offset;
 		let row_offset_delta 		= row_offset - row_offset_prev;
 		let _row_offset_delta_clamped = row_offset_delta.clamp(-rows_cache_capacity_half, rows_cache_capacity_half);
 		
@@ -389,7 +391,6 @@ impl SurfaceBevy {
 		let cache_offset			= self.cache_info.offset;
 		let rows_spawned			= rows_in_page + rows_cached;
 		
-		self.scroll_info.offset		= row_offset;
 		self.cache_info.offset		= (self.cache_info.offset + row_offset_delta).clamp(0, rows_cache_capacity as i32);
 		self.cache_info.rows_cached	= (rows_cached + row_offset_delta).max(rows_cached).clamp(0, rows_cache_capacity as i32);
 		
@@ -464,13 +465,13 @@ impl SurfaceBevy {
 			SurfaceAnchor::Bottom	=> RowOffsetDirection::Up,
 		};
 		
-		let mut table_coords 		= TableCoords::new(row_offset_dir, row_height, scroll_offset, cache_offset);
+		let mut surface_coords 		= SurfaceCoords::new(row_offset_dir, row_height, scroll_offset, cache_offset);
 		
 		let reverse_range			= row_offset_dir == RowOffsetDirection::Up;
 		let row_range				= utils::create_range(0 .. rows_in_page, reverse_range);
 
 		for row in row_range {
-			let row_cache			= table_coords.row_wcache();
+			let row_cache			= surface_coords.row_wcache();
 			
 			let mut word_row_state	= words::RowState::default();
 			let mut words			= words::Row::new();
@@ -492,7 +493,7 @@ impl SurfaceBevy {
 				// if word ended - spawn it, if not ended - add symbol to the word in progress, if space - do nothing
 				let mut new_word_entities =
 				words::update(
-					&table_coords,
+					&surface_coords,
 					words_row_bevy,
 					&mut word_row_state,
 					
@@ -520,7 +521,7 @@ impl SurfaceBevy {
 				let mut new_quad_entities =
 				quads::update(
 					&background_style,
-					&table_coords,
+					&surface_coords,
 					quads_row_bevy,
 					&mut quad_row_state,
 					
@@ -539,10 +540,10 @@ impl SurfaceBevy {
 				
 				}
 				
-				table_coords.next_column(&cell_helix.symbol, used_fonts);
+				surface_coords.next_column(&cell_helix.symbol, used_fonts);
 			}
 
-			table_coords.next_row();
+			surface_coords.next_row();
 		}
 		
 		if surface_children.len() > 0 {

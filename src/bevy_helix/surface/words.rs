@@ -43,7 +43,7 @@ pub struct RowState {
 }
 
 pub fn update<'a>(
-	table_coords	: &TableCoords,
+	table_coords	: &SurfaceCoords,
 	row_bevy		: &mut WordRowBevy,
 	row_state		: &mut RowState,
 	
@@ -154,7 +154,7 @@ pub fn update<'a>(
 fn on_word_ended(
 	word_index		: usize,	
 	word 			: &Word,
-	table_coords	: &TableCoords,
+	table_coords	: &SurfaceCoords,
 	row_bevy		: &mut WordRowBevy,
 	row_state		: &mut RowState,
 	
@@ -366,5 +366,5 @@ fn insert_word_mesh(
 		.insert(material_handle.clone_weak())
 		.insert(transform)
 		.insert(word_description.clone())
-		;
+	;
 }

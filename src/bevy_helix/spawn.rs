@@ -1,4 +1,5 @@
 use bevy				:: prelude :: { * };
+use bevy_mod_picking	:: { * };
 
 use crate :: bevy_ab_glyph :: TextMeshesCache;
 
@@ -52,7 +53,9 @@ pub fn background_quad(
 	commands		: &mut Commands
 ) -> Entity {
 	let quad_mesh_handle = mesh_assets.add(Mesh::from(shape::Quad::new(quad_size)));
-
+	
+	use bevy::ui::FocusPolicy;
+	
 	let entity = commands.spawn(PbrBundle {
 		mesh			: quad_mesh_handle.clone(),
 		transform		: Transform {
@@ -61,6 +64,14 @@ pub fn background_quad(
 		},
 		..default()
 	})
+	
+	// unpacked PickableBundle because we don't want Highlight
+	.insert(PickableMesh::default())
+	.insert(Interaction::default())
+	.insert(FocusPolicy::default())
+	.insert(Selection::default())
+	.insert(Hover::default())
+	
 	.id();
 	
 	if let Some(handle) = material_handle {

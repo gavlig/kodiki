@@ -1,6 +1,12 @@
 1. ✅ Camera is still not usable. edit: usable now. alt for reading. alt + ctrl for debug fly. 
 2. ✅ Symbols of diagnostic and spinner are missing
 3. Mouse support
+3.1. ✅ row/column for editor surface only
+3.2. ✅ click
+3.3. drag
+3.4. scroll
+3.5. modifiers
+3.6. map row/column to other surfaces
 4. ✅ Some keycodes are missing
 5. ✅ Cache words and chunks of background quads
 5.1. ✅ Words

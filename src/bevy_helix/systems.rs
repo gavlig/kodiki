@@ -1,23 +1,24 @@
-use bevy :: prelude :: *;
-use bevy :: input :: keyboard :: *;
-use bevy_tweening :: { * };
+use bevy :: prelude				:: { * };
+use bevy :: input :: keyboard	:: { * };
+use bevy_tweening				:: { * };
+use bevy_mod_picking			:: { * };
 
-use bevy_debug_text_overlay :: screen_print;
-use bevy_reader_camera :: ReaderCamera;
+use bevy_debug_text_overlay		:: { screen_print };
+use bevy_reader_camera			:: { ReaderCamera };
 
 use super :: HelixColorsCache;
 use super :: application :: Application;
-use super :: surface :: *;
-use super :: cursor :: *;
-
 use super :: animate;
 use super :: input;
 use super :: TokioRuntime;
 
+use super :: surface			:: { * };
+use super :: cursor				:: { * };
+
 use crate :: game :: DespawnResource;
 use crate :: game :: FontAssetHandles;
 
-use crate :: bevy_ab_glyph :: { ABGlyphFont, UsedFonts, GlyphMeshesCache, TextMeshesCache };
+use crate :: bevy_ab_glyph		:: { ABGlyphFont, UsedFonts, GlyphMeshesCache, TextMeshesCache };
 
 use helix_term  :: config		:: { Config };
 use helix_term  :: args			:: { Args };
@@ -26,7 +27,7 @@ use helix_view  :: graphics 	:: { Rect };
 
 use helix_tui   :: buffer		:: { Buffer as SurfaceHelix, SurfaceFlags, SurfaceAnchor, SurfacePlacement, SurfaceLifetime };
 
-use anyhow      :: { Context, Error, Result };
+use anyhow      				:: { Context, Error, Result };
 
 use std :: time :: Duration;
 
@@ -278,7 +279,7 @@ pub fn update_main(
 	}
 
 	// render and animate cursor
-	if app.editor_focused() { 
+	if app.editor_focused() && false { 
 		cursor.animate(
 			&mut q_transform,
 			used_fonts.main,
@@ -441,8 +442,90 @@ fn spawn_bevy_surfaces(
 	}
 }
 
+pub fn input_mouse(
+	mouse_button	: Res<Input<MouseButton>>,
+	key				: Res<Input<KeyCode>>,
+	
+	surfaces		: Res<SurfacesMapBevy>,
+	font_assets		: Res<Assets<ABGlyphFont>>,
+	font_handles	: Res<FontAssetHandles>,
+	
+	q_transform		: Query<&Transform>,
+	q_picking_camera: Query<&PickingCamera>,
+	
+	tokio_runtime	: Res<TokioRuntime>,
+	app				: Option<NonSendMut<Application>>,
+)
+{
+	if q_picking_camera.is_empty() {
+		return;
+	}
+
+	// getting editor surface first
+	let surface_editor = surfaces.get(&String::from(EditorView::ID)).unwrap();
+	let surface_entity = if let Some(entity) = surface_editor.entity {
+		entity
+	} else {
+		return;
+	};
+	
+	let surface_quad_entity = if let Some(entity) = surface_editor.background_quad_entity {
+		entity
+	} else {
+		return;
+	};
+	
+	// get its transform
+	let transform_result = q_transform.get(surface_entity);
+	let surface_transform = if let Ok(transform) = transform_result {
+		transform
+	} else {
+		return;
+	};
+	
+	// find where mouse cursor is on editor surface
+	let mut found_editor_surface = false;
+	let mut cursor_position_world = Vec3::ZERO;
+	let picking_camera = q_picking_camera.single();
+	for intersect in picking_camera.intersections().iter() {
+		if intersect.0 != surface_quad_entity {
+			continue;
+		}
+		cursor_position_world = intersect.1.position();
+		found_editor_surface = true;
+		break;
+	}
+	
+	if !found_editor_surface {
+		return;
+	}
+	
+	// world space to surface space
+	let cursor_position_surface = surface_transform.compute_matrix().inverse().transform_point3(cursor_position_world);
+	
+	// calculate row and column from surface space cursor coordinates
+	let font = font_assets.get(&font_handles.main).unwrap();
+	
+	let column_width	= font.horizontal_advance_char('a');
+	let row_height		= font.vertical_advance();
+	
+	let column	= (cursor_position_surface.x / column_width) as u16;
+	// TODO: consider bottom anchoring
+	let y_woffset = cursor_position_surface.y - row_height; // FIXME: first row offset has to go
+	let row 	= (y_woffset.abs() / row_height) as u16 - surface_editor.scroll_info.offset as u16;
+	
+	input::mouse(
+		&mouse_button,
+		&key,
+		column,
+		row,
+		&tokio_runtime,
+		&mut app.unwrap()
+	);
+}
+
 pub fn input_keyboard(
-	mut ev_keyboard : EventReader<KeyboardInput>,
+	mut keyboard_events : EventReader<KeyboardInput>,
 	key				: Res<Input<KeyCode>>,
 	tokio_runtime	: Res<TokioRuntime>,
 	app				: Option<NonSendMut<Application>>,
@@ -450,8 +533,12 @@ pub fn input_keyboard(
 	if app.is_none() {
 		return;
 	}
+	
+	if keyboard_events.is_empty() {
+		return;
+	}
 
-	input::keyboard(&mut ev_keyboard, &key, &tokio_runtime, &mut app.unwrap());
+	input::keyboard(&mut keyboard_events, &key, &tokio_runtime, &mut app.unwrap());
 }
 
 pub fn tokio_events(

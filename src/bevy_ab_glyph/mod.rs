@@ -55,6 +55,10 @@ impl ABGlyphFont {
 
 		advance
 	}
+	
+	pub fn horizontal_advance_mono(&self) -> f32 {
+		self.horizontal_advance_char('a')
+	}
 
 	pub fn kerning(&self, glyph_str0: &String, glyph_str1: &String) -> f32 {
 		let unit_scale = self.f.units_per_em().unwrap();

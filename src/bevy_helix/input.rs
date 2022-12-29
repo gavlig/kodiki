@@ -1,25 +1,27 @@
 use bevy :: prelude :: *;
 use bevy :: input :: *;
 use bevy :: input :: keyboard :: *;
-// use bevy :: input :: mouse :: { MouseMotion, MouseScrollUnit, MouseWheel };
+use bevy :: input :: mouse :: *;
+use bevy :: ecs :: query :: QueryEntityError;
+
+use crate :: game :: { FontAssetHandles };
+use crate :: bevy_ab_glyph :: { ABGlyphFont };
 
 use super :: application :: Application;
+use super :: surface :: *;
 
-use helix_view :: keyboard :: KeyCode as KeyCodeHelix;
+use helix_view :: keyboard :: { KeyCode as KeyCodeHelix };
+use helix_term :: ui :: { EditorView };
 
 use tokio::runtime::Runtime as TokioRuntime;
 
 pub fn keyboard(
-	ev_keyboard 	: &mut EventReader<KeyboardInput>,
+	keyboard_events : &mut EventReader<KeyboardInput>,
 	key				: &Input<KeyCode>,
 	tokio_runtime	: &TokioRuntime,
 	app				: &mut NonSendMut<Application>,
 ) {
-	if ev_keyboard.is_empty() {
-		return;
-	}
-
-	for e in ev_keyboard.iter() {
+	for e in keyboard_events.iter() {
 		if e.state != ButtonState::Pressed {
 			continue;
 		}
@@ -160,18 +162,46 @@ pub fn keyboard(
 }
 
 pub fn mouse(
-	// btn				: Res<Input<MouseButton>>,
-	// mut mouse_motion_event_reader: EventReader<MouseMotion>,
-	// tokio_runtime	: &TokioRuntime,
-	// app				: &mut NonSendMut<Application>,
+	mouse_button	: &Input<MouseButton>,
+	key				: &Input<KeyCode>,
+	column			: u16,
+	row				: u16,
+	tokio_runtime	: &TokioRuntime,
+	app				: &mut NonSendMut<Application>,
 ) {
-	// let mouse_event = helix_view::input::MouseEvent {
-	// 	column		: 0,
-	// 	row			: 0,
-	// 	kind		: helix_view::input::MouseEventKind::Down(())
-	// 	modifiers
-	// };
-
-	// let event = helix_view::input::Event::Mouse(mouse_event);
-	// tokio_runtime.block_on(app.handle_input_event(&event));
+	// pub enum MouseEventKind {
+	// 	/// Pressed mouse button. Contains the button that was pressed.
+	// 	Down(MouseButton),
+	// 	/// Released mouse button. Contains the button that was released.
+	// 	Up(MouseButton),
+	// 	/// Moved the mouse cursor while pressing the contained mouse button.
+	// 	Drag(MouseButton),
+	// 	/// Moved the mouse cursor while not pressing a mouse button.
+	// 	Moved,
+	// 	/// Scrolled mouse wheel downwards (towards the user).
+	// 	ScrollDown,
+	// 	/// Scrolled mouse wheel upwards (away from the user).
+	// 	ScrollUp,
+	// }
+	
+	for just_pressed in mouse_button.get_just_pressed() {
+		let helix_mouse_event_kind = helix_view::input::MouseEventKind::Down(
+			match just_pressed {
+				MouseButton::Left	=> helix_view::input::MouseButton::Left,
+				MouseButton::Right	=> helix_view::input::MouseButton::Right,
+				MouseButton::Middle => helix_view::input::MouseButton::Middle,
+				_ => continue
+			}
+		);
+		
+		let mouse_event = helix_view::input::MouseEvent {
+			column		: column,
+			row			: row,
+			kind		: helix_mouse_event_kind,
+			modifiers	: helix_view::keyboard::KeyModifiers::empty()
+		};
+	
+		let event = helix_view::input::Event::Mouse(mouse_event);
+		tokio_runtime.block_on(app.handle_input_event(&event));
+	}
 }

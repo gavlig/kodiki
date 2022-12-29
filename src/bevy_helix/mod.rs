@@ -109,6 +109,7 @@ impl Plugin for BevyHelixPlugin {
 				.run_in_state(AppMode::Main)
 				.with_system(systems::update_main)
 				.with_system(systems::tokio_events)
+				.with_system(systems::input_mouse)
 				.with_system(systems::input_keyboard)
 				.with_system(systems::update_editor_background_quad)
 				.with_system(systems::update_surface_background_quad)
