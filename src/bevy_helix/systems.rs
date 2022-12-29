@@ -279,22 +279,22 @@ pub fn update_main(
 	}
 
 	// render and animate cursor
-	if app.editor_focused() && false { 
-		cursor.animate(
-			&mut q_transform,
-			used_fonts.main,
-			&time,
-			row_offset as u32,
-			&mut app
-		);
+	// if app.editor_focused() { 
+	// 	cursor.animate(
+	// 		&mut q_transform,
+	// 		used_fonts.main,
+	// 		&time,
+	// 		row_offset as u32,
+	// 		&mut app
+	// 	);
 
-		cursor.update(
-			&app.editor.theme,
-			&mut helix_colors_cache,
-			&mut material_assets,
-			&mut commands
-		);
-	}
+	// 	cursor.update(
+	// 		&app.editor.theme,
+	// 		&mut helix_colors_cache,
+	// 		&mut material_assets,
+	// 		&mut commands
+	// 	);
+	// }
 }
 
 fn screen_print_active_layers(
