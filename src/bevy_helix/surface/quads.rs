@@ -137,7 +137,7 @@ pub fn update<'a>(
 		let v_down_offset = font.vertical_down_offset();
 	
 		let mut quad	= Quad::default();
-		quad.glyph_width		= h_advance;
+		quad.glyph_width = h_advance;
 		quad.height		= v_advance;
 		quad.v_down_offset = v_down_offset;
 		
@@ -149,7 +149,7 @@ pub fn update<'a>(
 		quad.column		= table_coords.column;
 		quad.color		= quad_color_helix;
 	
-		quad.length		+= 1;
+		quad.length		= 1;
 	
 		if row_state.ended {
 			let entity = on_quad_ended(
