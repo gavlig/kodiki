@@ -164,25 +164,29 @@ pub fn keyboard(
 pub fn mouse(
 	mouse_button	: &Input<MouseButton>,
 	key				: &Input<KeyCode>,
+	scroll_events	: &mut EventReader<MouseWheel>,
 	column			: u16,
 	row				: u16,
 	tokio_runtime	: &TokioRuntime,
 	app				: &mut NonSendMut<Application>,
 ) {
 	// pub enum MouseEventKind {
-	// 	/// Pressed mouse button. Contains the button that was pressed.
-	// 	Down(MouseButton),
-	// 	/// Released mouse button. Contains the button that was released.
-	// 	Up(MouseButton),
-	// 	/// Moved the mouse cursor while pressing the contained mouse button.
 	// 	Drag(MouseButton),
 	// 	/// Moved the mouse cursor while not pressing a mouse button.
 	// 	Moved,
-	// 	/// Scrolled mouse wheel downwards (towards the user).
-	// 	ScrollDown,
-	// 	/// Scrolled mouse wheel upwards (away from the user).
-	// 	ScrollUp,
 	// }
+	
+	let mut make_mouse_event = |helix_mouse_event_kind: helix_view::input::MouseEventKind| {
+		let mouse_event = helix_view::input::MouseEvent {
+			column		: column,
+			row			: row,
+			kind		: helix_mouse_event_kind,
+			modifiers	: helix_view::keyboard::KeyModifiers::empty()
+		};
+	
+		let event = helix_view::input::Event::Mouse(mouse_event);
+		tokio_runtime.block_on(app.handle_input_event(&event));
+	};
 	
 	for just_pressed in mouse_button.get_just_pressed() {
 		let helix_mouse_event_kind = helix_view::input::MouseEventKind::Down(
@@ -194,14 +198,38 @@ pub fn mouse(
 			}
 		);
 		
-		let mouse_event = helix_view::input::MouseEvent {
-			column		: column,
-			row			: row,
-			kind		: helix_mouse_event_kind,
-			modifiers	: helix_view::keyboard::KeyModifiers::empty()
-		};
-	
-		let event = helix_view::input::Event::Mouse(mouse_event);
-		tokio_runtime.block_on(app.handle_input_event(&event));
+		make_mouse_event(helix_mouse_event_kind);
 	}
+	
+	for just_released in mouse_button.get_just_released() {
+		let helix_mouse_event_kind = helix_view::input::MouseEventKind::Up(
+			match just_released {
+				MouseButton::Left	=> helix_view::input::MouseButton::Left,
+				MouseButton::Right	=> helix_view::input::MouseButton::Right,
+				MouseButton::Middle => helix_view::input::MouseButton::Middle,
+				_ => continue
+			}
+		);
+		
+		make_mouse_event(helix_mouse_event_kind);
+	}
+	
+	use bevy::input::mouse::MouseScrollUnit;
+	let pixels_per_line = 53.0;
+    for scroll_event in scroll_events.iter() {
+        match scroll_event.unit {
+            MouseScrollUnit::Line => {
+				let helix_mouse_event_kind = if scroll_event.y.is_sign_negative() {
+					helix_view::input::MouseEventKind::ScrollDown
+				} else {
+					helix_view::input::MouseEventKind::ScrollUp
+				};
+				
+				make_mouse_event(helix_mouse_event_kind);
+            }
+            MouseScrollUnit::Pixel => {
+                println!("Scroll (pixel units): vertical: {}, horizontal: {}", scroll_event.y, scroll_event.x);
+            }
+        }
+    }
 }

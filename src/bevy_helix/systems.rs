@@ -1,5 +1,6 @@
 use bevy :: prelude				:: { * };
 use bevy :: input :: keyboard	:: { * };
+use bevy :: input :: mouse		:: { * };
 use bevy_tweening				:: { * };
 use bevy_mod_picking			:: { * };
 
@@ -445,6 +446,7 @@ fn spawn_bevy_surfaces(
 pub fn input_mouse(
 	mouse_button	: Res<Input<MouseButton>>,
 	key				: Res<Input<KeyCode>>,
+	mut scroll_events : EventReader<MouseWheel>,
 	
 	surfaces		: Res<SurfacesMapBevy>,
 	font_assets		: Res<Assets<ABGlyphFont>>,
@@ -517,6 +519,7 @@ pub fn input_mouse(
 	input::mouse(
 		&mouse_button,
 		&key,
+		&mut scroll_events,
 		column,
 		row,
 		&tokio_runtime,
