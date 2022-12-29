@@ -43,7 +43,7 @@ pub struct RowState {
 }
 
 pub fn update<'a>(
-	table_coords	: &SurfaceCoords,
+	surface_coords	: &SurfaceCoords,
 	row_bevy		: &mut WordRowBevy,
 	row_state		: &mut RowState,
 	
@@ -90,7 +90,7 @@ pub fn update<'a>(
 			let entity = on_word_ended(
 				word_index,
 				word,
-				table_coords,
+				surface_coords,
 				row_bevy,
 				row_state,
 				glyph_meshes_cache,
@@ -111,10 +111,10 @@ pub fn update<'a>(
 		row_state.word_started = true;
 	
 		let mut word	= Word::default();
-		word.x			= table_coords.x;
-		word.y			= table_coords.y;
-		word.row		= table_coords.row;
-		word.column		= table_coords.column;
+		word.x			= surface_coords.x;
+		word.y			= surface_coords.y;
+		word.row		= surface_coords.row;
+		word.column		= surface_coords.column;
 		word.color		= symbol_color;
 	
 		word.string.push_str(cell_helix.symbol.as_str());
@@ -124,7 +124,7 @@ pub fn update<'a>(
 			let entity = on_word_ended(
 				words_row.len(),
 				&word,
-				table_coords,
+				surface_coords,
 				row_bevy,
 				row_state,
 				glyph_meshes_cache,

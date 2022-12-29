@@ -75,7 +75,7 @@ pub struct QuadDescription {
 pub fn update<'a>(
 	background_style: &HelixStyle,
 	
-	table_coords	: &SurfaceCoords,
+	surface_coords	: &SurfaceCoords,
 	row_bevy		: &mut BackgroundQuadRowBevy,
 	row_state		: &mut RowState,
 	
@@ -113,7 +113,7 @@ pub fn update<'a>(
 			let entity = on_quad_ended(
 				quad_index,
 				quad,
-				table_coords,
+				surface_coords,
 				row_bevy,
 				row_state,
 				helix_colors_cache,
@@ -141,12 +141,12 @@ pub fn update<'a>(
 		quad.height		= v_advance;
 		quad.v_down_offset = v_down_offset;
 		
-		quad.x			= table_coords.x;
-		quad.y			= table_coords.y;
+		quad.x			= surface_coords.x;
+		quad.y			= surface_coords.y;
 		quad.z			= -font.depth_scaled() + font.depth_scaled() / 5.0; // FIXME: define depth levels somewhere centralized
 		
-		quad.row		= table_coords.row;
-		quad.column		= table_coords.column;
+		quad.row		= surface_coords.row;
+		quad.column		= surface_coords.column;
 		quad.color		= quad_color_helix;
 	
 		quad.length		= 1;
@@ -155,7 +155,7 @@ pub fn update<'a>(
 			let entity = on_quad_ended(
 				quads_row.len(),
 				&quad,
-				table_coords,
+				surface_coords,
 				row_bevy,
 				row_state,
 				helix_colors_cache,
@@ -183,7 +183,7 @@ pub fn update<'a>(
 fn on_quad_ended(
 	quad_index		: usize,	
 	quad 			: &Quad,
-	table_coords	: &SurfaceCoords,
+	surface_coords	: &SurfaceCoords,
 	row_bevy		: &mut BackgroundQuadRowBevy,
 	row_state		: &mut RowState,
 	
@@ -205,8 +205,8 @@ fn on_quad_ended(
 
 	let quad_description = QuadDescription {
 		length	: quad.length,
-		row		: table_coords.row,
-		column	: table_coords.column,
+		row		: surface_coords.row,
+		column	: surface_coords.column,
 	};
 
 	// now spawn new mesh if needed
