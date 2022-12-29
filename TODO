@@ -52,6 +52,9 @@
 15.4.16. ✅ sometimes sufrace_entity doesnt have entity yet in update_permanent_surfaces_position: it is a valid situation, we just need to add safety checks
 15.4.17. ✅ first line in editor is corrupted (maybe after scrolling)
 15.4.18. ✅ when finding functions using symbol picker the highlighted line with function has broken rendering
+15.4.19. ":" panel disappears when command stops making sense
+15.4.20. init position of permanent surfaces is wrong
+15.4.21. zooming in/out is jittery
 15.5. ✅ Make surface size depend on the amount of visible rows in camera
 15.6. ✅ Determine size of background quad when opening file: instead i'm making it dependent on visible amount of rows in camera and make it follow camera on y axis
 15.7. ✅ Separate logic for non-scrollable surfaces
@@ -70,3 +73,6 @@
 19. ✅ Clean up warnings
 20. Add support for emoji in fonts
 21. Refactor: remove the need to do one row offset everywhere (see spawn_surface_quad and quad_y where we add 1 row_height to it to cover first row)
+22. integrate puffin for profiling
+23. Completion in a separate surface
+24. Fullscreen
