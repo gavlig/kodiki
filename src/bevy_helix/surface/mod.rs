@@ -224,7 +224,7 @@ impl SurfaceBevy {
 		
 		surface_bevy.spawn_surface_quad(surface_name, surface_helix, font, mesh_assets, commands);
 		
-		surface_bevy.insert_text_descriptor(font, commands);
+		surface_bevy.insert_text_descriptor_from_area(font, commands);
 	
 		surface_bevy
 	}
@@ -281,23 +281,33 @@ impl SurfaceBevy {
 		commands.entity(surface_entity).add_child(quad_entity_id);
 	}
 	
-	fn insert_text_descriptor(
+	fn insert_text_descriptor_from_area(
 		&mut self,
 		font			: &ABGlyphFont,
 		commands		: &mut Commands
 	)
 	{
-		let v_advance	= font.vertical_advance();
-		let h_advance	= font.horizontal_advance_char('a'); // in monospace font every letter should be of the same width so we pick 'a'
-		
-		let width		= self.area.width;
-		let height		= self.area.height;
+		let columns		= self.area.width as u32;
+		let rows		= self.area.height as u32;
+		self.update_text_descriptor(columns, rows, font, commands);
+	}
+	
+	pub fn update_text_descriptor(
+		&mut self,
+		columns			: u32,
+		rows			: u32,
+		font			: &ABGlyphFont,
+		commands		: &mut Commands
+	)
+	{
+		let glyph_height = font.vertical_advance();
+		let glyph_width	= font.horizontal_advance_mono(); // in monospace font every letter should be of the same width so we pick 'a'
 		
 		let text_descriptor = TextDescriptor {
-			rows		: height as u32,
-			columns		: width as u32,
-			glyph_width	: h_advance,
-			glyph_height: v_advance
+			rows,
+			columns,
+			glyph_width,
+			glyph_height,
 		};
 		
 		let surface_entity = self.entity.unwrap();

@@ -7,11 +7,11 @@ use helix_core      :: {
 	pos_at_coords, syntax, Selection,
 };
 use helix_lsp       :: { lsp, util :: lsp_pos_to_pos, LspProgressMap };
-use helix_view      :: { align_view, theme, tree :: Layout, Align, Editor, graphics :: Rect, input :: Event };
+use helix_view      :: { align_view, theme, tree :: Layout, Align, Editor, graphics :: Rect, input :: Event, doc };
 use helix_term      :: { config::Config, job :: Jobs, args::Args, keymap::Keymaps, compositor::Compositor, compositor::SurfacesMap, ui };
 use helix_tui 		:: { buffer :: Buffer as Surface };
 use serde_json      :: { json };
-use helix_term		:: { commands :: apply_workspace_edit };
+use helix_term		:: { commands, commands::{ apply_workspace_edit } };
 
 use std             :: {
 	sync            :: { Arc },
@@ -257,6 +257,40 @@ impl Application {
 	pub fn editor_focused(&self) -> bool {
 		// hacky, but works for now
 		self.compositor.layers.len() == 1
+	}
+	
+	pub fn current_doc_len_lines(&self) -> usize {
+		let current_doc = doc!(self.editor);
+		current_doc.text().len_lines()
+	}
+	
+	pub fn scroll(&mut self, scroll_offset_in: i32) {
+		let mut cx = helix_term::commands::Context {
+			editor: &mut self.editor,
+			count: None,
+			register: None,
+			callback: None,
+			on_next_key_callback: None,
+			jobs: &mut self.jobs,
+		};
+		
+		use helix_core::movement::Direction;
+		let scroll_dir	= if scroll_offset_in < 0 { Direction::Backward } else { Direction::Forward };
+		let offset = scroll_offset_in.abs() as usize;
+		
+		commands::scroll(&mut cx, offset, scroll_dir);
+	}
+	
+	pub fn row_offset(&self) -> usize {
+		let mut row = 0 as usize;
+		for (view, is_focused) in self.editor.tree.views() {
+			if is_focused {
+				row = view.offset.row;
+				break;
+			}
+		}
+		
+		row
 	}
 
 	pub async fn handle_input_event(&mut self, event : &helix_view::input::Event) {

@@ -188,16 +188,14 @@ pub fn update_main(
 
 	let mut app					= app.unwrap();
 	
-	let mut row_offset			= 0;
-	for (view, is_focused) in app.editor.tree.views() {
-		if is_focused {
-			row_offset			= view.offset.row;
-		}
+	let mut reader_camera		= q_camera.single_mut();
+	if reader_camera.row_offset_out != 0 {
+		app.scroll(reader_camera.row_offset_out);
+		reader_camera.row_offset_out = 0;
 	}
 	
-	let mut reader_camera		= q_camera.single_mut();
-	reader_camera.row_offset	= row_offset as u32;
-	reader_camera.row			= reader_camera.visible_rows / 2 - 1; // camera always looks at the center of page 
+	let row_offset				= app.row_offset();
+	reader_camera.row_offset_in	= row_offset as u32;
 	
 	let mut editor_area			= app.area;
 	editor_area.height			= reader_camera.visible_rows as u16;
@@ -277,6 +275,13 @@ pub fn update_main(
 			&mut material_assets,
 			&mut commands
 		);
+		
+		// update text_description on editor surface for proper camera navigation
+		if layer_name == EditorView::ID {
+			let columns = surface_bevy.area.width as u32;
+			let rows = app.current_doc_len_lines() as u32;
+			surface_bevy.update_text_descriptor(columns, rows, used_fonts.main, &mut commands)
+		}
 	}
 
 	// render and animate cursor
