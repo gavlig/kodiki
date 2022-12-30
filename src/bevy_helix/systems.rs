@@ -26,7 +26,7 @@ use helix_term  :: args			:: { Args };
 use helix_term	:: ui			:: { EditorView };
 use helix_view  :: graphics 	:: { Rect };
 
-use helix_tui   :: buffer		:: { Buffer as SurfaceHelix, SurfaceFlags, SurfaceAnchor, SurfacePlacement, SurfaceLifetime };
+use helix_tui   :: buffer		:: { Buffer as SurfaceHelix, SurfaceFlags, SurfaceAnchor, SurfaceLifetime };
 
 use anyhow      				:: { Context, Error, Result };
 
@@ -145,7 +145,7 @@ pub fn startup_spawn(
 
 pub fn update_main(
 	app		: Option<NonSendMut<Application>>,
-	time	: Res<Time>,
+	_time	: Res<Time>,
 	
 	(
 		mut surfaces_helix,
@@ -153,7 +153,7 @@ pub fn update_main(
 		mut glyph_meshes_cache,
 		mut text_meshes_cache,
 		mut helix_colors_cache,
-		mut cursor,
+		mut _cursor,
 			font_assets,
 			font_handles,
 	)

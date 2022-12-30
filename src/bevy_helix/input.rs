@@ -2,16 +2,10 @@ use bevy :: prelude :: *;
 use bevy :: input :: *;
 use bevy :: input :: keyboard :: *;
 use bevy :: input :: mouse :: *;
-use bevy :: ecs :: query :: QueryEntityError;
-
-use crate :: game :: { FontAssetHandles };
-use crate :: bevy_ab_glyph :: { ABGlyphFont };
 
 use super :: application :: Application;
-use super :: surface :: *;
 
 use helix_view :: keyboard :: { KeyCode as KeyCodeHelix };
-use helix_term :: ui :: { EditorView };
 
 use tokio::runtime::Runtime as TokioRuntime;
 

@@ -3,7 +3,7 @@ use bevy				:: utils :: { HashMap };
 use bevy_tweening		:: { * };
 use bevy_tweening		:: lens :: { * };
 
-use bevy_reader_camera::{	 TextDescriptor, ReaderCamera};
+use bevy_reader_camera	:: { TextDescriptor };
 
 use crate				:: bevy_ab_glyph::{ ABGlyphFont, UsedFonts, GlyphMeshesCache, TextMeshesCache };
 
