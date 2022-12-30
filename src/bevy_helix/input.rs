@@ -222,12 +222,26 @@ pub fn mouse(
 	tokio_runtime	: &TokioRuntime,
 	app				: &mut NonSendMut<Application>,
 ) {
+	let mut modifiers = helix_view::keyboard::KeyModifiers::NONE;
+
+	if key.pressed(KeyCode::LAlt) || key.pressed(KeyCode::RAlt) {
+		modifiers.insert(helix_view::keyboard::KeyModifiers::ALT);
+	}
+
+	if key.pressed(KeyCode::LControl) || key.pressed(KeyCode::RControl) {
+		modifiers.insert(helix_view::keyboard::KeyModifiers::CONTROL);
+	}
+
+	if key.pressed(KeyCode::LShift) || key.pressed(KeyCode::RShift) {
+		modifiers.insert(helix_view::keyboard::KeyModifiers::SHIFT);
+	}
+	
 	let mut make_mouse_event = |helix_mouse_event_kind: helix_view::input::MouseEventKind| {
 		let mouse_event = helix_view::input::MouseEvent {
 			column		: column,
 			row			: row,
 			kind		: helix_mouse_event_kind,
-			modifiers	: helix_view::keyboard::KeyModifiers::empty()
+			modifiers	: modifiers
 		};
 	
 		let event = helix_view::input::Event::Mouse(mouse_event);
