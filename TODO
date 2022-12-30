@@ -3,11 +3,12 @@
 3. Mouse support
 3.1. ✅ row/column for editor surface only
 3.2. ✅ click
-3.3. drag
+3.3. ✅ drag
 3.4. ✅ scroll
 3.5. modifiers
 3.6. map row/column to other surfaces
 4. ✅ Some keycodes are missing
+4.1. ✅ Upper case keycodes are missing
 5. ✅ Cache words and chunks of background quads
 5.1. ✅ Words
 5.1.1. ✅ bug: sometimes symbols dont get cleaned up on deletion
@@ -60,8 +61,8 @@
 15.7. ✅ Separate logic for non-scrollable surfaces
 15.7.1. ✅ Refactor 'update' module for that
 15.8. ✅ Determine initial camera row 
-15.9. Separate EditorView panels and show them at the top/bottom of camera
-15.10. Scrolling with mouse
+15.9. ✅ Separate EditorView panels and show them at the top/bottom of camera
+15.10. Scrolling with mouse movement
 15.11. Consider using small viewport for helix utilizing rows cache to the max
 15.12. ✅ Instead of huge quad make one that covers background for camera only
 15.13. Toggle hide background quad
@@ -76,3 +77,4 @@
 22. integrate puffin for profiling
 23. Completion in a separate surface
 24. Fullscreen
+25. Double click selection
