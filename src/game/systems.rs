@@ -112,7 +112,7 @@ pub fn setup_lighting_system(
 
 fn set_cursor_visibility(v: bool, window: &mut Window) {
 	window.set_cursor_visibility(v);
-	window.set_cursor_grab_mode	(if v { CursorGrabMode::None } else { CursorGrabMode::Locked });
+	window.set_cursor_grab_mode	(if v { CursorGrabMode::None } else { CursorGrabMode::Confined });
 }
 
 fn toggle_picking_mode(v: bool, mut picking: &mut PickingPluginsState) {
