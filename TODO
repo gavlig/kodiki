@@ -5,8 +5,8 @@
 3.2. ✅ click
 3.3. ✅ drag
 3.4. ✅ scroll
-3.5. modifiers
-3.6. map row/column to other surfaces
+3.5. ✅ modifiers
+3.6. ❎ map row/column to other surfaces: not needed currently. Aux surfaces dont support mouse and split views are not supported in kodiki
 4. ✅ Some keycodes are missing
 4.1. ✅ Upper case keycodes are missing
 5. ✅ Cache words and chunks of background quads
@@ -56,6 +56,8 @@
 15.4.19. ":" panel disappears when command stops making sense
 15.4.20. init position of permanent surfaces is wrong
 15.4.21. zooming in/out is jittery
+15.4.22. zooming in/out breaks permanent surfaces placement
+15.4.23. Reader mode gets stuck after alt tabbing
 15.5. ✅ Make surface size depend on the amount of visible rows in camera
 15.6. ✅ Determine size of background quad when opening file: instead i'm making it dependent on visible amount of rows in camera and make it follow camera on y axis
 15.7. ✅ Separate logic for non-scrollable surfaces
