@@ -25,6 +25,23 @@ pub fn keyboard(
 		if e.state != ButtonState::Pressed {
 			continue;
 		}
+		
+		let mut modifiers = helix_view::keyboard::KeyModifiers::NONE;
+		let mut shift = false;
+
+		if key.pressed(KeyCode::LAlt) || key.pressed(KeyCode::RAlt) {
+			modifiers.insert(helix_view::keyboard::KeyModifiers::ALT);
+		}
+
+		if key.pressed(KeyCode::LControl) || key.pressed(KeyCode::RControl) {
+			modifiers.insert(helix_view::keyboard::KeyModifiers::CONTROL);
+		}
+
+		if key.pressed(KeyCode::LShift) || key.pressed(KeyCode::RShift) {
+			modifiers.insert(helix_view::keyboard::KeyModifiers::SHIFT);
+			shift = true;
+		}
+
 
 		let helix_keycode =
 		if e.key_code.is_some() {
@@ -59,43 +76,91 @@ pub fn keyboard(
 			KeyCode::Key8		=> KeyCodeHelix::Char('8'),
 			KeyCode::Key9		=> KeyCodeHelix::Char('9'),
 
-			KeyCode::Q			=> KeyCodeHelix::Char('q'),
-			KeyCode::W			=> KeyCodeHelix::Char('w'),
-			KeyCode::E			=> KeyCodeHelix::Char('e'),
-			KeyCode::R			=> KeyCodeHelix::Char('r'),
-			KeyCode::T			=> KeyCodeHelix::Char('t'),
-			KeyCode::Y			=> KeyCodeHelix::Char('y'),
+			KeyCode::A if !shift	=> KeyCodeHelix::Char('a'),
+			KeyCode::A if  shift	=> KeyCodeHelix::Char('A'),
+			
+			KeyCode::B if !shift	=> KeyCodeHelix::Char('b'),
+			KeyCode::B if  shift	=> KeyCodeHelix::Char('B'),
+			
+			KeyCode::C if !shift	=> KeyCodeHelix::Char('c'),
+			KeyCode::C if  shift	=> KeyCodeHelix::Char('C'),
+			
+			KeyCode::D if !shift	=> KeyCodeHelix::Char('d'),
+			KeyCode::D if  shift	=> KeyCodeHelix::Char('D'),
+			
+			KeyCode::E if !shift	=> KeyCodeHelix::Char('e'),
+			KeyCode::E if  shift	=> KeyCodeHelix::Char('E'),
+			
+			KeyCode::F if !shift	=> KeyCodeHelix::Char('f'),
+			KeyCode::F if  shift	=> KeyCodeHelix::Char('F'),
+			
+			KeyCode::G if !shift	=> KeyCodeHelix::Char('g'),
+			KeyCode::G if  shift	=> KeyCodeHelix::Char('G'),
+			
+			KeyCode::H if !shift	=> KeyCodeHelix::Char('h'),
+			KeyCode::H if  shift	=> KeyCodeHelix::Char('H'),
+			
+			KeyCode::I if !shift	=> KeyCodeHelix::Char('i'),
+			KeyCode::I if  shift	=> KeyCodeHelix::Char('I'),
+			
+			KeyCode::J if !shift	=> KeyCodeHelix::Char('j'),
+			KeyCode::J if  shift	=> KeyCodeHelix::Char('J'),
+			
+			KeyCode::K if !shift	=> KeyCodeHelix::Char('k'),
+			KeyCode::K if  shift	=> KeyCodeHelix::Char('K'),
+			
+			KeyCode::L if !shift	=> KeyCodeHelix::Char('l'),
+			KeyCode::L if  shift	=> KeyCodeHelix::Char('L'),
+			
+			KeyCode::M if !shift	=> KeyCodeHelix::Char('m'),
+			KeyCode::M if  shift	=> KeyCodeHelix::Char('M'),
+			
+			KeyCode::N if !shift	=> KeyCodeHelix::Char('n'),
+			KeyCode::N if  shift	=> KeyCodeHelix::Char('N'),
+			
+			KeyCode::O if !shift	=> KeyCodeHelix::Char('o'),
+			KeyCode::O if  shift	=> KeyCodeHelix::Char('O'),
+			
+			KeyCode::P if !shift	=> KeyCodeHelix::Char('p'),
+			KeyCode::P if  shift	=> KeyCodeHelix::Char('P'),
+			
+			KeyCode::Q if !shift	=> KeyCodeHelix::Char('q'),
+			KeyCode::Q if  shift	=> KeyCodeHelix::Char('Q'),
+			
+			KeyCode::R if !shift	=> KeyCodeHelix::Char('r'),
+			KeyCode::R if  shift	=> KeyCodeHelix::Char('R'),
+			
+			KeyCode::S if !shift	=> KeyCodeHelix::Char('s'),
+			KeyCode::S if  shift	=> KeyCodeHelix::Char('S'),
+			
+			KeyCode::T if !shift	=> KeyCodeHelix::Char('t'),
+			KeyCode::T if  shift	=> KeyCodeHelix::Char('T'),
+			
+			KeyCode::U if !shift	=> KeyCodeHelix::Char('u'),
+			KeyCode::U if  shift	=> KeyCodeHelix::Char('U'),
+			
+			KeyCode::V if !shift	=> KeyCodeHelix::Char('v'),
+			KeyCode::V if  shift	=> KeyCodeHelix::Char('V'),
+			
+			KeyCode::W if !shift	=> KeyCodeHelix::Char('w'),
+			KeyCode::W if  shift	=> KeyCodeHelix::Char('W'),
+			
+			KeyCode::X if !shift	=> KeyCodeHelix::Char('x'),
+			KeyCode::X if  shift	=> KeyCodeHelix::Char('X'),
+			
+			KeyCode::Y if !shift	=> KeyCodeHelix::Char('y'),
+			KeyCode::Y if  shift	=> KeyCodeHelix::Char('Y'),
+			
+			KeyCode::Z if !shift	=> KeyCodeHelix::Char('z'),
+			KeyCode::Z if  shift	=> KeyCodeHelix::Char('Z'),
 
-			KeyCode::U			=> KeyCodeHelix::Char('u'),
-			KeyCode::I			=> KeyCodeHelix::Char('i'),
-			KeyCode::O			=> KeyCodeHelix::Char('o'),
-			KeyCode::P			=> KeyCodeHelix::Char('p'),
 			KeyCode::LBracket	=> KeyCodeHelix::Char('['),
 			KeyCode::RBracket	=> KeyCodeHelix::Char(']'),
 			KeyCode::Backslash	=> KeyCodeHelix::Char('\\'),
-
-			KeyCode::A			=> KeyCodeHelix::Char('a'),
-			KeyCode::S			=> KeyCodeHelix::Char('s'),
-			KeyCode::D			=> KeyCodeHelix::Char('d'),
-			KeyCode::F			=> KeyCodeHelix::Char('f'),
-			KeyCode::G			=> KeyCodeHelix::Char('g'),
-
-			KeyCode::H			=> KeyCodeHelix::Char('h'),
-			KeyCode::J			=> KeyCodeHelix::Char('j'),
-			KeyCode::K			=> KeyCodeHelix::Char('k'),
-			KeyCode::L			=> KeyCodeHelix::Char('l'),
 			KeyCode::Semicolon	=> KeyCodeHelix::Char(';'),
 			KeyCode::Colon		=> KeyCodeHelix::Char(':'),
 			KeyCode::Apostrophe	=> KeyCodeHelix::Char('\''),
-
-			KeyCode::Z			=> KeyCodeHelix::Char('z'),
-			KeyCode::X			=> KeyCodeHelix::Char('x'),
-			KeyCode::C			=> KeyCodeHelix::Char('c'),
-			KeyCode::V			=> KeyCodeHelix::Char('v'),
-			KeyCode::B			=> KeyCodeHelix::Char('b'),
-
-			KeyCode::N			=> KeyCodeHelix::Char('n'),
-			KeyCode::M			=> KeyCodeHelix::Char('m'),
+			
 			KeyCode::Comma		=> KeyCodeHelix::Char(','),
 			KeyCode::Convert	=> KeyCodeHelix::Char('.'),
 			KeyCode::Slash		=> KeyCodeHelix::Char('/'),
@@ -104,6 +169,7 @@ pub fn keyboard(
 			KeyCode::Asterisk	=> KeyCodeHelix::Char('*'),
 			KeyCode::Plus		=> KeyCodeHelix::Char('+'),
 			KeyCode::Minus		=> KeyCodeHelix::Char('-'),
+			KeyCode::Equals		=> KeyCodeHelix::Char('='),
 			KeyCode::Grave		=> KeyCodeHelix::Char('`'),
 
 			_ => { println!("skipping keycode {:?}", e.key_code); continue; }
@@ -136,20 +202,6 @@ pub fn keyboard(
 		}
 
 		};
-
-		let mut modifiers = helix_view::keyboard::KeyModifiers::NONE;
-
-		if key.pressed(KeyCode::LAlt) || key.pressed(KeyCode::RAlt) {
-			modifiers.insert(helix_view::keyboard::KeyModifiers::ALT);
-		}
-
-		if key.pressed(KeyCode::LControl) || key.pressed(KeyCode::RControl) {
-			modifiers.insert(helix_view::keyboard::KeyModifiers::CONTROL);
-		}
-
-		if key.pressed(KeyCode::LShift) || key.pressed(KeyCode::RShift) {
-			modifiers.insert(helix_view::keyboard::KeyModifiers::SHIFT);
-		}
 
 		let key_event = helix_view::input::KeyEvent {
 			code : helix_keycode,
