@@ -170,12 +170,6 @@ pub fn mouse(
 	tokio_runtime	: &TokioRuntime,
 	app				: &mut NonSendMut<Application>,
 ) {
-	// pub enum MouseEventKind {
-	// 	Drag(MouseButton),
-	// 	/// Moved the mouse cursor while not pressing a mouse button.
-	// 	Moved,
-	// }
-	
 	let mut make_mouse_event = |helix_mouse_event_kind: helix_view::input::MouseEventKind| {
 		let mouse_event = helix_view::input::MouseEvent {
 			column		: column,
@@ -188,14 +182,18 @@ pub fn mouse(
 		tokio_runtime.block_on(app.handle_input_event(&event));
 	};
 	
+	let bevy2helix_mouse_button = |mouse_button_in: &MouseButton| -> Option<helix_view::input::MouseButton> {
+		match mouse_button_in {
+			MouseButton::Left	=> Some(helix_view::input::MouseButton::Left),
+			MouseButton::Right	=> Some(helix_view::input::MouseButton::Right),
+			MouseButton::Middle => Some(helix_view::input::MouseButton::Middle),
+			_ => None
+		}
+	};
+	
 	for just_pressed in mouse_button.get_just_pressed() {
 		let helix_mouse_event_kind = helix_view::input::MouseEventKind::Down(
-			match just_pressed {
-				MouseButton::Left	=> helix_view::input::MouseButton::Left,
-				MouseButton::Right	=> helix_view::input::MouseButton::Right,
-				MouseButton::Middle => helix_view::input::MouseButton::Middle,
-				_ => continue
-			}
+			if let Some(btn) = bevy2helix_mouse_button(just_pressed) { btn } else { continue }
 		);
 		
 		make_mouse_event(helix_mouse_event_kind);
@@ -203,19 +201,21 @@ pub fn mouse(
 	
 	for just_released in mouse_button.get_just_released() {
 		let helix_mouse_event_kind = helix_view::input::MouseEventKind::Up(
-			match just_released {
-				MouseButton::Left	=> helix_view::input::MouseButton::Left,
-				MouseButton::Right	=> helix_view::input::MouseButton::Right,
-				MouseButton::Middle => helix_view::input::MouseButton::Middle,
-				_ => continue
-			}
+			if let Some(btn) = bevy2helix_mouse_button(just_released) { btn } else { continue }
+		);
+		
+		make_mouse_event(helix_mouse_event_kind);
+	}
+	for pressed in mouse_button.get_pressed() {
+		let helix_mouse_event_kind = helix_view::input::MouseEventKind::Drag(
+			if let Some(btn) = bevy2helix_mouse_button(pressed) { btn } else { continue }
 		);
 		
 		make_mouse_event(helix_mouse_event_kind);
 	}
 	
 	use bevy::input::mouse::MouseScrollUnit;
-	let pixels_per_line = 53.0;
+	// let pixels_per_line = 53.0;
     for scroll_event in scroll_events.iter() {
         match scroll_event.unit {
             MouseScrollUnit::Line => {
