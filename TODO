@@ -57,14 +57,16 @@
 15.4.20. ✅ init position of permanent surfaces is wrong
 15.4.21. zooming in/out is jittery
 15.4.22. zooming in/out breaks permanent surfaces placement
-15.4.23. Reader mode gets stuck after alt tabbing
+15.4.23. reader mode gets stuck after alt tabbing
+15.4.24. ✅ mouse cursor is not properly captured by window in wayland? Used Confined mode instead of Locked
+15.4.25. crash when scrolling with mouse movement
 15.5. ✅ Make surface size depend on the amount of visible rows in camera
 15.6. ✅ Determine size of background quad when opening file: instead i'm making it dependent on visible amount of rows in camera and make it follow camera on y axis
 15.7. ✅ Separate logic for non-scrollable surfaces
 15.7.1. ✅ Refactor 'update' module for that
 15.8. ✅ Determine initial camera row 
 15.9. ✅ Separate EditorView panels and show them at the top/bottom of camera
-15.10. Scrolling with mouse movement
+15.10. ✅ Scrolling with mouse movement
 15.11. Consider using small viewport for helix utilizing rows cache to the max
 15.12. ✅ Instead of huge quad make one that covers background for camera only
 15.13. Toggle hide background quad
