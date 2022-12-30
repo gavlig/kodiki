@@ -3,14 +3,14 @@ use bevy				:: utils :: { HashMap };
 use bevy_tweening		:: { * };
 use bevy_tweening		:: lens :: { * };
 
-use bevy_reader_camera	:: TextDescriptor;
+use bevy_reader_camera::{	 TextDescriptor, ReaderCamera};
 
 use crate				:: bevy_ab_glyph::{ ABGlyphFont, UsedFonts, GlyphMeshesCache, TextMeshesCache };
 
 use super				:: { * };
 use super				:: animate :: TweenPoint;
 
-use helix_tui 			:: buffer :: { Buffer as SurfaceHelix, SurfaceAnchor };
+use helix_tui 			:: buffer :: { Buffer as SurfaceHelix, SurfaceAnchor, SurfacePlacement };
 
 use helix_view			:: { Theme };
 use helix_view			:: graphics :: { Style };
@@ -96,6 +96,8 @@ pub struct SurfaceBevy {
 	pub background_quad_color	: Color,
 	
 	pub rows				: RowsBevy,
+	pub anchor				: SurfaceAnchor,
+	pub placement			: SurfacePlacement,
 	pub area				: helix_view::graphics::Rect,
 	
 	pub scroll_info			: SurfaceBevyScrollInfo,
@@ -111,6 +113,8 @@ impl Default for SurfaceBevy {
 			background_quad_entity	: None,
 			background_quad_color	: Color::CYAN,
 			rows				: RowsBevy::new(),
+			anchor				: SurfaceAnchor::default(),
+			placement			: SurfacePlacement::default(),
 			area				: helix_view::graphics::Rect::default(),
 			scroll_info			: SurfaceBevyScrollInfo::default(),
 			cache_info			: SurfaceBevyCacheInfo::default(),
@@ -337,8 +341,10 @@ impl SurfaceBevy {
 			return;
 		}
 		
-		self.area = surface_helix.area; // syncing area size first because everything else depends on it
-		let rows_total = self.rows_total();
+		self.anchor		= surface_helix.anchor;
+		self.placement	= surface_helix.placement;
+		self.area		= surface_helix.area; // syncing area size first because everything else depends on it
+		let rows_total	= self.rows_total();
 		
 		self.despawn_unused_rows(rows_total as usize, commands);
 		self.rows.resize_with	(rows_total as usize, || { RowBevy::default() });
@@ -613,7 +619,8 @@ impl SurfaceBevy {
 		&mut self,
 		new_rows_cnt	: usize,
 		commands		: &mut Commands,
-	) {
+	)
+	{
 		let old_rows_cnt = self.rows.len();
 		if new_rows_cnt < old_rows_cnt {
 			for i in new_rows_cnt .. old_rows_cnt {
@@ -663,5 +670,50 @@ impl SurfaceBevy {
 		commands.entity(surface_entity)
 			.insert(Transform::from_translation(start_position))
 			.insert(Animator::new(seq));
+	}
+	
+	pub fn calc_target_position(
+		anchor			: SurfaceAnchor,
+		placement		: SurfacePlacement,
+		area			: helix_view::graphics::Rect,
+		zoom			: f32,
+		visible_rows	: u32,
+		column_width	: f32,
+		row_height		: f32,
+	) -> Vec3
+	{
+		let x = -column_width * (area.width as f32 / 2.0);
+		let z = -zoom + 0.05;
+		let target_pos = match placement {
+			SurfacePlacement::Top => {
+				let y = row_height * ((visible_rows as f32 - 1.5)  / 2.0);
+				Vec3::new(x, y, z)
+			},
+			SurfacePlacement::Center => {
+				let mut y = row_height * (area.height as f32 / 2.0);
+				if anchor == SurfaceAnchor::Bottom {
+					y *= -1.0;
+				}
+				Vec3::new(x, y, z)
+			},
+			SurfacePlacement::Bottom => {
+				let y = -row_height * ((visible_rows as f32 - 0.5) / 2.0);
+				Vec3::new(x, y, z)
+			},
+			_ => panic!(),
+		};
+		
+		target_pos
+	}
+	
+	pub fn target_position(
+		&self,
+		zoom			: f32,
+		visible_rows	: u32,
+		column_width	: f32,
+		row_height		: f32,
+	) -> Vec3
+	{
+		SurfaceBevy::calc_target_position(self.anchor, self.placement, self.area, zoom, visible_rows, column_width, row_height)
 	}
 }

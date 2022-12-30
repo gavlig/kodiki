@@ -385,7 +385,21 @@ fn spawn_bevy_surfaces(
 		let row_height		= font.vertical_advance();
 		let column_width	= font.horizontal_advance_char('a');
 
-		let start_pos = Vec3::new(0.0, 0.0, -reader_camera.zoom - 1.0);
+		let target_pos		= SurfaceBevy::calc_target_position(
+			surface_helix.anchor,
+			surface_helix.placement,
+			surface_helix.area,
+			reader_camera.zoom,
+			reader_camera.visible_rows,
+			column_width,
+			row_height
+		);
+		
+		let start_pos = if surface_helix.lifetime == SurfaceLifetime::Temporary {
+			Vec3::new(0.0, 0.0, -reader_camera.zoom - 1.0)
+		} else {
+			target_pos
+		};
 		
 		let surface_bevy = SurfaceBevy::spawn(
 			surface_name,
@@ -403,27 +417,6 @@ fn spawn_bevy_surfaces(
 		commands.entity(reader_camera.entity).add_child(surface_entity);
 		
 		if surface_helix.lifetime == SurfaceLifetime::Temporary {
-			let x = -column_width * surface_helix.area.width as f32 / 2.0;
-			let z = -reader_camera.zoom + 0.5;
-			let target_pos = match surface_helix.placement {
-				SurfacePlacement::Top => {
-					let y = row_height * ((reader_camera.visible_rows as f32 - 1.5)  / 2.0);
-					Vec3::new(x, y, z)
-				},
-				SurfacePlacement::Center => {
-					let mut y = row_height * (surface_helix.area.height as f32 / 2.0);
-					if surface_helix.anchor == SurfaceAnchor::Bottom {
-						y *= -1.0;
-					}
-					Vec3::new(x, y, z)
-				},
-				SurfacePlacement::Bottom => {
-					let y = -row_height * ((reader_camera.visible_rows as f32 - 0.5) / 2.0);
-					Vec3::new(x, y, z)
-				},
-				_ => panic!(),
-			};
-			
 			let tween_point = animate::TweenPoint {
 				pos: target_pos,
 				ease_function: EaseFunction::ExponentialOut,
@@ -647,26 +640,7 @@ pub fn update_permanent_surfaces_position(
 			let mut surface_transform = surface_transform.unwrap();	
 			
 			let reader_camera = q_camera.single();
-			let x = -column_width * (surface_helix.area.width as f32 / 2.0);
-			let z = -reader_camera.zoom + 0.05;
-			let target_pos = match surface_helix.placement {
-				SurfacePlacement::Top => {
-					let y = row_height * ((reader_camera.visible_rows as f32 - 1.5)  / 2.0);
-					Vec3::new(x, y, z)
-				},
-				SurfacePlacement::Center => {
-					let mut y = row_height * (surface_helix.area.height as f32 / 2.0);
-					if surface_helix.anchor == SurfaceAnchor::Bottom {
-						y *= -1.0;
-					}
-					Vec3::new(x, y, z)
-				},
-				SurfacePlacement::Bottom => {
-					let y = -row_height * ((reader_camera.visible_rows as f32 - 0.5) / 2.0);
-					Vec3::new(x, y, z)
-				},
-				_ => panic!(),
-			};
+			let target_pos = surface_bevy.target_position(reader_camera.zoom, reader_camera.visible_rows, column_width, row_height);
 			
 			surface_transform.translation = target_pos;
 		}
