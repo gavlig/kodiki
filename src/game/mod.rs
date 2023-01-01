@@ -135,6 +135,7 @@ impl Plugin for AppPlugin {
 				ConditionSet::new()
 				.run_in_state(AppMode::Reader)
 				.with_system(input_system)
+				.with_system(window_unfocused_system)
 				.with_system(stats_system)
 				.into()
 			)

@@ -1,7 +1,7 @@
 use bevy				:: { prelude :: * };
 use bevy				:: { app::AppExit };
 use bevy				:: core_pipeline :: clear_color :: ClearColorConfig;
-use bevy				:: window :: CursorGrabMode;
+use bevy				:: window :: { CursorGrabMode, WindowFocused };
 use bevy_reader_camera	:: { * };
 use bevy_mod_picking	:: { * };
 use iyes_loopless		:: { prelude :: * };
@@ -199,25 +199,39 @@ pub fn input_system(
 			
 			commands.insert_resource(NextState(AppMode::Main));
 		}
-
-		if camera.mode == CameraMode::Reader {
-			// if key.pressed(KeyCode::Left) {
-			// 	camera.column_dec(delta_seconds);
-			// }
-
-			// if key.pressed(KeyCode::Right) {
-			// 	camera.column_inc(delta_seconds);
-			// }
-
-			// if key.pressed(KeyCode::Up) {
-			// 	camera.row_dec(delta_seconds);
-			// }
-
-			// if key.pressed(KeyCode::Down) {
-			// 	camera.row_inc(delta_seconds);
-			// }
-		}
 	}
+}
+
+// works in AppMode::Reader only
+pub fn window_unfocused_system(
+	mut	windows			: ResMut<Windows>,
+    mut focused_events	: EventReader<WindowFocused>,
+	mut q_reader_camera : Query<&mut ReaderCamera>,
+	
+	mut commands		: Commands,
+) {
+	let window = windows.get_primary_mut();
+	let mut window = if window.is_none() { return; } else { window.unwrap() };
+	
+	if q_reader_camera.is_empty() {
+		return;
+	}
+	
+	let mut camera = q_reader_camera.single_mut();
+	
+    for e in focused_events.iter() {
+		if e.id != window.id() || e.focused == true {
+			continue;
+		}
+		
+		if camera.mode == CameraMode::Reader {
+			camera.set_restrictions(false, false, false);
+
+			set_cursor_visibility(true, window);
+
+			commands.insert_resource(NextState(AppMode::Main));
+		}
+    }
 }
 
 pub fn stats_system(
