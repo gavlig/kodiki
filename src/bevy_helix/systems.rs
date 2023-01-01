@@ -388,7 +388,7 @@ fn spawn_bevy_surfaces(
 		}
 		
 		let row_height		= font.vertical_advance();
-		let column_width	= font.horizontal_advance_char('a');
+		let column_width	= font.horizontal_advance_mono();
 
 		let target_pos		= SurfaceBevy::calc_target_position(
 			surface_helix.anchor,
@@ -506,7 +506,7 @@ pub fn input_mouse(
 	// calculate row and column from surface space cursor coordinates
 	let font = font_assets.get(&font_handles.main).unwrap();
 	
-	let column_width	= font.horizontal_advance_char('a');
+	let column_width	= font.horizontal_advance_mono();
 	let row_height		= font.vertical_advance();
 	
 	let column	= (cursor_position_surface.x / column_width) as u16;
@@ -621,7 +621,7 @@ pub fn update_permanent_surfaces_position(
 	};
 	
 	let row_height		= used_fonts.main.vertical_advance();
-	let column_width	= used_fonts.main.horizontal_advance_char('a');
+	let column_width	= used_fonts.main.horizontal_advance_mono();
 	
 	for (surface_name, surface_helix) in surfaces_helix.iter() {
 		if surface_name == EditorView::ID {
