@@ -53,13 +53,13 @@
 15.4.16. ✅ sometimes sufrace_entity doesnt have entity yet in update_permanent_surfaces_position: it is a valid situation, we just need to add safety checks
 15.4.17. ✅ first line in editor is corrupted (maybe after scrolling)
 15.4.18. ✅ when finding functions using symbol picker the highlighted line with function has broken rendering
-15.4.19. ":" panel disappears when command stops making sense
+15.4.19. ✅ ":" panel disappears when command stops making sense
 15.4.20. ✅ init position of permanent surfaces is wrong
 15.4.21. zooming in/out is jittery as in focused row jumps up and down
 15.4.22. zooming in/out breaks permanent surfaces placement
 15.4.23. ✅ reader mode gets stuck after alt tabbing. Cancel it when window becomes unfocused
 15.4.24. ✅ mouse cursor is not properly captured by window in wayland? Used Confined mode instead of Locked
-15.4.25. crash when scrolling with mouse movement
+15.4.25. random crash when scrolling with mouse movement
 15.4.26. popup with help is located in a wrong place (println!("row offset out {}", reader_camera.row_offset_out);)
 15.4.27. saving with :w doesnt always work?! 
 15.4.28. ":" panel comes with garbage from previous commands (:w for example)
@@ -68,6 +68,7 @@
 15.4.31. surface without text visible when zooming
 15.4.32. surface without text visible when scrolling after zooming
 15.4.33. after alt-tabbing multiple cursor mode gets stuck
+15.4.33. after alt-tabbing overlay component gets stuck (like file picker for example)
 15.5. ✅ Make surface size depend on the amount of visible rows in camera
 15.6. ✅ Determine size of background quad when opening file: instead i'm making it dependent on visible amount of rows in camera and make it follow camera on y axis
 15.7. ✅ Separate logic for non-scrollable surfaces
