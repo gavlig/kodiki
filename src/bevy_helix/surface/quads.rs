@@ -1,6 +1,6 @@
 use bevy				:: prelude :: { * };
 
-use crate				:: bevy_ab_glyph::{ UsedFonts };
+use crate				:: bevy_ab_glyph::{ ABFonts };
 
 use super				:: { * };
 
@@ -72,7 +72,7 @@ pub struct QuadDescription {
 	pub column		: u32,
 }
 
-pub fn update<'a>(
+pub fn append_quad<'a>(
 	background_style: &HelixStyle,
 	
 	surface_coords	: &SurfaceCoords,
@@ -81,7 +81,7 @@ pub fn update<'a>(
 	
 	quads_row		: &mut Row,
 	cell_helix		: &CellHelix,
-	used_fonts		: &'a UsedFonts<'a>,
+	used_fonts		: &'a ABFonts<'a>,
 	
 	helix_colors_cache: &mut HelixColorsCache,
 	

@@ -5,7 +5,7 @@ use bevy_tweening		:: lens :: { * };
 
 use bevy_reader_camera	:: { TextDescriptor };
 
-use crate				:: bevy_ab_glyph::{ ABGlyphFont, UsedFonts, GlyphMeshesCache, TextMeshesCache };
+use crate				:: bevy_ab_glyph::{ ABGlyphFont, ABFonts, GlyphMeshesCache, TextMeshesCache };
 
 use super				:: { * };
 use super				:: animate :: TweenPoint;
@@ -181,7 +181,7 @@ impl SurfaceCoords {
 		self.y			= self.row_height * self.row_offset_sign * row_wscroll as f32;
 	}
 	
-	pub fn next_column(&mut self, glyph: &String, used_fonts: &UsedFonts) {
+	pub fn next_column(&mut self, glyph: &String, used_fonts: &ABFonts) {
 		self.x += used_fonts.main.horizontal_advance(glyph);
 		self.column += 1;
 	}
@@ -336,7 +336,7 @@ impl SurfaceBevy {
 		
 		row_offset		: i32,
 		theme			: &Theme,
-		used_fonts		: &UsedFonts,
+		used_fonts		: &ABFonts,
 	
 		glyph_meshes_cache	: &mut GlyphMeshesCache,
 		text_meshes_cache	: &mut TextMeshesCache,
@@ -452,7 +452,7 @@ impl SurfaceBevy {
 		surface_helix	: &SurfaceHelix,
 		
 		background_style: &Style,
-		used_fonts		: &UsedFonts,
+		used_fonts		: &ABFonts,
 
 		glyph_meshes_cache	: &mut GlyphMeshesCache,
 		text_meshes_cache	: &mut TextMeshesCache,
@@ -508,7 +508,7 @@ impl SurfaceBevy {
 				
 				// if word ended - spawn it, if not ended - add symbol to the word in progress, if space - do nothing
 				let mut new_word_entities =
-				words::update(
+				words::append_symbol(
 					&surface_coords,
 					words_row_bevy,
 					&mut word_row_state,
@@ -535,7 +535,7 @@ impl SurfaceBevy {
 				let quads_row_bevy	= &mut self.rows[row_cache as usize].quads;
 				
 				let mut new_quad_entities =
-				quads::update(
+				quads::append_quad(
 					&background_style,
 					&surface_coords,
 					quads_row_bevy,

@@ -84,69 +84,119 @@ impl ABGlyphFont {
 unsafe impl Sync for ABGlyphFont {}
 unsafe impl Send for ABGlyphFont {}
 
-pub struct UsedFonts<'a> {
-	pub main		: &'a ABGlyphFont,
-	pub fallback	: &'a ABGlyphFont,
+#[derive(Resource, Default, Debug)]
+pub struct FontAssetHandles {
+	pub main			: Handle<ABGlyphFont>,
+	pub emoji			: Handle<ABGlyphFont>,
+	pub fallback		: Vec<Handle<ABGlyphFont>>,
+
+	pub loaded_cnt		: usize,
+}
+
+#[derive(Debug)]
+pub struct ABFonts<'a> {
+	pub main			: &'a ABGlyphFont,
+	pub emoji			: &'a ABGlyphFont,
+	pub fallback		: Vec<&'a ABGlyphFont>,
+}
+
+impl ABFonts<'_> {
+	pub fn new<'a>(
+		font_assets		: &'a Res<'a, Assets<ABGlyphFont>>,
+		font_handles	: &'a Res<'a, FontAssetHandles>,
+	) -> ABFonts<'a>
+	{
+		let main 	= font_assets.get(&font_handles.main).unwrap();
+		let emoji	= font_assets.get(&font_handles.emoji).unwrap();
+		
+		let mut fallback = Vec::new();
+		for handle in font_handles.fallback.iter() {
+			fallback.push(font_assets.get(&handle).unwrap());
+		}
+		
+		ABFonts {
+			main,
+			emoji,
+			fallback
+		}
+	}
 }
 
 #[derive(Clone, Debug)]
 pub struct GlyphWithFonts<'a> {
 	pub glyph_str	: String,
-	pub main		: &'a ABGlyphFont,
-	pub fallback	: &'a ABGlyphFont,
+	pub fonts		: &'a ABFonts<'a>,
 
 	pub initialized	: bool,
-	pub use_fallback: bool,
+	pub is_emoji	: bool,
+	pub fallback_index	: Option<usize>,
 }
 
 impl GlyphWithFonts<'_> {
 	pub fn new<'a>(
 		glyph_str	: String,
-		used_fonts	: &'a UsedFonts
+		fonts		: &'a ABFonts
 	) -> GlyphWithFonts<'a>
 	{
 		let mut cwf = GlyphWithFonts {
-			glyph_str	: glyph_str,
-			main		: used_fonts.main,
-			fallback	: used_fonts.fallback,
+			glyph_str,
+			fonts,
 		
-			initialized	: false,
-			use_fallback: false,
+			initialized		: false,
+			is_emoji		: false,
+			fallback_index	: None,
 		};
 
 		cwf.initialize();
 
 		cwf
 	}
+	
+	pub fn is_emoji(
+		glyph_with_fonts	: &GlyphWithFonts
+	) -> bool {
+		GlyphId(0) != glyph_with_fonts.fonts.emoji.glyph_id(&glyph_with_fonts.glyph_str)
+	}
 
-	pub fn use_fallback_font(
-		char_with_fonts	: &GlyphWithFonts,
-	) -> bool
+	pub fn get_fallback_index(
+		glyph_with_fonts	: &GlyphWithFonts,
+	) -> Option<usize>
 	{
-		let glyph_id = char_with_fonts.main.glyph_id(&char_with_fonts.glyph_str);
-		let use_fallback = glyph_id == GlyphId(0);
-		if use_fallback {
-			let glyph_id = char_with_fonts.fallback.glyph_id(&char_with_fonts.glyph_str);
+		let mut glyph_id		= glyph_with_fonts.fonts.main.glyph_id(&glyph_with_fonts.glyph_str);
+		let mut fallback_index	= None;
+		if glyph_id == GlyphId(0) {
+			for (index, fallback_font) in glyph_with_fonts.fonts.fallback.iter().enumerate() {
+				glyph_id = fallback_font.glyph_id(&glyph_with_fonts.glyph_str);
+				if glyph_id != GlyphId(0) {
+					println!("using fallback font for char: {} font index: {}", glyph_with_fonts.glyph_str, index);
+					fallback_index = Some(index);
+					break;
+				}
+			}
+			
 			if glyph_id == GlyphId(0) {
-				error!("bevy_ab_glyph: couldnt find glyph for {:?}!", char_with_fonts.glyph_str);
+				error!("bevy_ab_glyph: couldnt find glyph for {:?}!", glyph_with_fonts.glyph_str);
 			}
 		}
 	
-		use_fallback
+		fallback_index
 	}
 
 	pub fn initialize(&mut self) {
-		self.use_fallback = GlyphWithFonts::use_fallback_font(&self);
-		self.initialized = true;
+		self.is_emoji		= GlyphWithFonts::is_emoji(&self);
+		self.fallback_index = GlyphWithFonts::get_fallback_index(&self);
+		self.initialized	= true;
 	}
 
 	pub fn current_font(&self) -> &ABGlyphFont {
 		assert!(self.initialized);
 
-		if self.use_fallback {
-			self.fallback
+		if self.is_emoji {
+			self.fonts.emoji
+		} else if self.fallback_index.is_some() {
+			self.fonts.fallback[self.fallback_index.unwrap()]
 		} else {
-			self.main
+			self.fonts.main
 		}
 	}
 }
@@ -167,6 +217,13 @@ pub struct TextMeshesCache {
 	pub meshes: TextMeshesMap,
 }
 
+pub type EmojiImagesMap = HashMap<String, Handle<Image>>;
+
+#[derive(Resource, Default)]
+pub struct EmojiImagesCache {
+	pub images: EmojiImagesMap,
+}
+
 mod font_loader;
 pub mod mesh_generator;
 
@@ -177,6 +234,8 @@ impl Plugin for ABGlyphPlugin {
 		app
 			.insert_resource	(GlyphMeshesCache::default())
 			.insert_resource	(TextMeshesCache::default())
+			.insert_resource	(FontAssetHandles::default())
+			.insert_resource	(EmojiImagesCache::default())
 			.add_asset          :: <ABGlyphFont>()
 			.init_asset_loader  :: <font_loader::FontLoader>()
 

@@ -1,7 +1,7 @@
 use bevy				:: prelude :: { * };
 
-use crate				:: bevy_ab_glyph::{ UsedFonts, StringWithFonts, GlyphWithFonts, TextMeshesCache, GlyphMeshesCache };
-use crate				:: bevy_ab_glyph :: mesh_generator :: { generate_string_mesh_wcache };
+use crate				:: bevy_ab_glyph::{ ABFonts, StringWithFonts, GlyphWithFonts, TextMeshesCache, GlyphMeshesCache };
+use crate				:: bevy_ab_glyph :: mesh_generator :: { generate_string_mesh_wcache, generate_emoji_mesh_image_wcache };
 
 use super				:: { * };
 
@@ -42,14 +42,14 @@ pub struct RowState {
 	pub ended		: bool,
 }
 
-pub fn update<'a>(
+pub fn append_symbol<'a>(
 	surface_coords	: &SurfaceCoords,
 	row_bevy		: &mut WordRowBevy,
 	row_state		: &mut RowState,
 	
 	words_row		: &mut Row<'a>,
 	cell_helix		: &CellHelix,
-	used_fonts		: &'a UsedFonts<'a>,
+	used_fonts		: &'a ABFonts<'a>,
 	
 	glyph_meshes_cache	: &mut GlyphMeshesCache,
 	text_meshes_cache	: &mut TextMeshesCache,
@@ -77,9 +77,10 @@ pub fn update<'a>(
 		} else {
 			false
 		};
+		let is_emoji	= glyph_with_fonts_current.is_emoji;
 	
 		// if word ended check if it's different from what we already have spawned and spawn it or re-use existing entity to attach a different mesh to it
-		let word_ended	= is_space || different_color || different_font || row_state.ended;
+		let word_ended	= is_space || different_color || different_font || is_emoji || row_state.ended;
 		
 		if (word_ended && row_state.ended && !is_space) || !word_ended {
 			word.string.push_str(cell_helix.symbol.as_str());
@@ -263,21 +264,32 @@ fn update_word(
 	word 				: &Word,
 	word_description	: &WordDescription,
 	row_bevy			: &mut WordRowBevy,
+	
 	glyph_meshes_cache	: &mut GlyphMeshesCache,
 	text_meshes_cache	: &mut TextMeshesCache,
 	helix_colors_cache	: &mut HelixColorsCache,
+	
 	mesh_assets			: &mut Assets<Mesh>,
 	material_assets		: &mut Assets<StandardMaterial>,
 	commands			: &mut Commands
 ) -> Option<Entity>
 {
-	let word_mesh_handle = generate_string_mesh_wcache(&word.string_with_fonts, mesh_assets, glyph_meshes_cache, text_meshes_cache);
 	let color			= color_from_helix(word.color);
-	let material_handle = get_helix_color_material_handle(
-		color,
-		helix_colors_cache,
-		material_assets
-	);
+	let first_symbol 	= word.string_with_fonts.first().unwrap();
+	
+	let (word_mesh_handle, material_handle) = if first_symbol.is_emoji {
+		assert!			(word.string.len() == 1);
+		generate_emoji_mesh_image_wcache(first_symbol, mesh_assets, image_assets, emoji_images_cache, text_meshes_cache)
+	} else {
+		(
+			generate_string_mesh_wcache(&word.string_with_fonts, mesh_assets, glyph_meshes_cache, text_meshes_cache),
+			get_helix_color_material_handle(
+				color,
+				helix_colors_cache,
+				material_assets
+			)
+		)
+	};
 	
 	// spawn new word if row doesnt have entity
 	let new_word		= word_index >= row_bevy.len();

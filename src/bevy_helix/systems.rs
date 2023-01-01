@@ -17,9 +17,8 @@ use super :: surface			:: { * };
 use super :: cursor				:: { * };
 
 use crate :: game :: DespawnResource;
-use crate :: game :: FontAssetHandles;
 
-use crate :: bevy_ab_glyph		:: { ABGlyphFont, UsedFonts, GlyphMeshesCache, TextMeshesCache };
+use crate :: bevy_ab_glyph		:: { ABGlyphFont, FontAssetHandles, ABFonts, GlyphMeshesCache, TextMeshesCache };
 
 use helix_term  :: config		:: { Config };
 use helix_term  :: args			:: { Args };
@@ -106,10 +105,7 @@ pub fn startup_spawn(
 ) {
 	let surface_editor_name = String::from(EditorView::ID);
 	
-	let used_fonts = UsedFonts{
-		main			: font_assets.get(&font_handles.main).unwrap(),
-		fallback		: font_assets.get(&font_handles.fallback).unwrap()
-	};
+	let used_fonts = ABFonts::new(&font_assets, &font_handles);
 	
 	let surface_helix_editor = surfaces_helix.get(&surface_editor_name).unwrap();
 	
@@ -181,10 +177,7 @@ pub fn update_main(
 		return;
 	}
 	
-	let used_fonts	= UsedFonts{
-		main		: font_assets.get(&font_handles.main).unwrap(),
-		fallback	: font_assets.get(&font_handles.fallback).unwrap()
-	};
+	let used_fonts = ABFonts::new(&font_assets, &font_handles);
 
 	let mut app					= app.unwrap();
 	
@@ -615,10 +608,7 @@ pub fn update_permanent_surfaces_position(
 	mut	q_transform		: Query<&mut Transform>,
 )
 {
-	let used_fonts = UsedFonts {
-		main			: font_assets.get(&font_handles.main).unwrap(),
-		fallback		: font_assets.get(&font_handles.fallback).unwrap()
-	};
+	let used_fonts		= ABFonts::new(&font_assets, &font_handles);
 	
 	let row_height		= used_fonts.main.vertical_advance();
 	let column_width	= used_fonts.main.horizontal_advance_mono();

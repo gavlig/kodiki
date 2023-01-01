@@ -44,10 +44,7 @@ pub fn setup_ab_glyph_tests(
 	mut material_assets : ResMut<Assets<StandardMaterial>>,
 	mut commands		: Commands,
 ) {
-	let used_fonts	= UsedFonts{
-		main	: font_assets.get(&font_handles.main).unwrap(),
-		fallback: font_assets.get(&font_handles.fallback).unwrap()
-	};
+	let used_fonts = ABFonts::new(&font_assets, &font_handles);
 	
 	let text = String::from("test_text_abcd(){}:/@#$");
 	let mut string_with_fonts = StringWithFonts::new();
@@ -281,35 +278,26 @@ pub fn load_assets(
 	mut font_handles	: ResMut<FontAssetHandles>,
 		ass				: ResMut<AssetServer>,
 ) {
-	font_handles.droid_sans_mono	= ass.load("fonts/droidsans-mono.ttf");
-	font_handles.open_dyslexic		= ass.load("fonts/OpenDyslexic3-Regular.ttf");
-	font_handles.source_code_pro	= ass.load("fonts/SourceCodePro-Regular.ttf");
-	font_handles.B612				= ass.load("fonts/B612Mono-Regular.ttf");
-	font_handles.share_tech			= ass.load("fonts/ShareTechMono-Regular.ttf");
+	let ubuntu_mono			= ass.load("fonts/UbuntuMono-Regular.otf");
+	let noto_color_emoji	= ass.load("fonts/NotoColorEmoji.ttf");
+	
+	let mut fallback		= Vec::new();
+	fallback.push			(ass.load("fonts/DejaVuSerif.ttf"));
 
-	font_handles.ubuntu_mono		= ass.load("fonts/UbuntuMono-Regular.otf");
-	font_handles.dejavu_serif		= ass.load("fonts/DejaVuSerif.ttf");
-
-	font_handles.main				= font_handles.ubuntu_mono.clone_weak();
-	font_handles.fallback			= font_handles.dejavu_serif.clone_weak();
+	font_handles.main		= ubuntu_mono;
+	font_handles.emoji		= noto_color_emoji;
+	font_handles.fallback	= fallback;
 }
 
-pub fn asset_loading_events(
+pub fn font_asset_loading_events(
 	mut font_handles	: ResMut<FontAssetHandles>,
 	mut ev_asset		: EventReader<AssetEvent<ABGlyphFont>>,
 	mut commands		: Commands
 ) {
 	for ev in ev_asset.iter() {
 		match ev {
-			AssetEvent::Created { handle } => {
+			AssetEvent::Created { handle: _ } => {
 				font_handles.loaded_cnt += 1;
-				if font_handles.ubuntu_mono == *handle {
-					println!("ubuntu_mono loaded!");
-				}
-
-				if font_handles.dejavu_serif == *handle {
-					println!("dejavu serif loaded!");
-				}
 			}
 			AssetEvent::Modified { handle: _ } => {
 			}
@@ -318,9 +306,9 @@ pub fn asset_loading_events(
 		}
 	}
 
-	if font_handles.loaded_cnt == 7 {
+	if font_handles.loaded_cnt == font_handles.fallback.len() + 2 {
 		commands.insert_resource(NextState(AppMode::AssetsLoaded));
-		println!("assets loaded!");
+		println!("fonts loaded!");
 	}
 }
 

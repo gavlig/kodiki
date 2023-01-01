@@ -16,7 +16,7 @@ pub type LyonPoint      = lyon :: math :: Point;
 
 use bevy::render::mesh::shape as render_shape;
 
-use super :: { GlyphMeshesCache, TextMeshesCache, ABGlyphFont, GlyphWithFonts, StringWithFonts };
+use super :: { GlyphMeshesCache, TextMeshesCache, EmojiImagesCache, ABGlyphFont, GlyphWithFonts, StringWithFonts };
 
 pub type VertexPos		= [f32; 3];
 pub type VertexIndex	= u16;
@@ -47,39 +47,26 @@ impl MeshInternal {
 	}
 }
 
-fn generate_glyph_outline(
+fn generate_glyph_outline_char(
 	glyph_char	: char,
 	font		: &FontVec,
 	debug		: bool,
-) -> Outline
-{
-	let placeholder_glyph_id = font.glyph_id('?');
-
+) -> Option<Outline> {
 	let glyph_id = font.glyph_id(glyph_char);
 
 	if debug {
-		println!("generate_glyph_outline glyph_id: {:?} char {}", glyph_id, glyph_char);
+		println!("generate_glyph_outline_char glyph_id: {:?} char {}", glyph_id, glyph_char);
 	}
 
-	let mut outline = font.outline(glyph_id);
-	// couldn't find outline for requested character, use placeholder instead
-	if outline.is_none() {
-		println!("glyph id for {} not found!", glyph_char);
-		outline = font.outline(placeholder_glyph_id);
-	}
-
-	let outline = outline.unwrap();
-
-	outline
+	font.outline(glyph_id)
 }
 
-fn generate_glyph_outline_string(
+fn generate_glyph_outline(
 	glyph_str	: &String,
 	font		: &FontVec,
 	debug		: bool,
-) -> Outline
-{
-	generate_glyph_outline(
+) -> Option<Outline> {
+	generate_glyph_outline_char(
 		glyph_str.chars().next().unwrap(),
 		font,
 		debug
@@ -88,8 +75,7 @@ fn generate_glyph_outline_string(
 
 fn generate_path_from_outline(
 	outline: Outline
-) -> Path
-{
+) -> Path {
 	let mut path_builder = Path::builder();
 
 	// handle first point
@@ -155,15 +141,30 @@ fn generate_path_from_outline(
 	path_builder.build()
 }
 
-fn generate_vertices_from_path(
-	path		: Path,
-	scale		: f32,
-	tolerance	: f32
-) -> VertexBuffer
-{
-	let mut vertex_buffer: VertexBuffer = VertexBuffers::new();
-	fill_vertex_buffer_from_path(path, scale, tolerance, &mut vertex_buffer);
-	vertex_buffer
+fn generate_quad_vertices(
+	scale			: f32,
+	vertex_buffer	: &mut VertexBuffer,
+	normals			: &mut NormalBuffer
+) {
+	let vertices_cnt = 4;
+	let v0	= Vec3::new(0.0, 0.0, 0.0);
+	let v1	= Vec3::new(0.0, 1.0, 0.0) * scale;
+	let v2	= Vec3::new(1.0, 1.0, 0.0) * scale;
+	let v3	= Vec3::new(1.0, 0.0, 0.0) * scale;
+	
+	vertex_buffer.vertices.reserve(vertices_cnt);
+	vertex_buffer.vertices.push(v0.to_array());
+	vertex_buffer.vertices.push(v1.to_array());
+	vertex_buffer.vertices.push(v2.to_array());
+	vertex_buffer.vertices.push(v3.to_array());
+	
+	vertex_buffer.indices.reserve(vertices_cnt);
+	vertex_buffer.indices.push(0);
+	vertex_buffer.indices.push(1);
+	vertex_buffer.indices.push(2);
+	vertex_buffer.indices.push(3);
+	
+	*normals 	= vec![[0.0, 0.0, 1.0]; vertices_cnt];
 }
 
 fn fill_vertex_buffer_from_path(
@@ -171,8 +172,7 @@ fn fill_vertex_buffer_from_path(
 	scale		: f32,
 	tolerance	: f32,
 	vertex_buffer : &mut VertexBuffer
-)
-{
+) {
 	let mut tessellator = FillTessellator::new();
 	tessellator.tessellate_path(
 		&path,
@@ -223,8 +223,7 @@ impl Triangle {
 
 fn collect_triangles_from_vertices(
 	vertex_buffer: &VertexBuffer
-) -> Vec<Triangle>
-{
+) -> Vec<Triangle> {
 	let triangles_cnt = vertex_buffer.indices.len() / 3;
 	
 	let mut triangles : Vec<Triangle> = Vec::with_capacity(triangles_cnt);
@@ -258,8 +257,7 @@ fn collect_triangles_from_vertices(
 
 fn run_triangle_adjacency_tests(
 	triangles : &mut Vec<Triangle>
-)
-{
+) {
 	let triangles_cnt = triangles.len();
 
 	// test every trangle against each other to find adjacent edges (adjacent = edges shared between more than 1 triangle)
@@ -281,8 +279,7 @@ fn generate_glyph_back_face(
 	depth: f32,
 	vertex_buffer: &mut VertexBuffer,
 	normals: &mut Vec<[f32; 3]>
-)
-{
+) {
 	let vertices_cnt = vertex_buffer.vertices.len();
 	let indices_cnt = vertex_buffer.indices.len();
 	let triangles_cnt = indices_cnt / 3;
@@ -318,8 +315,7 @@ fn generate_connecting_quads(
 	triangles: &Vec<Triangle>,
 	vertex_buffer: &mut VertexBuffers<[f32; 3], u16>,
 	normals: &mut Vec<[f32; 3]>,
-)
-{
+) {
 	let vertices_cnt = vertex_buffer.vertices.len() / 2; // dividing by two because it is expected that vertex buffer already has geometry for front and back face
 	let backface_offset = vertices_cnt as u16;
 
@@ -371,43 +367,49 @@ fn generate_connecting_quads(
 	}
 }
 
-pub fn generate_glyph_mesh_inner(
-	char_with_fonts	: &GlyphWithFonts,
+pub fn generate_glyph_mesh_internal(
+	glyph_with_fonts : &GlyphWithFonts,
 ) -> MeshInternal {
-	let glyph_str			= &char_with_fonts.glyph_str;
-	let font				= char_with_fonts.current_font();
-
-	let glyph_outline		= generate_glyph_outline_string(glyph_str, &font.f, false);
-	let path				= generate_path_from_outline(glyph_outline);
-
-	// geometry of a glyph's front face
+	let glyph_str			= &glyph_with_fonts.glyph_str;
+	let font				= glyph_with_fonts.current_font();
+	
 	let unit_scale			= 1.0 / font.f.units_per_em().unwrap();
-	let vertices			= generate_vertices_from_path(path, unit_scale, font.tolerance);
-	let vertices_cnt		= vertices.vertices.len();
-	let normals: NormalBuffer = vec![[0.0, 0.0, 1.0]; vertices_cnt];
+	let mut vertex_buffer	= VertexBuffers::new();
+	let mut normals			= NormalBuffer::new();
 
-	// Now to "extrude" the said geometry to get a 3d glyph first we need to find the edges that are not adjacent with others. 
-	// Or in other words we need to find the contour edges
+	if let Some(glyph_outline) = generate_glyph_outline(glyph_str, &font.f, false) {
+		let path			= generate_path_from_outline(glyph_outline);
 
-	// // collect vertices into triangles with 3 edges to find adjacent edges
-	// let mut triangles = collect_triangles_from_vertices(&vertices);
+		// geometry of a glyph's front face
+		fill_vertex_buffer_from_path(path, unit_scale, font.tolerance, &mut vertex_buffer);
+		let vertices_cnt	= vertex_buffer.vertices.len();
+		normals				= vec![[0.0, 0.0, 1.0]; vertices_cnt];
 
-	// // find adjacent edges and mark them in "triangles"
-	// run_triangle_adjacency_tests(&mut triangles);
+		// Now to "extrude" the said geometry to get a 3d glyph first we need to find the edges that are not adjacent with others. 
+		// Or in other words we need to find the contour edges
 
-	// // make back face with inverted winding and normals
-	// generate_glyph_back_face(font.depth, &mut vertices, &mut normals);
+		// // collect vertices into triangles with 3 edges to find adjacent edges
+		// let mut triangles = collect_triangles_from_vertices(&vertex_buffer);
 
-	// // make connecting quads
-	// generate_connecting_quads(&triangles, &mut vertices, &mut normals);
+		// // find adjacent edges and mark them in "triangles"
+		// run_triangle_adjacency_tests(&mut triangles);
 
-	MeshInternal { vertex_buffer: vertices, normals }
+		// // make back face with inverted winding and normals
+		// generate_glyph_back_face(font.depth, &mut vertex_buffer, &mut normals);
+
+		// // make connecting quads
+		// generate_connecting_quads(&triangles, &mut vertex_buffer, &mut normals);
+	} else {
+		generate_quad_vertices(unit_scale, &mut vertex_buffer, &mut normals);
+	}
+
+	MeshInternal { vertex_buffer, normals }
 }
 
 pub fn generate_glyph_mesh(
-	char_with_fonts	: &GlyphWithFonts,
+	glyph_with_fonts	: &GlyphWithFonts,
 ) -> Mesh {
-	let mesh_internal = generate_glyph_mesh_inner(char_with_fonts);
+	let mesh_internal = generate_glyph_mesh_internal(glyph_with_fonts);
 
 	let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
 	mesh.insert_attribute	(Mesh::ATTRIBUTE_POSITION, mesh_internal.vertices().clone());
@@ -418,21 +420,18 @@ pub fn generate_glyph_mesh(
 }
 
 pub fn generate_glyph_mesh_wcache(
-	char_with_fonts	: &GlyphWithFonts,
-	mesh_assets	: &mut Assets<Mesh>,
-	text_meshes_cache : &mut TextMeshesCache
-) -> Handle<Mesh>
-{
-	let glyph_str = char_with_fonts.glyph_str.clone();
-
-	match text_meshes_cache.meshes.get(&glyph_str) {
+	glyph_with_fonts	: &GlyphWithFonts,
+	mesh_assets			: &mut Assets<Mesh>,
+	text_meshes_cache 	: &mut TextMeshesCache
+) -> Handle<Mesh> {
+	match text_meshes_cache.meshes.get(&glyph_with_fonts.glyph_str) {
 		Some(handle) => handle.clone_weak(),
 		None => {
 			let handle = mesh_assets.add(
-				generate_glyph_mesh(char_with_fonts)
+				generate_glyph_mesh(glyph_with_fonts)
 			);
 			
-			text_meshes_cache.meshes.insert_unique_unchecked(glyph_str.clone(), handle).1.clone()
+			text_meshes_cache.meshes.insert_unique_unchecked(glyph_with_fonts.glyph_str.clone(), handle).1.clone()
 		}
 	}
 }
@@ -440,8 +439,7 @@ pub fn generate_glyph_mesh_wcache(
 fn offset_vertices(
 	vertices: &mut Vec<[f32; 3]>,
 	offset: f32,
-)
-{
+) {
 	if offset > 0.0 {
 		for v in vertices.iter_mut() {
 			v[0] += offset;
@@ -452,8 +450,7 @@ fn offset_vertices(
 fn offset_indices(
 	indices: &mut Vec<u16>,
 	offset: u16
-)
-{
+) {
 	if offset == 0 {
 		return;
 	}
@@ -464,8 +461,8 @@ fn offset_indices(
 }
 
 pub fn generate_string_mesh(
-	string_with_fonts : &Vec<GlyphWithFonts>,
-	mut glyph_meshes_cache : Option<&mut GlyphMeshesCache>,
+		string_with_fonts	: &StringWithFonts,
+	mut glyph_meshes_cache	: Option<&mut GlyphMeshesCache>,
 ) -> Mesh {
 	let mut vertex_buffer_string: VertexBuffer = VertexBuffers::new();
 	let mut normals_string		: NormalBuffer = Vec::new();
@@ -478,12 +475,12 @@ pub fn generate_string_mesh(
 			match cache.meshes.get(&glyph_with_fonts.glyph_str) {
 				Some(mesh) => mesh.clone(),
 				None => {
-					let mesh_internal = generate_glyph_mesh_inner(glyph_with_fonts);
+					let mesh_internal = generate_glyph_mesh_internal(glyph_with_fonts);
 					cache.meshes.insert_unique_unchecked(glyph_with_fonts.glyph_str.clone(), mesh_internal).1.clone()
 				}
 			}
 		} else {
-			generate_glyph_mesh_inner(glyph_with_fonts)
+			generate_glyph_mesh_internal(glyph_with_fonts)
 		}
 	};
 
@@ -526,8 +523,7 @@ pub fn generate_string_mesh_wcache(
 	mesh_assets			: &mut Assets<Mesh>,
 	glyph_meshes_cache	: &mut GlyphMeshesCache,
 	text_meshes_cache	: &mut TextMeshesCache
-) -> Handle<Mesh>
-{
+) -> Handle<Mesh> {
 	let mut glyph_str	= String::new();
 	for symbol in string_with_fonts.iter() {
 		glyph_str.push_str(symbol.glyph_str.as_str());
@@ -543,6 +539,88 @@ pub fn generate_string_mesh_wcache(
 			text_meshes_cache.meshes.insert_unique_unchecked(glyph_str.clone(), handle).1.clone()
 		}
 	}
+}
+
+use bevy::render::texture::ImageType;
+
+fn generate_glyph_image_char(
+	glyph_char	: char,
+	font		: &FontVec,
+	debug		: bool,
+) -> Image {
+	let glyph_id = font.glyph_id(glyph_char);
+
+	if debug {
+		println!("generate_glyph_image glyph_id: {:?} char {}", glyph_id, glyph_char);
+	}
+
+	if let Some(glyph_image) = font.glyph_raster_image(glyph_id, u16::MAX) {
+		let ext = match glyph_image.format {
+			ab_glyph::GlyphImageFormat::Png => "png",
+			_ => panic!("unsupported glyph image format obtained from ab_glyph!")
+		};
+		
+		let compressed_image_formats = bevy::render::texture::CompressedImageFormats::NONE;
+		
+		let buffer_result = Image::from_buffer(
+		    glyph_image.data,
+		    ImageType::Extension(ext),
+		    compressed_image_formats,
+		    true,
+		);
+		
+		if let Ok(buffer) = buffer_result {
+			buffer
+		} else {
+			error!("Failed to create emoji image for glyph: {}", glyph_char);
+			Image::default()
+		}
+	} else {
+		error!("Failed to obtain emoji image from ab_glyph! glyph: {}", glyph_char);
+		Image::default()
+	}
+}
+
+fn generate_glyph_image(
+	glyph_str	: &String,
+	font		: &FontVec,
+	debug		: bool,
+) -> Image {
+	generate_glyph_image_char(
+		glyph_str.chars().next().unwrap(),
+		font,
+		debug
+	)
+}
+
+pub fn generate_glyph_image_wcache(
+	glyph_with_fonts	: &GlyphWithFonts,
+	image_assets		: &mut Assets<Image>,
+	emoji_images_cache 	: &mut EmojiImagesCache
+) -> Handle<Image> {
+	match emoji_images_cache.images.get(&glyph_with_fonts.glyph_str) {
+		Some(handle) => handle.clone_weak(),
+		None => {
+			let handle = image_assets.add(
+				generate_glyph_image(&glyph_with_fonts.glyph_str, &glyph_with_fonts.current_font().f, false)
+			);
+			
+			emoji_images_cache.images.insert_unique_unchecked(glyph_with_fonts.glyph_str.clone(), handle).1.clone()
+		}
+	}
+}
+
+pub fn generate_emoji_mesh_image_wcache(
+	glyph_with_fonts	: &GlyphWithFonts,
+	mesh_assets			: &mut Assets<Mesh>,
+	image_assets		: &mut Assets<Image>,
+	emoji_images_cache	: &mut EmojiImagesCache,
+	text_meshes_cache	: &mut TextMeshesCache
+) -> (Handle<Mesh>, Handle<Image>) {
+	let mesh_handle		= generate_glyph_mesh_wcache(glyph_with_fonts, mesh_assets, text_meshes_cache);
+	let image_handle	= generate_glyph_image_wcache(glyph_with_fonts, image_assets, emoji_images_cache);
+	
+	(mesh_handle, image_handle)
 }
 
 fn spawn_sphere(
@@ -647,13 +725,14 @@ pub fn generate_glyph_mesh_dbg(
 	// polylines	: &mut Assets<Polyline>,
 	// polyline_materials: &mut Assets<PolylineMaterial>,
 	// commands	: &mut Commands
-) -> Mesh {
-	let glyph_outline		= generate_glyph_outline_string(glyph_str, &font.f, true);
+) -> Option<Mesh> {
+	let glyph_outline		= if let Some(outline) = generate_glyph_outline(glyph_str, &font.f, true) { outline } else { return None; };
 	let path				= generate_path_from_outline(glyph_outline);
 
 	// geometry of a glyph's front face
+	let mut vertex_buffer	= VertexBuffer::new();
 	let unit_scale			= 1.0 / font.f.units_per_em().unwrap();
-	let mut vertex_buffer	= generate_vertices_from_path(path, unit_scale, font.tolerance);
+	fill_vertex_buffer_from_path(path, unit_scale, font.tolerance, &mut vertex_buffer);
 	let vertices_cnt		= vertex_buffer.vertices.len();
 	let mut normals: Vec<[f32; 3]> = vec![[0.0, 0.0, 1.0]; vertices_cnt];
 
@@ -677,7 +756,7 @@ pub fn generate_glyph_mesh_dbg(
 	mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
 	mesh.set_indices(Some(Indices::U16(vertex_buffer.indices)));
 
-	mesh
+	Some(mesh)
 
 	// let p0 = Vec3::new(geometry.vertices[edge0.i0 as usize][0], geometry.vertices[edge0.i0 as usize][1], 1.0);
 	// let p1 = Vec3::new(geometry.vertices[edge0.i1 as usize][0], geometry.vertices[edge0.i1 as usize][1], 1.0);

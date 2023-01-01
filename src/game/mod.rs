@@ -96,7 +96,6 @@ impl Plugin for AppPlugin {
 
 			.insert_resource(AppState::default())
 			.insert_resource(MouseCursorState::default())
-			.insert_resource(FontAssetHandles::default())
 
 			.insert_resource(clear_color)
 			.insert_resource(Msaa::default())
@@ -113,7 +112,7 @@ impl Plugin for AppPlugin {
 			// .add_startup_system(setup_shadertoy)
 			.add_startup_system(load_assets)
 
-			.add_system		(asset_loading_events.run_in_state(AppMode::AssetLoading))
+			.add_system		(font_asset_loading_events.run_in_state(AppMode::AssetLoading))
 			
 			.add_enter_system_set(
 				AppMode::AssetsLoaded,
