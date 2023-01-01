@@ -401,7 +401,7 @@ fn spawn_bevy_surfaces(
 		);
 		
 		let start_pos = if surface_helix.lifetime == SurfaceLifetime::Temporary {
-			Vec3::new(0.0, 0.0, -reader_camera.zoom - 1.0)
+			Vec3::new(0.0, 0.0, SurfaceBevy::z_offset(reader_camera.zoom))
 		} else {
 			target_pos
 		};

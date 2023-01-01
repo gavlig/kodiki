@@ -682,6 +682,10 @@ impl SurfaceBevy {
 			.insert(Animator::new(seq));
 	}
 	
+	pub fn z_offset(zoom: f32) -> f32 {
+		-zoom + 0.05
+	}
+	
 	pub fn calc_target_position(
 		anchor			: SurfaceAnchor,
 		placement		: SurfacePlacement,
@@ -693,7 +697,7 @@ impl SurfaceBevy {
 	) -> Vec3
 	{
 		let x = -column_width * (area.width as f32 / 2.0);
-		let z = -zoom + 0.05;
+		let z = SurfaceBevy::z_offset(zoom);
 		let target_pos = match placement {
 			SurfacePlacement::Top => {
 				let y = row_height * ((visible_rows as f32 - 1.5)  / 2.0);

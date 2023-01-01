@@ -62,8 +62,8 @@
 15.4.25. random crash when scrolling with mouse movement
 15.4.26. popup with help is located in a wrong place (println!("row offset out {}", reader_camera.row_offset_out);)
 15.4.27. saving with :w doesnt always work?! 
-15.4.28. ":" panel comes with garbage from previous commands (:w for example)
-15.4.29. start position for temp surfaces is clipping with main quad
+15.4.28. ❎ (by design) ":" panel comes with garbage from previous commands (:w for example)
+15.4.29. ✅ start position for temp surfaces is clipping with main quad
 15.4.30. when jumping too far (like using symbol picker to go to another function) we see surface without text
 15.4.31. surface without text visible when zooming
 15.4.32. surface without text visible when scrolling after zooming
