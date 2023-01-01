@@ -274,7 +274,6 @@ pub fn mouse(
 		make_mouse_event(helix_mouse_event_kind);
 	}
 	
-	use bevy::input::mouse::MouseScrollUnit;
 	// let pixels_per_line = 53.0;
     for scroll_event in scroll_events.iter() {
         match scroll_event.unit {

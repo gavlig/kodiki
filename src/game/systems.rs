@@ -211,7 +211,7 @@ pub fn window_unfocused_system(
 	mut commands		: Commands,
 ) {
 	let window = windows.get_primary_mut();
-	let mut window = if window.is_none() { return; } else { window.unwrap() };
+	let window = if window.is_none() { return; } else { window.unwrap() };
 	
 	if q_reader_camera.is_empty() {
 		return;
