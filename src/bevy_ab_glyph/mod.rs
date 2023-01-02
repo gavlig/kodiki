@@ -164,7 +164,7 @@ impl GlyphWithFonts<'_> {
 	{
 		let mut glyph_id		= glyph_with_fonts.fonts.main.glyph_id(&glyph_with_fonts.glyph_str);
 		let mut fallback_index	= None;
-		if glyph_id == GlyphId(0) {
+		if glyph_id == GlyphId(0) && !glyph_with_fonts.is_emoji {
 			for (index, fallback_font) in glyph_with_fonts.fonts.fallback.iter().enumerate() {
 				glyph_id = fallback_font.glyph_id(&glyph_with_fonts.glyph_str);
 				if glyph_id != GlyphId(0) {
@@ -217,15 +217,16 @@ pub struct TextMeshesCache {
 	pub meshes: TextMeshesMap,
 }
 
-pub type EmojiImagesMap = HashMap<String, Handle<Image>>;
+pub type EmojiMaterialsMap = HashMap<String, Handle<StandardMaterial>>;
 
 #[derive(Resource, Default)]
-pub struct EmojiImagesCache {
-	pub images: EmojiImagesMap,
+pub struct EmojiMaterialsCache {
+	pub materials: EmojiMaterialsMap,
 }
 
 mod font_loader;
 pub mod mesh_generator;
+pub mod emoji_generator;
 
 pub struct ABGlyphPlugin;
 
@@ -235,7 +236,7 @@ impl Plugin for ABGlyphPlugin {
 			.insert_resource	(GlyphMeshesCache::default())
 			.insert_resource	(TextMeshesCache::default())
 			.insert_resource	(FontAssetHandles::default())
-			.insert_resource	(EmojiImagesCache::default())
+			.insert_resource	(EmojiMaterialsCache::default())
 			.add_asset          :: <ABGlyphFont>()
 			.init_asset_loader  :: <font_loader::FontLoader>()
 

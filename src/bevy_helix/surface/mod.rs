@@ -5,7 +5,7 @@ use bevy_tweening		:: lens :: { * };
 
 use bevy_reader_camera	:: { TextDescriptor };
 
-use crate				:: bevy_ab_glyph::{ ABGlyphFont, ABFonts, GlyphMeshesCache, TextMeshesCache };
+use crate				:: bevy_ab_glyph :: { ABGlyphFont, ABFonts, GlyphMeshesCache, TextMeshesCache, EmojiMaterialsCache };
 
 use super				:: { * };
 use super				:: animate :: TweenPoint;
@@ -341,8 +341,10 @@ impl SurfaceBevy {
 		glyph_meshes_cache	: &mut GlyphMeshesCache,
 		text_meshes_cache	: &mut TextMeshesCache,
 		helix_colors_cache	: &mut HelixColorsCache,
+		emoji_materials_cache : &mut EmojiMaterialsCache,
 	
 		mesh_assets		: &mut Assets<Mesh>,
+		image_assets	: &mut Assets<Image>,
 		material_assets	: &mut Assets<StandardMaterial>,
 		commands		: &mut Commands,
 	)
@@ -374,8 +376,10 @@ impl SurfaceBevy {
 			glyph_meshes_cache,
 			text_meshes_cache,
 			helix_colors_cache,
+			emoji_materials_cache,
 			
 			mesh_assets,
+			image_assets,
 			material_assets,
 			
 			commands
@@ -457,8 +461,10 @@ impl SurfaceBevy {
 		glyph_meshes_cache	: &mut GlyphMeshesCache,
 		text_meshes_cache	: &mut TextMeshesCache,
 		helix_colors_cache	: &mut HelixColorsCache,
-
+		emoji_materials_cache : &mut EmojiMaterialsCache,
+	
 		mesh_assets		: &mut Assets<Mesh>,
+		image_assets	: &mut Assets<Image>,
 		material_assets	: &mut Assets<StandardMaterial>,
 		commands		: &mut Commands,
 	)
@@ -520,8 +526,10 @@ impl SurfaceBevy {
 					glyph_meshes_cache,
 					text_meshes_cache,
 					helix_colors_cache,
+					emoji_materials_cache,
 					
 					mesh_assets,
+					image_assets,
 					material_assets,
 					commands
 				);

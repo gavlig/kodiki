@@ -59,22 +59,6 @@ pub struct MouseCursorState {
 	pub visible : bool
 }
 
-#[derive(Default, Resource)]
-pub struct FontAssetHandles {
-	pub droid_sans_mono	: Handle<ABGlyphFont>,
-	pub open_dyslexic	: Handle<ABGlyphFont>,
-	pub source_code_pro	: Handle<ABGlyphFont>,
-	pub B612			: Handle<ABGlyphFont>,
-	pub share_tech		: Handle<ABGlyphFont>,
-
-	pub ubuntu_mono		: Handle<ABGlyphFont>,
-	pub dejavu_serif	: Handle<ABGlyphFont>,
-
-	pub main			: Handle<ABGlyphFont>,
-	pub fallback		: Handle<ABGlyphFont>,
-
-	pub loaded_cnt		: u32,
-}
 
 #[derive(Default, Resource)]
 pub struct CameraIDs {

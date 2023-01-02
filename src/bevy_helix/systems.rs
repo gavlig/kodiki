@@ -18,7 +18,7 @@ use super :: cursor				:: { * };
 
 use crate :: game :: DespawnResource;
 
-use crate :: bevy_ab_glyph		:: { ABGlyphFont, FontAssetHandles, ABFonts, GlyphMeshesCache, TextMeshesCache };
+use crate :: bevy_ab_glyph		:: { ABGlyphFont, FontAssetHandles, ABFonts, GlyphMeshesCache, TextMeshesCache, EmojiMaterialsCache };
 
 use helix_term  :: config		:: { Config };
 use helix_term  :: args			:: { Args };
@@ -149,6 +149,7 @@ pub fn update_main(
 		mut glyph_meshes_cache,
 		mut text_meshes_cache,
 		mut helix_colors_cache,
+		mut emoji_materials_cache,
 		mut _cursor,
 			font_assets,
 			font_handles,
@@ -160,6 +161,7 @@ pub fn update_main(
 		ResMut<GlyphMeshesCache>,
 		ResMut<TextMeshesCache>,
 		ResMut<HelixColorsCache>,
+		ResMut<EmojiMaterialsCache>,
 		ResMut<CursorBevy>,
 		Res<Assets<ABGlyphFont>>,
 		Res<FontAssetHandles>,
@@ -169,6 +171,7 @@ pub fn update_main(
 	mut q_camera		: Query<&mut ReaderCamera>,
 	
 	mut mesh_assets		: ResMut<Assets<Mesh>>,
+	mut image_assets	: ResMut<Assets<Image>>,
 	mut material_assets	: ResMut<Assets<StandardMaterial>>,
 	mut despawn         : ResMut<DespawnResource>,
 	mut commands        : Commands,
@@ -263,8 +266,10 @@ pub fn update_main(
 			&mut glyph_meshes_cache,
 			&mut text_meshes_cache,
 			&mut helix_colors_cache,
+			&mut emoji_materials_cache,
 
 			&mut mesh_assets,
+			&mut image_assets,
 			&mut material_assets,
 			&mut commands
 		);

@@ -1,7 +1,8 @@
 use bevy				:: prelude :: { * };
 
-use crate				:: bevy_ab_glyph::{ ABFonts, StringWithFonts, GlyphWithFonts, TextMeshesCache, GlyphMeshesCache };
-use crate				:: bevy_ab_glyph :: mesh_generator :: { generate_string_mesh_wcache, generate_emoji_mesh_image_wcache };
+use crate				:: bevy_ab_glyph::{ ABFonts, StringWithFonts, GlyphWithFonts, TextMeshesCache, GlyphMeshesCache, EmojiMaterialsCache };
+use crate				:: bevy_ab_glyph :: mesh_generator :: { generate_string_mesh_wcache, generate_glyph_mesh_wcache };
+use crate				:: bevy_ab_glyph :: emoji_generator :: { generate_emoji_material_wcache };
 
 use super				:: { * };
 
@@ -54,8 +55,10 @@ pub fn append_symbol<'a>(
 	glyph_meshes_cache	: &mut GlyphMeshesCache,
 	text_meshes_cache	: &mut TextMeshesCache,
 	helix_colors_cache	: &mut HelixColorsCache,
+	emoji_materials_cache : &mut EmojiMaterialsCache,
 	
 	mesh_assets		: &mut Assets<Mesh>,
+	image_assets	: &mut Assets<Image>,
 	material_assets	: &mut Assets<StandardMaterial>,
 	
 	commands		: &mut Commands,
@@ -94,11 +97,16 @@ pub fn append_symbol<'a>(
 				surface_coords,
 				row_bevy,
 				row_state,
+				
 				glyph_meshes_cache,
 				text_meshes_cache,
 				helix_colors_cache,
+				emoji_materials_cache,
+				
 				mesh_assets,
+				image_assets,
 				material_assets,
+				
 				commands
 			);
 			
@@ -128,10 +136,14 @@ pub fn append_symbol<'a>(
 				surface_coords,
 				row_bevy,
 				row_state,
+				
 				glyph_meshes_cache,
 				text_meshes_cache,
 				helix_colors_cache,
+				emoji_materials_cache,
+				
 				mesh_assets,
+				image_assets,
 				material_assets,
 				commands
 			);
@@ -162,8 +174,10 @@ fn on_word_ended(
 	glyph_meshes_cache	: &mut GlyphMeshesCache,
 	text_meshes_cache	: &mut TextMeshesCache,
 	helix_colors_cache	: &mut HelixColorsCache,
+	emoji_materials_cache : &mut EmojiMaterialsCache,
 	
 	mesh_assets		: &mut Assets<Mesh>,
+	image_assets	: &mut Assets<Image>,
 	material_assets	: &mut Assets<StandardMaterial>,
 	
 	commands		: &mut Commands,
@@ -190,11 +204,16 @@ fn on_word_ended(
 			word,
 			&word_description,
 			row_bevy,
+			
 			glyph_meshes_cache,
 			text_meshes_cache,
 			helix_colors_cache,
+			emoji_materials_cache,
+			
 			mesh_assets,
+			image_assets,
 			material_assets,
+			
 			commands
 		);
 	}
@@ -268,8 +287,10 @@ fn update_word(
 	glyph_meshes_cache	: &mut GlyphMeshesCache,
 	text_meshes_cache	: &mut TextMeshesCache,
 	helix_colors_cache	: &mut HelixColorsCache,
+	emoji_materials_cache : &mut EmojiMaterialsCache,
 	
 	mesh_assets			: &mut Assets<Mesh>,
+	image_assets		: &mut Assets<Image>,
 	material_assets		: &mut Assets<StandardMaterial>,
 	commands			: &mut Commands
 ) -> Option<Entity>
@@ -277,9 +298,14 @@ fn update_word(
 	let color			= color_from_helix(word.color);
 	let first_symbol 	= word.string_with_fonts.first().unwrap();
 	
-	let (word_mesh_handle, material_handle) = if first_symbol.is_emoji {
-		assert!			(word.string.len() == 1);
-		generate_emoji_mesh_image_wcache(first_symbol, mesh_assets, image_assets, emoji_images_cache, text_meshes_cache)
+	// normal glyphs are made of meshes with simple color-material, emojis are made of simple quad mesh with image-material
+	let (word_mesh_handle, material_handle) =
+	if first_symbol.is_emoji {
+		// assert!			(word.string.len() == 1, "for emojis we expect to have 1 word per each emoji! Instead got {} symbols in word [{}]", word.string.len(), word.string);
+		(
+			generate_glyph_mesh_wcache(first_symbol, mesh_assets, text_meshes_cache),
+			generate_emoji_material_wcache(first_symbol, image_assets, material_assets, emoji_materials_cache)
+		)
 	} else {
 		(
 			generate_string_mesh_wcache(&word.string_with_fonts, mesh_assets, glyph_meshes_cache, text_meshes_cache),
