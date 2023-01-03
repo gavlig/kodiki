@@ -81,7 +81,7 @@ pub fn append_quad<'a>(
 	
 	quads_row		: &mut Row,
 	cell_helix		: &CellHelix,
-	used_fonts		: &'a ABFonts<'a>,
+	fonts			: &'a ABFonts<'a>,
 	
 	helix_colors_cache: &mut HelixColorsCache,
 	
@@ -131,7 +131,7 @@ pub fn append_quad<'a>(
     if !is_space && !row_state.quad_started {
 		row_state.quad_started = true;
 		
-		let font		= used_fonts.main;
+		let font		= fonts.main;
 		let v_advance	= font.vertical_advance();
 		let h_advance	= font.horizontal_advance_mono();
 		let v_down_offset = font.vertical_down_offset();

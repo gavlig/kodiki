@@ -56,7 +56,7 @@ pub fn append_symbol<'a>(
 	
 	words_row		: &mut Row<'a>,
 	cell_helix		: &CellHelix,
-	used_fonts		: &'a ABFonts<'a>,
+	fonts			: &'a ABFonts<'a>,
 	
 	glyph_meshes_cache	: &mut GlyphMeshesCache,
 	text_meshes_cache	: &mut TextMeshesCache,
@@ -74,7 +74,7 @@ pub fn append_symbol<'a>(
 	let is_space		= cell_helix.symbol == " " || cell_helix.symbol == "\t";
 	
 	let mut word_entities : Vec<Entity> = Vec::new();
-	let glyph_with_fonts_current = GlyphWithFonts::new(cell_helix.symbol.clone(), used_fonts);
+	let glyph_with_fonts_current = GlyphWithFonts::new(cell_helix.symbol.clone(), fonts);
 	
     if row_state.word_started {
 		let word_index	= words_row.len() - 1;

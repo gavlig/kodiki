@@ -105,7 +105,7 @@ pub fn startup_spawn(
 ) {
 	let surface_editor_name = String::from(EditorView::ID);
 	
-	let used_fonts = ABFonts::new(&font_assets, &font_handles);
+	let fonts = ABFonts::new(&font_assets, &font_handles);
 	
 	let surface_helix_editor = surfaces_helix.get(&surface_editor_name).unwrap();
 	
@@ -115,7 +115,7 @@ pub fn startup_spawn(
 		true, /* scroll_enabled */
 		true, /* cache_enabled */
 		&surface_helix_editor,
-		used_fonts.main,
+		fonts.main,
 		&mut mesh_assets,
 		&mut commands
 	);
@@ -123,7 +123,7 @@ pub fn startup_spawn(
 	CursorBevy::spawn(
 		&mut cursor,
 		surface_bevy_editor.entity.unwrap(),
-		used_fonts.main,
+		fonts.main,
 		&mut text_meshes_cache,
 		&mut helix_colors_cache,
 		&mut material_assets,
@@ -180,7 +180,7 @@ pub fn update_main(
 		return;
 	}
 	
-	let used_fonts = ABFonts::new(&font_assets, &font_handles);
+	let fonts = ABFonts::new(&font_assets, &font_handles);
 
 	let mut app					= app.unwrap();
 	
@@ -239,15 +239,15 @@ pub fn update_main(
 	screen_print_stats(&surfaces_bevy);
 
 	if render_mode != RenderMode::Benchmark {
-		cleanup_unused_surfaces(&mut surfaces_helix, &mut surfaces_bevy, &mut despawn);
+		despawn_unused_surfaces(&mut surfaces_helix, &mut surfaces_bevy, &mut despawn);
 	}
 	
 	// create bevy surfaces for every helix surface
-	spawn_bevy_surfaces(
+	spawn_new_surfaces(
 		&mut surfaces_helix,
 		&mut surfaces_bevy,
 		&reader_camera,
-		used_fonts.main,
+		fonts.main,
 		&mut mesh_assets,
 		&mut commands
 	);
@@ -261,7 +261,7 @@ pub fn update_main(
 
 			row_offset as i32,
 			&app.editor.theme,
-			&used_fonts,
+			&fonts,
 
 			&mut glyph_meshes_cache,
 			&mut text_meshes_cache,
@@ -278,7 +278,7 @@ pub fn update_main(
 		if layer_name == EditorView::ID {
 			let columns = surface_bevy.area.width as u32;
 			let rows = app.current_doc_len_lines() as u32;
-			surface_bevy.update_text_descriptor(columns, rows, used_fonts.main, &mut commands)
+			surface_bevy.update_text_descriptor(columns, rows, fonts.main, &mut commands)
 		}
 	}
 
@@ -286,7 +286,7 @@ pub fn update_main(
 	// if app.editor_focused() { 
 	// 	cursor.animate(
 	// 		&mut q_transform,
-	// 		used_fonts.main,
+	// 		fonts.main,
 	// 		&time,
 	// 		row_offset as u32,
 	// 		&mut app
@@ -332,7 +332,7 @@ fn screen_print_stats(
 	screen_print!("\n{}", stats);
 }
 
-fn cleanup_unused_surfaces(
+fn despawn_unused_surfaces(
 	surfaces_helix	: &mut SurfacesMapHelix,
 	surfaces_bevy	: &mut SurfacesMapBevy,
 	despawn			: &mut DespawnResource
@@ -369,7 +369,7 @@ fn cleanup_unused_surfaces(
 	}
 }
 
-fn spawn_bevy_surfaces(
+fn spawn_new_surfaces(
 	surfaces_helix		: &mut SurfacesMapHelix,
 	surfaces_bevy		: &mut SurfacesMapBevy,
 
@@ -461,17 +461,9 @@ pub fn input_mouse(
 
 	// getting editor surface first
 	let surface_editor = surfaces.get(&String::from(EditorView::ID)).unwrap();
-	let surface_entity = if let Some(entity) = surface_editor.entity {
-		entity
-	} else {
-		return;
-	};
 	
-	let surface_quad_entity = if let Some(entity) = surface_editor.background_quad_entity {
-		entity
-	} else {
-		return;
-	};
+	let surface_entity		= if let Some(entity) = surface_editor.entity					{ entity } else { return; };
+	let surface_quad_entity = if let Some(entity) = surface_editor.background_quad_entity	{ entity } else { return; };
 	
 	// get its transform
 	let transform_result = q_transform.get(surface_entity);
@@ -613,10 +605,10 @@ pub fn update_permanent_surfaces_position(
 	mut	q_transform		: Query<&mut Transform>,
 )
 {
-	let used_fonts		= ABFonts::new(&font_assets, &font_handles);
+	let fonts			= ABFonts::new(&font_assets, &font_handles);
 	
-	let row_height		= used_fonts.main.vertical_advance();
-	let column_width	= used_fonts.main.horizontal_advance_mono();
+	let row_height		= fonts.main.vertical_advance();
+	let column_width	= fonts.main.horizontal_advance_mono();
 	
 	for (surface_name, surface_helix) in surfaces_helix.iter() {
 		if surface_name == EditorView::ID {
@@ -628,16 +620,8 @@ pub fn update_permanent_surfaces_position(
 		}
 		
 		if let Some(surface_bevy) = surfaces_bevy.get(surface_name) {
-			if surface_bevy.entity.is_none() {
-				continue;
-			}
-			let surface_entity = surface_bevy.entity.unwrap();
-			
-			let surface_transform = q_transform.get_mut(surface_entity);
-			if surface_transform.is_err() {
-				continue;
-			} 
-			let mut surface_transform = surface_transform.unwrap();	
+			let		surface_entity		= if let Some(entity)	= surface_bevy.entity					{ entity }		else { continue; };
+			let mut surface_transform	= if let Ok(transform)	= q_transform.get_mut(surface_entity)	{ transform }	else { continue; };
 			
 			let reader_camera = q_camera.single();
 			let target_pos = surface_bevy.target_position(reader_camera.zoom, reader_camera.visible_rows, column_width, row_height);

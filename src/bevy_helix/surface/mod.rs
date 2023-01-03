@@ -181,8 +181,8 @@ impl SurfaceCoords {
 		self.y			= self.row_height * self.row_offset_sign * row_wscroll as f32;
 	}
 	
-	pub fn next_column(&mut self, glyph: &String, used_fonts: &ABFonts) {
-		self.x += used_fonts.main.horizontal_advance(glyph);
+	pub fn next_column(&mut self, glyph: &String, fonts: &ABFonts) {
+		self.x += fonts.main.horizontal_advance(glyph);
 		self.column += 1;
 	}
 	
@@ -336,7 +336,7 @@ impl SurfaceBevy {
 		
 		row_offset		: i32,
 		theme			: &Theme,
-		used_fonts		: &ABFonts,
+		fonts			: &ABFonts,
 	
 		glyph_meshes_cache	: &mut GlyphMeshesCache,
 		text_meshes_cache	: &mut TextMeshesCache,
@@ -356,13 +356,14 @@ impl SurfaceBevy {
 		self.anchor		= surface_helix.anchor;
 		self.placement	= surface_helix.placement;
 		self.area		= surface_helix.area; // syncing area size first because everything else depends on it
-		let rows_total	= self.rows_total();
 		
+		let rows_total	= self.rows_total();
 		self.despawn_unused_rows(rows_total as usize, commands);
 		self.rows.resize_with	(rows_total as usize, || { RowBevy::default() });
 		
 		let scroll_offset_prev	= self.scroll_info.offset;
 		self.scroll_info.offset	= row_offset;
+		
 		self.offset_cached_rows(row_offset, scroll_offset_prev, commands);
 		
 		let background_style = theme.get("ui.background");
@@ -371,7 +372,7 @@ impl SurfaceBevy {
 			surface_helix,
 			
 			&background_style,
-			used_fonts,
+			fonts,
 			
 			glyph_meshes_cache,
 			text_meshes_cache,
@@ -456,7 +457,7 @@ impl SurfaceBevy {
 		surface_helix	: &SurfaceHelix,
 		
 		background_style: &Style,
-		used_fonts		: &ABFonts,
+		fonts			: &ABFonts,
 
 		glyph_meshes_cache	: &mut GlyphMeshesCache,
 		text_meshes_cache	: &mut TextMeshesCache,
@@ -480,7 +481,7 @@ impl SurfaceBevy {
 
 		let cells_helix				= &surface_helix.content;
 		
-		let row_height				= used_fonts.main.vertical_advance();
+		let row_height				= fonts.main.vertical_advance();
 		let row_offset_dir			= match surface_helix.anchor {
 			SurfaceAnchor::Unknown	=> RowOffsetDirection::Down,
 			SurfaceAnchor::Top		=> RowOffsetDirection::Down,
@@ -522,7 +523,7 @@ impl SurfaceBevy {
 					&mut words,
 					cell_helix,
 					
-					used_fonts,
+					fonts,
 					glyph_meshes_cache,
 					text_meshes_cache,
 					helix_colors_cache,
@@ -552,7 +553,7 @@ impl SurfaceBevy {
 					&mut quads,
 					cell_helix,
 					
-					used_fonts,
+					fonts,
 					helix_colors_cache,
 					
 					mesh_assets,
@@ -564,7 +565,7 @@ impl SurfaceBevy {
 				
 				}
 				
-				surface_coords.next_column(&cell_helix.symbol, used_fonts);
+				surface_coords.next_column(&cell_helix.symbol, fonts);
 			}
 
 			surface_coords.next_row();
@@ -601,10 +602,7 @@ impl SurfaceBevy {
 
 		// replace material to reflect changed color
 		if let Some(background_entity) = self.background_quad_entity {
-			commands.entity	(background_entity)
-				.remove::<Handle<StandardMaterial>>()
-				.insert(background_quad_material_handle.clone_weak())
-			;
+			commands.entity(background_entity).insert(background_quad_material_handle.clone_weak());
 		}
 	}
 
