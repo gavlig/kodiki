@@ -135,7 +135,7 @@ pub fn append_symbol<'a>(
 		word.string.push_str(cell_helix.symbol.as_str());
 		word.string_with_fonts.push(glyph_with_fonts_current.clone());
 	
-		if row_state.ended {
+		if row_state.ended || glyph_with_fonts_current.is_emoji {
 			let entity = on_word_ended(
 				words_row.len(),
 				&word,
