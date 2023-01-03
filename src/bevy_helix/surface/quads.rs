@@ -143,7 +143,7 @@ pub fn append_quad<'a>(
 		
 		quad.x			= surface_coords.x;
 		quad.y			= surface_coords.y;
-		quad.z			= -font.depth_scaled() + font.depth_scaled() / 5.0; // FIXME: define depth levels somewhere centralized
+		quad.z			= SurfaceBevy::quad_z_offset(font);
 		
 		quad.row		= surface_coords.row;
 		quad.column		= surface_coords.column;

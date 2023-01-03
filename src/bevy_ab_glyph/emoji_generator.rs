@@ -22,17 +22,17 @@ fn generate_glyph_image_char(
 			_ => panic!("unsupported glyph image format obtained from ab_glyph!")
 		};
 		
-		let compressed_image_formats = bevy::render::texture::CompressedImageFormats::NONE;
+		let compressed_image_formats = bevy::render::texture::CompressedImageFormats::all();
 		
-		let buffer_result = Image::from_buffer(
+		let image_result = Image::from_buffer(
 		    glyph_image.data,
 		    ImageType::Extension(ext),
 		    compressed_image_formats,
 		    true,
 		);
 		
-		if let Ok(buffer) = buffer_result {
-			buffer
+		if let Ok(image) = image_result {
+			image
 		} else {
 			error!("Failed to create emoji image for glyph: {}", glyph_char);
 			Image::default()
@@ -70,6 +70,7 @@ pub fn generate_emoji_material_wcache(
 			
 			let material_handle = material_assets.add(StandardMaterial{
 				base_color_texture: Some(image_handle),
+				alpha_mode: AlphaMode::Blend,
 				unlit: true,
 				..default()
 			});

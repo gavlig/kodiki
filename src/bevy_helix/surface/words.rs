@@ -34,6 +34,12 @@ impl Default for Word<'_> {
 	}
 }
 
+impl Word<'_> {
+	pub fn position(&self) -> Vec3 {
+		Vec3::new(self.x, self.y, SurfaceBevy::symbol_z_offset())
+	}
+}
+
 pub type Row<'a> = Vec<Word<'a>>;
 
 #[derive(Default)]
@@ -371,7 +377,7 @@ fn spawn_word_mesh(
 		mesh		: mesh_handle.clone_weak(),
 		material	: material_handle.clone_weak(),
 		transform	: Transform {
-			translation	: Vec3::new(word.x, word.y, 0.0),
+			translation	: word.position(),
 			scale		: [font.scale; 3].into(),
 			..default()
 		},
@@ -394,7 +400,7 @@ fn insert_word_mesh(
 {
 	let font		= word.string_with_fonts.first().unwrap().current_font();
 	let transform	= Transform {
-		translation	: Vec3::new(word.x, word.y, 0.0),
+		translation	: word.position(),
 		scale		: [font.scale; 3].into(),
 		..default()
 	};

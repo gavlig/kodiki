@@ -152,30 +152,25 @@ impl GlyphWithFonts<'_> {
 		cwf
 	}
 	
-	pub fn is_emoji(
-		glyph_with_fonts	: &GlyphWithFonts
-	) -> bool {
-		GlyphId(0) != glyph_with_fonts.fonts.emoji.glyph_id(&glyph_with_fonts.glyph_str)
+	fn main(&self) -> bool {
+		GlyphId(0) != self.fonts.main.glyph_id(&self.glyph_str)
+	}
+	
+	fn is_emoji(&self) -> bool {
+		GlyphId(0) != self.fonts.emoji.glyph_id(&self.glyph_str)
 	}
 
-	pub fn get_fallback_index(
-		glyph_with_fonts	: &GlyphWithFonts,
-	) -> Option<usize>
+	fn find_fallback_index(&self) -> Option<usize>
 	{
-		let mut glyph_id		= glyph_with_fonts.fonts.main.glyph_id(&glyph_with_fonts.glyph_str);
+		let mut glyph_id		= self.fonts.main.glyph_id(&self.glyph_str);
 		let mut fallback_index	= None;
-		if glyph_id == GlyphId(0) && !glyph_with_fonts.is_emoji {
-			for (index, fallback_font) in glyph_with_fonts.fonts.fallback.iter().enumerate() {
-				glyph_id = fallback_font.glyph_id(&glyph_with_fonts.glyph_str);
+		if glyph_id == GlyphId(0) {
+			for (index, fallback_font) in self.fonts.fallback.iter().enumerate() {
+				glyph_id = fallback_font.glyph_id(&self.glyph_str);
 				if glyph_id != GlyphId(0) {
-					println!("using fallback font for char: {} font index: {}", glyph_with_fonts.glyph_str, index);
 					fallback_index = Some(index);
 					break;
 				}
-			}
-			
-			if glyph_id == GlyphId(0) {
-				error!("bevy_ab_glyph: couldnt find glyph for {:?}!", glyph_with_fonts.glyph_str);
 			}
 		}
 	
@@ -183,8 +178,17 @@ impl GlyphWithFonts<'_> {
 	}
 
 	pub fn initialize(&mut self) {
-		self.is_emoji		= GlyphWithFonts::is_emoji(&self);
-		self.fallback_index = GlyphWithFonts::get_fallback_index(&self);
+		// check glyph availablility in order: main font -> fallback font -> emoji font
+		
+		let main			= self.main();
+		if !main {
+			self.fallback_index = self.find_fallback_index();
+			
+			if None == self.fallback_index {
+				self.is_emoji = self.is_emoji();
+			}
+		}
+		
 		self.initialized	= true;
 	}
 

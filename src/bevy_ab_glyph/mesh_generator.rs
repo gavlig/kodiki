@@ -20,13 +20,16 @@ use super :: { GlyphMeshesCache, TextMeshesCache, ABGlyphFont, GlyphWithFonts, S
 
 pub type VertexPos		= [f32; 3];
 pub type VertexIndex	= u16;
+pub type VertexUV		= [f32; 2];
 pub type VertexBuffer	= VertexBuffers<VertexPos, VertexIndex>;
 pub type NormalBuffer	= Vec<VertexPos>;
+pub type UVBuffer		= Vec<VertexUV>;
 
-#[derive(Clone)]
+#[derive(Default, Clone)]
 pub struct MeshInternal {
 	pub vertex_buffer	: VertexBuffer,
 	pub normals			: NormalBuffer,
+	pub uvs				: Option<UVBuffer>
 }
 
 impl MeshInternal {
@@ -142,29 +145,45 @@ fn generate_path_from_outline(
 }
 
 fn generate_quad_vertices(
-	scale			: f32,
-	vertex_buffer	: &mut VertexBuffer,
-	normals			: &mut NormalBuffer
+	mesh			: &mut MeshInternal,
 ) {
 	let vertices_cnt = 4;
-	let v0	= Vec3::new(0.0, 0.0, 0.0);
-	let v1	= Vec3::new(0.0, 1.0, 0.0) * scale;
-	let v2	= Vec3::new(1.0, 1.0, 0.0) * scale;
-	let v3	= Vec3::new(1.0, 0.0, 0.0) * scale;
+	let v0			= Vec3::new(0.0, 0.0, 0.0);
+	let v1			= Vec3::new(0.0, 1.0, 0.0);
+	let v2			= Vec3::new(1.0, 1.0, 0.0);
+	let v3			= Vec3::new(1.0, 0.0, 0.0);
 	
-	vertex_buffer.vertices.reserve(vertices_cnt);
-	vertex_buffer.vertices.push(v0.to_array());
-	vertex_buffer.vertices.push(v1.to_array());
-	vertex_buffer.vertices.push(v2.to_array());
-	vertex_buffer.vertices.push(v3.to_array());
+	mesh.vertex_buffer.vertices.reserve(vertices_cnt);
 	
-	vertex_buffer.indices.reserve(vertices_cnt);
-	vertex_buffer.indices.push(0);
-	vertex_buffer.indices.push(1);
-	vertex_buffer.indices.push(2);
-	vertex_buffer.indices.push(3);
+	mesh.vertex_buffer.vertices.push(v0.to_array());
+	mesh.vertex_buffer.vertices.push(v1.to_array());
+	mesh.vertex_buffer.vertices.push(v2.to_array());
+	mesh.vertex_buffer.vertices.push(v3.to_array());
 	
-	*normals 	= vec![[0.0, 0.0, 1.0]; vertices_cnt];
+	mesh.vertex_buffer.indices.reserve(vertices_cnt);
+	
+	mesh.vertex_buffer.indices.push(0);
+	mesh.vertex_buffer.indices.push(2);
+	mesh.vertex_buffer.indices.push(1);
+	
+	mesh.vertex_buffer.indices.push(0);
+	mesh.vertex_buffer.indices.push(3);
+	mesh.vertex_buffer.indices.push(2);
+	
+	mesh.normals 	= vec![[0.0, 0.0, 1.0]; vertices_cnt];
+	
+	let mut uvs		= Vec::with_capacity(vertices_cnt);
+	
+	let uv0			= Vec2::new(0.0, 1.0);
+	let uv1			= Vec2::new(0.0, 0.0);
+	let uv2			= Vec2::new(1.0, 0.0);
+	let uv3			= Vec2::new(1.0, 1.0);
+	
+	uvs.push		(uv0.to_array());
+	uvs.push		(uv1.to_array());
+	uvs.push		(uv2.to_array());
+	uvs.push		(uv3.to_array());
+	mesh.uvs		= Some(uvs);
 }
 
 fn fill_vertex_buffer_from_path(
@@ -373,7 +392,6 @@ pub fn generate_glyph_mesh_internal(
 	let glyph_str			= &glyph_with_fonts.glyph_str;
 	let font				= glyph_with_fonts.current_font();
 	
-	let unit_scale			= 1.0 / font.f.units_per_em().unwrap();
 	let mut vertex_buffer	= VertexBuffers::new();
 	let mut normals			= NormalBuffer::new();
 
@@ -381,6 +399,7 @@ pub fn generate_glyph_mesh_internal(
 		let path			= generate_path_from_outline(glyph_outline);
 
 		// geometry of a glyph's front face
+		let unit_scale		= 1.0 / font.f.units_per_em().unwrap();
 		fill_vertex_buffer_from_path(path, unit_scale, font.tolerance, &mut vertex_buffer);
 		let vertices_cnt	= vertex_buffer.vertices.len();
 		normals				= vec![[0.0, 0.0, 1.0]; vertices_cnt];
@@ -399,11 +418,14 @@ pub fn generate_glyph_mesh_internal(
 
 		// // make connecting quads
 		// generate_connecting_quads(&triangles, &mut vertex_buffer, &mut normals);
+		
+		MeshInternal { vertex_buffer, normals, uvs: None }
 	} else {
-		generate_quad_vertices(unit_scale, &mut vertex_buffer, &mut normals);
+		let mut mesh = MeshInternal::default();
+		generate_quad_vertices(&mut mesh);
+		
+		mesh
 	}
-
-	MeshInternal { vertex_buffer, normals }
 }
 
 pub fn generate_glyph_mesh(
@@ -415,6 +437,9 @@ pub fn generate_glyph_mesh(
 	mesh.insert_attribute	(Mesh::ATTRIBUTE_POSITION, mesh_internal.vertices().clone());
 	mesh.insert_attribute	(Mesh::ATTRIBUTE_NORMAL, mesh_internal.normals.clone());
 	mesh.set_indices(Some	(Indices::U16(mesh_internal.indices().clone())));
+	if let Some(uvs) = mesh_internal.uvs {
+		mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs.clone())
+	}
 
 	mesh
 }

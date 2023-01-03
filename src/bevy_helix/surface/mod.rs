@@ -694,6 +694,14 @@ impl SurfaceBevy {
 		-zoom + 0.05
 	}
 	
+	pub fn symbol_z_offset() -> f32 {
+		0.01
+	}
+	
+	pub fn quad_z_offset(font: &ABGlyphFont) -> f32 {
+		-font.depth_scaled() + font.depth_scaled() / 5.0
+	}
+	
 	pub fn calc_target_position(
 		anchor			: SurfaceAnchor,
 		placement		: SurfacePlacement,
