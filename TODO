@@ -41,7 +41,7 @@
 15.4.4. ✅ moving with pageup/pagedown too fast breaks text rendering
 15.4.5. ✅ crash when row visibility number is jittery
 15.4.6. ✅ weird hitch when using pageup/pagedown
-15.4.7. ✅ when scrolling up with arrow page caching doesnt work
+15.4.7. ✅ when scrolling up with arrow page caching doesnt work 
 15.4.8. ✅ two rows on top and one on bottom are not visible 
 15.4.9. ✅ pageup does not cleanup
 15.4.10. ✅ pageup/pagedown also considers statusline thus -1 in height
@@ -85,9 +85,10 @@
 17. ✅ Figure out how logging works: bevy takes care of it with env_logging, can be controlled with RUST_LOG="error, warn, info, debug, trace"
 18. ✅ Update Helix to latest (20221210)
 19. ✅ Clean up warnings
-20. Add support for emoji in fonts
+20. ✅ Add support for emoji in fonts
 21. Refactor: remove the need to do one row offset everywhere (see spawn_surface_quad and quad_y where we add 1 row_height to it to cover first row)
 22. integrate puffin for profiling
 23. Completion in a separate surface
 24. Fullscreen
 25. Double click selection
+26. Copy/paste from OS

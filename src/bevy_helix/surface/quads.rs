@@ -93,7 +93,7 @@ pub fn append_quad<'a>(
 {
 	let background_color = background_style.bg.unwrap();
 	let quad_color_helix = cell_helix.bg;
-	let is_space	= quad_color_helix == background_color;
+	let is_space	= quad_color_helix == background_color || quad_color_helix == HelixColor::Reset;
 	
 	let mut quad_entities : Vec<Entity> = Vec::new();
 	
