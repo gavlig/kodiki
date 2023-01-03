@@ -10,7 +10,7 @@ use bevy_shadertoy_wgsl	:: { * };
 use bevy_debug_text_overlay :: { screen_print };
 
 use crate :: bevy_ab_glyph :: ABGlyphFont;
-use crate :: bevy_ab_glyph :: mesh_generator :: generate_string_mesh;
+use crate :: bevy_ab_glyph :: glyph_generator :: generate_string_mesh;
 
 use super :: spawn :: AxisDesc;
 use super :: { * };

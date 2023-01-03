@@ -1,8 +1,8 @@
 use bevy				:: prelude :: { * };
 
 use crate				:: bevy_ab_glyph::{ ABFonts, StringWithFonts, GlyphWithFonts, TextMeshesCache, GlyphMeshesCache, EmojiMaterialsCache };
-use crate				:: bevy_ab_glyph :: mesh_generator :: { generate_string_mesh_wcache, generate_glyph_mesh_wcache };
-use crate				:: bevy_ab_glyph :: emoji_generator :: { generate_emoji_material_wcache };
+use crate				:: bevy_ab_glyph :: glyph_generator :: { generate_string_mesh_wcache };
+use crate				:: bevy_ab_glyph :: emoji_generator :: { generate_emoji_mesh_wcache, generate_emoji_material_wcache };
 
 use super				:: { * };
 
@@ -309,7 +309,7 @@ fn update_word(
 	if first_symbol.is_emoji {
 		// assert!			(word.string.len() == 1, "for emojis we expect to have 1 word per each emoji! Instead got {} symbols in word [{}]", word.string.len(), word.string);
 		(
-			generate_glyph_mesh_wcache(first_symbol, mesh_assets, text_meshes_cache),
+			generate_emoji_mesh_wcache(first_symbol, mesh_assets, text_meshes_cache),
 			generate_emoji_material_wcache(first_symbol, image_assets, material_assets, emoji_materials_cache)
 		)
 	} else {

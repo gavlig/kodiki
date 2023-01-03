@@ -17,38 +17,7 @@ pub type LyonPoint      = lyon :: math :: Point;
 use bevy::render::mesh::shape as render_shape;
 
 use super :: { GlyphMeshesCache, TextMeshesCache, ABGlyphFont, GlyphWithFonts, StringWithFonts };
-
-pub type VertexPos		= [f32; 3];
-pub type VertexIndex	= u16;
-pub type VertexUV		= [f32; 2];
-pub type VertexBuffer	= VertexBuffers<VertexPos, VertexIndex>;
-pub type NormalBuffer	= Vec<VertexPos>;
-pub type UVBuffer		= Vec<VertexUV>;
-
-#[derive(Default, Clone)]
-pub struct MeshInternal {
-	pub vertex_buffer	: VertexBuffer,
-	pub normals			: NormalBuffer,
-	pub uvs				: Option<UVBuffer>
-}
-
-impl MeshInternal {
-	pub fn vertices(&self) -> &Vec<VertexPos> {
-		&self.vertex_buffer.vertices
-	}
-	
-	pub fn vertices_mut(&mut self) -> &mut Vec<VertexPos> {
-		&mut self.vertex_buffer.vertices
-	}
-	
-	pub fn indices(&self) -> &Vec<VertexIndex> {
-		&self.vertex_buffer.indices
-	}
-	
-	pub fn indices_mut(&mut self) -> &mut Vec<VertexIndex> {
-		&mut self.vertex_buffer.indices
-	}
-}
+use super :: generator_common :: { * };
 
 fn generate_glyph_outline_char(
 	glyph_char	: char,
@@ -142,48 +111,6 @@ fn generate_path_from_outline(
 	path_builder.end(/*close=*/true);
 
 	path_builder.build()
-}
-
-fn generate_quad_vertices(
-	mesh			: &mut MeshInternal,
-) {
-	let vertices_cnt = 4;
-	let v0			= Vec3::new(0.0, 0.0, 0.0);
-	let v1			= Vec3::new(0.0, 1.0, 0.0);
-	let v2			= Vec3::new(1.0, 1.0, 0.0);
-	let v3			= Vec3::new(1.0, 0.0, 0.0);
-	
-	mesh.vertex_buffer.vertices.reserve(vertices_cnt);
-	
-	mesh.vertex_buffer.vertices.push(v0.to_array());
-	mesh.vertex_buffer.vertices.push(v1.to_array());
-	mesh.vertex_buffer.vertices.push(v2.to_array());
-	mesh.vertex_buffer.vertices.push(v3.to_array());
-	
-	mesh.vertex_buffer.indices.reserve(vertices_cnt);
-	
-	mesh.vertex_buffer.indices.push(0);
-	mesh.vertex_buffer.indices.push(2);
-	mesh.vertex_buffer.indices.push(1);
-	
-	mesh.vertex_buffer.indices.push(0);
-	mesh.vertex_buffer.indices.push(3);
-	mesh.vertex_buffer.indices.push(2);
-	
-	mesh.normals 	= vec![[0.0, 0.0, 1.0]; vertices_cnt];
-	
-	let mut uvs		= Vec::with_capacity(vertices_cnt);
-	
-	let uv0			= Vec2::new(0.0, 1.0);
-	let uv1			= Vec2::new(0.0, 0.0);
-	let uv2			= Vec2::new(1.0, 0.0);
-	let uv3			= Vec2::new(1.0, 1.0);
-	
-	uvs.push		(uv0.to_array());
-	uvs.push		(uv1.to_array());
-	uvs.push		(uv2.to_array());
-	uvs.push		(uv3.to_array());
-	mesh.uvs		= Some(uvs);
 }
 
 fn fill_vertex_buffer_from_path(
@@ -392,17 +319,15 @@ pub fn generate_glyph_mesh_internal(
 	let glyph_str			= &glyph_with_fonts.glyph_str;
 	let font				= glyph_with_fonts.current_font();
 	
-	let mut vertex_buffer	= VertexBuffers::new();
-	let mut normals			= NormalBuffer::new();
-
 	if let Some(glyph_outline) = generate_glyph_outline(glyph_str, &font.f, false) {
 		let path			= generate_path_from_outline(glyph_outline);
 
 		// geometry of a glyph's front face
+		let mut vertex_buffer = VertexBuffers::new();
 		let unit_scale		= 1.0 / font.f.units_per_em().unwrap();
 		fill_vertex_buffer_from_path(path, unit_scale, font.tolerance, &mut vertex_buffer);
 		let vertices_cnt	= vertex_buffer.vertices.len();
-		normals				= vec![[0.0, 0.0, 1.0]; vertices_cnt];
+		let normals			= vec![[0.0, 0.0, 1.0]; vertices_cnt];
 
 		// Now to "extrude" the said geometry to get a 3d glyph first we need to find the edges that are not adjacent with others. 
 		// Or in other words we need to find the contour edges
@@ -428,22 +353,6 @@ pub fn generate_glyph_mesh_internal(
 	}
 }
 
-pub fn generate_glyph_mesh(
-	glyph_with_fonts	: &GlyphWithFonts,
-) -> Mesh {
-	let mesh_internal = generate_glyph_mesh_internal(glyph_with_fonts);
-
-	let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-	mesh.insert_attribute	(Mesh::ATTRIBUTE_POSITION, mesh_internal.vertices().clone());
-	mesh.insert_attribute	(Mesh::ATTRIBUTE_NORMAL, mesh_internal.normals.clone());
-	mesh.set_indices(Some	(Indices::U16(mesh_internal.indices().clone())));
-	if let Some(uvs) = mesh_internal.uvs {
-		mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs.clone())
-	}
-
-	mesh
-}
-
 pub fn generate_glyph_mesh_wcache(
 	glyph_with_fonts	: &GlyphWithFonts,
 	mesh_assets			: &mut Assets<Mesh>,
@@ -452,8 +361,10 @@ pub fn generate_glyph_mesh_wcache(
 	match text_meshes_cache.meshes.get(&glyph_with_fonts.glyph_str) {
 		Some(handle) => handle.clone_weak(),
 		None => {
+			let mesh_internal = generate_glyph_mesh_internal(glyph_with_fonts);
+			
 			let handle = mesh_assets.add(
-				generate_glyph_mesh(glyph_with_fonts)
+				bevy_mesh_from_internal(&mesh_internal)
 			);
 			
 			text_meshes_cache.meshes.insert_unique_unchecked(glyph_with_fonts.glyph_str.clone(), handle).1.clone()

@@ -207,7 +207,7 @@ impl GlyphWithFonts<'_> {
 
 pub type StringWithFonts<'a> = Vec<GlyphWithFonts<'a>>;
 
-pub type GlyphMeshesMap = HashMap<String, mesh_generator::MeshInternal>;
+pub type GlyphMeshesMap = HashMap<String, generator_common::MeshInternal>;
 
 #[derive(Resource, Default)]
 pub struct GlyphMeshesCache {
@@ -229,7 +229,8 @@ pub struct EmojiMaterialsCache {
 }
 
 mod font_loader;
-pub mod mesh_generator;
+mod generator_common;
+pub mod glyph_generator;
 pub mod emoji_generator;
 
 pub struct ABGlyphPlugin;
