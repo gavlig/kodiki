@@ -68,7 +68,10 @@
 15.4.31. surface without text visible when zooming
 15.4.32. surface without text visible when scrolling after zooming
 15.4.33. after alt-tabbing multiple cursor mode gets stuck
-15.4.33. after alt-tabbing overlay component gets stuck (like file picker for example)
+15.4.34. after alt-tabbing overlay component gets stuck (like file picker for example)
+15.4.35. ✅ inconsistent zoom steps: different values added/reducted on equivalent amount of scrolls
+15.4.36. permanent panels dont stay on same place with different zoom levels
+15.4.37. status panel disappears on cursor movement (could be helix)
 15.5. ✅ Make surface size depend on the amount of visible rows in camera
 15.6. ✅ Determine size of background quad when opening file: instead i'm making it dependent on visible amount of rows in camera and make it follow camera on y axis
 15.7. ✅ Separate logic for non-scrollable surfaces
