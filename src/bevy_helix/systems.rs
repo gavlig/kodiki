@@ -545,54 +545,41 @@ pub fn tokio_events(
 	tokio_runtime.block_on(app.handle_tokio_events());
 }
 
-pub fn update_editor_background_quad(
-		surfaces_bevy	: Res<SurfacesMapBevy>,
-		q_camera		: Query<(&ReaderCamera, &Transform)>,
-	mut	q_transform		: Query<&mut Transform, Without<ReaderCamera>>,
-)
-{
-	let surface_bevy_editor = surfaces_bevy.get(&String::from(EditorView::ID)).unwrap();
-
-	let (reader_camera, camera_transform) = q_camera.single();
-
-	let bg_quad_entity = surface_bevy_editor.background_quad_entity.unwrap();
-	let mut bg_quad_transform = q_transform.get_mut(bg_quad_entity).unwrap();
-
-	bg_quad_transform.scale.y = (reader_camera.visible_rows * 2) as f32;
-	bg_quad_transform.translation.y = camera_transform.translation.y;
-}
-
 pub fn update_surface_background_quad(
 		surfaces_bevy	: Res<SurfacesMapBevy>,
 		surfaces_helix	: Res<SurfacesMapHelix>,
 		font_assets		: Res<Assets<ABGlyphFont>>,
 		font_handles	: Res<FontAssetHandles>,
-	mut	q_transform		: Query<&mut Transform>,
-)
-{
+		q_camera		: Query<(&ReaderCamera, &Transform)>,
+	mut	q_transform		: Query<&mut Transform, Without<ReaderCamera>>,
+) {
 	for (surface_name, surface_bevy) in surfaces_bevy.iter() {
+		// main background quad follows camera and is always bigger than camera visibility range
 		if surface_name == EditorView::ID {
-			continue;
+			let (reader_camera, camera_transform) = q_camera.single();
+
+			let bg_quad_entity = surface_bevy.background_quad_entity.unwrap();
+			let mut bg_quad_transform = q_transform.get_mut(bg_quad_entity).unwrap();
+
+			bg_quad_transform.scale.y = (reader_camera.visible_rows * 2) as f32;
+			bg_quad_transform.translation.y = camera_transform.translation.y;
+		// remaining background quads rely on their parent surfaces size both for scale and position
+		} else {
+			let surface_helix = surfaces_helix.get(surface_name).unwrap();
+			
+			let bg_quad_entity = surface_bevy.background_quad_entity.unwrap();
+			let mut bg_quad_transform = if let Ok(transform) = q_transform.get_mut(bg_quad_entity) { transform } else { continue; };
+			
+			bg_quad_transform.scale.y = surface_helix.area.height as f32;
+			
+			let font		= font_assets.get(&font_handles.main).unwrap();
+			let row_height	= font.vertical_advance();
+			let mut offset_y = (surface_helix.area.height - 1) as f32 * row_height / 2.0 - font.vertical_down_offset();
+			if surface_helix.anchor == SurfaceAnchor::Top {
+				offset_y	*= -1.0;
+			}
+			bg_quad_transform.translation.y = offset_y;
 		}
-		
-		let surface_helix = surfaces_helix.get(surface_name).unwrap();
-		
-		let bg_quad_entity = surface_bevy.background_quad_entity.unwrap();
-		let bg_quad_transform = q_transform.get_mut(bg_quad_entity);
-		if bg_quad_transform.is_err() {
-			continue;
-		}
-		
-		let mut bg_quad_transform = bg_quad_transform.unwrap();
-		bg_quad_transform.scale.y = surface_helix.area.height as f32;
-		
-		let font		= font_assets.get(&font_handles.main).unwrap();
-		let row_height	= font.vertical_advance();
-		let mut offset_y = (surface_helix.area.height - 1) as f32 * row_height / 2.0 - font.vertical_down_offset();
-		if surface_helix.anchor == SurfaceAnchor::Top {
-			offset_y	*= -1.0;
-		}
-		bg_quad_transform.translation.y = offset_y;
 	}
 }
 
