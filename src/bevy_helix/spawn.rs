@@ -8,8 +8,7 @@ fn get_quad_mesh_handle(
 	quad_size		: Vec2,
 	text_mesh_cache	: &mut TextMeshesCache,
 	mesh_assets		: &mut Assets<Mesh>,
-) -> Handle<Mesh>
-{
+) -> Handle<Mesh> {
 	let quad_mesh_handle = match text_mesh_cache.meshes.get(quad_mesh_name) {
 		Some(handle) => handle.clone_weak(),
 		None => {

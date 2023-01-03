@@ -303,8 +303,7 @@ pub fn update_main(
 
 fn screen_print_active_layers(
 	surfaces_helix : &SurfacesMapHelix,
-)
-{
+) {
 	let mut surface_names_str = String::default();
 	surface_names_str.push_str(format!("{} helix layers:\n", surfaces_helix.len()).as_str());
 	for (name, surface) in surfaces_helix.iter() {
@@ -317,8 +316,7 @@ fn screen_print_active_layers(
 
 fn screen_print_stats(
 	surfaces_bevy : &SurfacesMapBevy,
-)
-{
+) {
 	let mut stats	= String::default();
 	stats.push_str	("stats:\n");
 	
@@ -378,8 +376,7 @@ fn spawn_new_surfaces(
 
 	mut mesh_assets		: &mut Assets<Mesh>,
 	mut commands		: &mut Commands,
-)
-{
+) {
 	for (surface_name, surface_helix) in surfaces_helix.iter() {
 		if surfaces_bevy.contains_key(surface_name) {
 			continue;
@@ -453,8 +450,7 @@ pub fn input_mouse(
 	
 	tokio_runtime	: Res<TokioRuntime>,
 	app				: Option<NonSendMut<Application>>,
-)
-{
+) {
 	if q_picking_camera.is_empty() {
 		return;
 	}
@@ -535,8 +531,7 @@ pub fn input_keyboard(
 pub fn tokio_events(
 	app				: Option<NonSendMut<Application>>,
 	tokio_runtime	: Res<TokioRuntime>,
-)
-{
+) {
 	if app.is_none() {
 		return;
 	}
@@ -590,8 +585,7 @@ pub fn update_permanent_surfaces_position(
 		font_handles	: Res<FontAssetHandles>,
 		q_camera		: Query<&ReaderCamera>,
 	mut	q_transform		: Query<&mut Transform>,
-)
-{
+) {
 	let fonts			= ABFonts::new(&font_assets, &font_handles);
 	
 	let row_height		= fonts.main.vertical_advance();

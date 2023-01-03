@@ -33,8 +33,7 @@ impl CursorBevy {
 		material_assets	: &mut Assets<StandardMaterial>,
 		mesh_assets		: &mut ResMut<Assets<Mesh>>,
 		commands		: &mut Commands
-	)
-	{
+	) {
 		let cursor_color_fg	= color_from_helix(HelixColor::Magenta);
 		let material_handle	= get_helix_color_material_handle(cursor_color_fg, helix_colors_cache, material_assets);
 		
@@ -76,8 +75,7 @@ impl CursorBevy {
 
 		material_assets		: &mut Assets<StandardMaterial>,
 		commands			: &mut Commands
-	)
-	{
+	) {
 		let cursor_theme = theme.get("ui.cursor");
 		if cursor_theme.bg.is_none() {
 			return;
@@ -104,8 +102,7 @@ impl CursorBevy {
 	
 		row_offset			: u32,
 		app					: &mut NonSendMut<Application>,
-	)
-	{
+	) {
 		let editor_area     = app.area;
 		let (cursor_pos, cursor_kind) = app.cursor(editor_area);
 		if let Some(cursor_pos) = cursor_pos {
