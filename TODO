@@ -72,6 +72,8 @@
 15.4.35. ✅ inconsistent zoom steps: different values added/reducted on equivalent amount of scrolls
 15.4.36. permanent panels dont stay on same place with different zoom levels
 15.4.37. status panel disappears on cursor movement (could be helix)
+15.4.38. scrolling with mouse wheel doesnt reach the end of file
+15.4.39. scrolling as well as visible rows calculation isnt precise enough
 15.5. ✅ Make surface size depend on the amount of visible rows in camera
 15.6. ✅ Determine size of background quad when opening file: instead i'm making it dependent on visible amount of rows in camera and make it follow camera on y axis
 15.7. ✅ Separate logic for non-scrollable surfaces
