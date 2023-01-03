@@ -39,12 +39,12 @@ impl CursorBevy {
 		let material_handle	= get_helix_color_material_handle(cursor_color_fg, helix_colors_cache, material_assets);
 		
 		let v_advance		= font.vertical_advance();
-		let h_advance		= font.horizontal_advance(&String::from("a")); // in monospace font every letter should be of the same width so we pick 'a'
+		let h_advance		= font.horizontal_advance_mono();
 	
 		let glyph_width		= h_advance;
 		let glyph_height	= v_advance;
 	
-		let cursor_z		= -font.depth_scaled() + (font.depth_scaled() / 4.0); // FIXME: define depth levels somewhere centralized
+		let cursor_z		= SurfaceBevy::cursor_z_offset(font);
 	
 		let quad_width		= glyph_width;
 		let quad_height		= glyph_height;

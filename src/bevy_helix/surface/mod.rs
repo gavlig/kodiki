@@ -247,7 +247,7 @@ impl SurfaceBevy {
 		}
 		
 		let row_height	= font.vertical_advance();
-		let column_width = font.horizontal_advance(&String::from("a")); // in monospace font every letter should be of the same width so we pick 'a'
+		let column_width = font.horizontal_advance_mono();
 		let v_down_offset = font.vertical_down_offset();
 		
 		let width		= surface_helix.area.width;
@@ -700,6 +700,10 @@ impl SurfaceBevy {
 	
 	pub fn quad_z_offset(font: &ABGlyphFont) -> f32 {
 		-font.depth_scaled() + font.depth_scaled() / 5.0
+	}
+	
+	pub fn cursor_z_offset(font: &ABGlyphFont) -> f32 {
+		-font.depth_scaled() + font.depth_scaled() / 4.0
 	}
 	
 	pub fn calc_target_position(

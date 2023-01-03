@@ -86,7 +86,6 @@ pub fn generate_emoji_mesh_internal(
 	glyph_with_fonts : &GlyphWithFonts,
 ) -> MeshInternal {
 	let glyph_str			= &glyph_with_fonts.glyph_str;
-	// let glyph_char			= glyph_str.chars().next().unwrap();
 	let font				= glyph_with_fonts.current_font();
 	
 	let mut mesh 			= MeshInternal::default();
