@@ -201,8 +201,7 @@ impl SurfaceBevy {
 		font			: &ABGlyphFont,
 		mesh_assets		: &mut Assets<Mesh>,
 		commands		: &mut Commands
-	) -> SurfaceBevy
-	{
+	) -> SurfaceBevy {
 		println!		("spawning surface {}", surface_name);
 		
 		let surface_position = world_position.unwrap_or(Vec3::new(0.0, 0.0, 0.0));
@@ -240,8 +239,7 @@ impl SurfaceBevy {
 		font			: &ABGlyphFont,
 		mesh_assets		: &mut Assets<Mesh>,
 		commands		: &mut Commands
-	)
-	{
+	) {
 		if let Some(background_entity) = self.background_quad_entity {
 			commands.entity(background_entity).despawn();
 		}
@@ -285,8 +283,7 @@ impl SurfaceBevy {
 		&mut self,
 		font			: &ABGlyphFont,
 		commands		: &mut Commands
-	)
-	{
+	) {
 		let columns		= self.area.width as u32;
 		let rows		= self.area.height as u32;
 		self.update_text_descriptor(columns, rows, font, commands);
@@ -298,8 +295,7 @@ impl SurfaceBevy {
 		rows			: u32,
 		font			: &ABGlyphFont,
 		commands		: &mut Commands
-	)
-	{
+	) {
 		let glyph_height = font.vertical_advance();
 		let glyph_width	= font.horizontal_advance_mono(); // in monospace font every letter should be of the same width so we pick 'a'
 		
@@ -347,8 +343,7 @@ impl SurfaceBevy {
 		image_assets	: &mut Assets<Image>,
 		material_assets	: &mut Assets<StandardMaterial>,
 		commands		: &mut Commands,
-	)
-	{
+	) {
 		if !self.update {
 			return;
 		}
@@ -394,8 +389,7 @@ impl SurfaceBevy {
 		row_offset		: i32,
 		row_offset_prev	: i32,
 		commands		: &mut Commands,
-	)
-	{
+	) {
 		if !self.cache_info.enabled {
 			return;
 		}
@@ -468,8 +462,7 @@ impl SurfaceBevy {
 		image_assets	: &mut Assets<Image>,
 		material_assets	: &mut Assets<StandardMaterial>,
 		commands		: &mut Commands,
-	)
-	{
+	) {
 		let rows_in_page			= self.rows_in_page();
 		let columns_in_page			= self.columns_in_page();
 		
@@ -582,8 +575,7 @@ impl SurfaceBevy {
 		helix_colors_cache	: &mut HelixColorsCache,
 		material_assets		: &mut Assets<StandardMaterial>,
 		commands			: &mut Commands,
-	)
-	{
+	) {
 		if background_style.bg.is_none() {
 			return;
 		}
@@ -610,8 +602,7 @@ impl SurfaceBevy {
 		&mut self,
 		row_num			: usize,
 		commands		: &mut Commands
-	)
-	{
+	) {
 		let row_len		= self.rows[row_num].words.len();
 		for i in 0 .. row_len {
 			let word_bevy = &mut self.rows[row_num].words[i];
@@ -635,8 +626,7 @@ impl SurfaceBevy {
 		&mut self,
 		new_rows_cnt	: usize,
 		commands		: &mut Commands,
-	)
-	{
+	) {
 		let old_rows_cnt = self.rows.len();
 		if new_rows_cnt < old_rows_cnt {
 			for i in new_rows_cnt .. old_rows_cnt {
@@ -650,8 +640,7 @@ impl SurfaceBevy {
 		start_position	: Vec3,
 		tween_path		: Vec<TweenPoint>,
 		commands		: &mut Commands
-	)
-	{
+	) {
 		let path_len	= tween_path.len();
 		assert!			(path_len > 0);
 		
