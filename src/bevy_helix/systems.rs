@@ -185,6 +185,8 @@ pub fn update_main(
 	let mut app					= app.unwrap();
 	
 	let mut reader_camera		= q_camera.single_mut();
+	let		camera_transform	= q_transform.get(reader_camera.entity).unwrap();
+	
 	if reader_camera.row_offset_out != 0 {
 		app.scroll(reader_camera.row_offset_out);
 		reader_camera.row_offset_out = 0;
@@ -194,7 +196,7 @@ pub fn update_main(
 	reader_camera.row_offset_in	= row_offset as u32;
 	
 	let mut editor_area			= app.area;
-	editor_area.height			= reader_camera.visible_rows as u16;
+	editor_area.height			= reader_camera.visible_rows.ceil() as u16;
 
 	// erase previous frame
 	for (name, surface_helix) in surfaces_helix.iter_mut() {
@@ -247,6 +249,7 @@ pub fn update_main(
 		&mut surfaces_helix,
 		&mut surfaces_bevy,
 		&reader_camera,
+		camera_transform,
 		fonts.main,
 		&mut mesh_assets,
 		&mut commands
@@ -372,6 +375,7 @@ fn spawn_new_surfaces(
 	surfaces_bevy		: &mut SurfacesMapBevy,
 
 	reader_camera		: &ReaderCamera,
+	camera_transform	: &Transform,
 	font				: &ABGlyphFont,
 
 	mut mesh_assets		: &mut Assets<Mesh>,
@@ -389,14 +393,15 @@ fn spawn_new_surfaces(
 			surface_helix.anchor,
 			surface_helix.placement,
 			surface_helix.area,
-			reader_camera.zoom,
-			reader_camera.visible_rows,
-			column_width,
-			row_height
+			reader_camera,
+			camera_transform,
+			font
 		);
 		
 		let start_pos = if surface_helix.lifetime == SurfaceLifetime::Temporary {
-			Vec3::new(0.0, 0.0, SurfaceBevy::z_offset(reader_camera.zoom))
+			let y = camera_transform.translation.y - reader_camera.y_top;
+			let z = SurfaceBevy::z_offset();
+			Vec3::new(0.0, y, z)
 		} else {
 			target_pos
 		};
@@ -412,9 +417,6 @@ fn spawn_new_surfaces(
 			&mut mesh_assets,
 			&mut commands
 		);
-		
-		let surface_entity = surface_bevy.entity.unwrap();
-		commands.entity(reader_camera.entity).add_child(surface_entity);
 		
 		if surface_helix.lifetime == SurfaceLifetime::Temporary {
 			let tween_point = animate::TweenPoint {
@@ -556,7 +558,7 @@ pub fn update_surface_background_quad(
 			let bg_quad_entity = surface_bevy.background_quad_entity.unwrap();
 			let mut bg_quad_transform = q_transform.get_mut(bg_quad_entity).unwrap();
 
-			bg_quad_transform.scale.y = (reader_camera.visible_rows * 2) as f32;
+			bg_quad_transform.scale.y = reader_camera.visible_rows * 2.0;
 			bg_quad_transform.translation.y = camera_transform.translation.y;
 		// remaining background quads rely on their parent surfaces size both for scale and position
 		} else {
@@ -588,9 +590,6 @@ pub fn update_permanent_surfaces_position(
 ) {
 	let fonts			= ABFonts::new(&font_assets, &font_handles);
 	
-	let row_height		= fonts.main.vertical_advance();
-	let column_width	= fonts.main.horizontal_advance_mono();
-	
 	for (surface_name, surface_helix) in surfaces_helix.iter() {
 		if surface_name == EditorView::ID {
 			continue;
@@ -601,12 +600,17 @@ pub fn update_permanent_surfaces_position(
 		}
 		
 		if let Some(surface_bevy) = surfaces_bevy.get(surface_name) {
-			let		surface_entity		= if let Some(entity)	= surface_bevy.entity					{ entity }		else { continue; };
-			let mut surface_transform	= if let Ok(transform)	= q_transform.get_mut(surface_entity)	{ transform }	else { continue; };
-			
 			let reader_camera = q_camera.single();
-			let target_pos = surface_bevy.target_position(reader_camera.zoom, reader_camera.visible_rows, column_width, row_height);
+			let camera_entity = reader_camera.entity;
+			let mut target_pos = Vec3::ZERO;
 			
+			{
+				let	camera_transform = q_transform.get(camera_entity).unwrap();
+				target_pos = surface_bevy.target_position(reader_camera, &camera_transform, fonts.main);
+			}
+			
+			let		surface_entity	=	 if let Some(entity)	= surface_bevy.entity					{ entity }		else { continue; };
+			let mut surface_transform	= if let Ok(transform)	= q_transform.get_mut(surface_entity)	{ transform }	else { continue; };
 			surface_transform.translation = target_pos;
 		}
 	}

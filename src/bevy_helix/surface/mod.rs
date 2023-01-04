@@ -3,7 +3,7 @@ use bevy				:: utils :: { HashMap };
 use bevy_tweening		:: { * };
 use bevy_tweening		:: lens :: { * };
 
-use bevy_reader_camera	:: { TextDescriptor };
+use bevy_reader_camera	:: { TextDescriptor, ReaderCamera };
 
 use crate				:: bevy_ab_glyph :: { ABGlyphFont, ABFonts, GlyphMeshesCache, TextMeshesCache, EmojiMaterialsCache };
 
@@ -705,31 +705,34 @@ impl SurfaceBevy {
 	}
 	
 	pub fn calc_target_position(
-		anchor			: SurfaceAnchor,
-		placement		: SurfacePlacement,
-		area			: helix_view::graphics::Rect,
-		zoom			: f32,
-		visible_rows	: u32,
-		column_width	: f32,
-		row_height		: f32,
-	) -> Vec3
-	{
-		let x = -column_width * (area.width as f32 / 2.0);
-		let z = SurfaceBevy::z_offset(zoom);
+		anchor				: SurfaceAnchor,
+		placement			: SurfacePlacement,
+		area				: helix_view::graphics::Rect,
+		reader_camera		: &ReaderCamera,
+		camera_transform	: &Transform,
+		font				: &ABGlyphFont
+	) -> Vec3 {
+		let row_height		= font.vertical_advance();
+		let column_width	= font.horizontal_advance_mono();
+		
+		let 	x = camera_transform.translation.x + (-column_width * (area.width as f32 / 2.0));
+		let mut y = camera_transform.translation.y;
+		let 	z = SurfaceBevy::z_offset();
 		let target_pos = match placement {
 			SurfacePlacement::Top => {
-				let y = row_height * ((visible_rows as f32 - 1.5)  / 2.0);
+				y += reader_camera.y_top - row_height;
 				Vec3::new(x, y, z)
 			},
 			SurfacePlacement::Center => {
-				let mut y = row_height * (area.height as f32 / 2.0);
+				let mut y_local = row_height * (area.height as f32 / 2.0);
 				if anchor == SurfaceAnchor::Bottom {
-					y *= -1.0;
+					y_local *= -1.0;
 				}
+				y += y_local;
 				Vec3::new(x, y, z)
 			},
 			SurfacePlacement::Bottom => {
-				let y = -row_height * ((visible_rows as f32 - 0.5) / 2.0);
+				y += reader_camera.y_bottom + font.vertical_down_offset();
 				Vec3::new(x, y, z)
 			},
 			_ => panic!(),
@@ -740,12 +743,10 @@ impl SurfaceBevy {
 	
 	pub fn target_position(
 		&self,
-		zoom			: f32,
-		visible_rows	: u32,
-		column_width	: f32,
-		row_height		: f32,
-	) -> Vec3
-	{
-		SurfaceBevy::calc_target_position(self.anchor, self.placement, self.area, zoom, visible_rows, column_width, row_height)
+		reader_camera		: &ReaderCamera,
+		camera_transform	: &Transform,
+		font				: &ABGlyphFont
+	) -> Vec3 {
+		SurfaceBevy::calc_target_position(self.anchor, self.placement, self.area, reader_camera, camera_transform, font)
 	}
 }
