@@ -688,8 +688,8 @@ impl SurfaceBevy {
 			.insert(Animator::new(seq));
 	}
 	
-	pub fn z_offset(zoom: f32) -> f32 {
-		-zoom + 0.05
+	pub fn z_offset() -> f32 {
+		0.05
 	}
 	
 	pub fn symbol_z_offset() -> f32 {
