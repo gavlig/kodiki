@@ -65,8 +65,8 @@
 15.4.28. ❎ (by design) ":" panel comes with garbage from previous commands (:w for example)
 15.4.29. ✅ start position for temp surfaces is clipping with main quad
 15.4.30. when jumping too far (like using symbol picker to go to another function) we see surface without text
-15.4.31. surface without text visible when zooming
-15.4.32. surface without text visible when scrolling after zooming
+15.4.31. ✅ surface without text visible when zooming
+15.4.32. surface without text visible when scrolling after zooming: we need to precache in direction of scrolling
 15.4.33. after alt-tabbing multiple cursor mode gets stuck
 15.4.34. after alt-tabbing overlay component gets stuck (like file picker for example)
 15.4.35. ✅ inconsistent zoom steps: different values added/reducted on equivalent amount of scrolls
@@ -76,6 +76,7 @@
 15.4.39. ✅ scrolling as well as visible rows calculation isnt precise enough
 15.4.40. clean up rows cache when opening new file
 15.4.41. ✅ scrolling makes permanent panels move
+15.4.42. first line is covered by status panel
 15.5. ✅ Make surface size depend on the amount of visible rows in camera
 15.6. ✅ Determine size of background quad when opening file: instead i'm making it dependent on visible amount of rows in camera and make it follow camera on y axis
 15.7. ✅ Separate logic for non-scrollable surfaces
@@ -99,3 +100,4 @@
 24. Fullscreen
 25. Double click selection
 26. Copy/paste from OS
+27. Separate scrolling from cursor positioning

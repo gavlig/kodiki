@@ -245,10 +245,11 @@ pub fn stats_system(
 			(0.0, 0.0)
 		};
 
-		screen_print!("visible rows: {} row: {}({:.1}) col: {}({:.1}) zoom: {:.1} pitch: {:.1} glyph_w: {:.1} glyph_h: {:.1}",
+		screen_print!("visible rows: {:.2} row: {}({:.1}) offset: {} col: {}({:.1}) zoom: {:.1} pitch: {:.1} glyph_w: {:.1} glyph_h: {:.1}",
 			camera.visible_rows,
-			camera.row,
+			camera.row_offset_in + (camera.visible_rows / 2.0).floor() as u32,
 			camera.vertical_scroll,
+			camera.row_offset_in,
 			camera.column,
 			camera.horizontal_scroll,
 			camera.zoom,

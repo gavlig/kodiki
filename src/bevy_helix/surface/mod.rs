@@ -3,6 +3,8 @@ use bevy				:: utils :: { HashMap };
 use bevy_tweening		:: { * };
 use bevy_tweening		:: lens :: { * };
 
+use bevy_prototype_debug_lines	:: { * };
+
 use bevy_reader_camera	:: { TextDescriptor, ReaderCamera };
 
 use crate				:: bevy_ab_glyph :: { ABGlyphFont, ABFonts, GlyphMeshesCache, TextMeshesCache, EmojiMaterialsCache };
@@ -140,7 +142,7 @@ pub enum RowOffsetDirection {
 	Down
 }
 
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 pub struct SurfaceCoords {
 	pub x		: f32,
 	pub y		: f32,
@@ -343,6 +345,8 @@ impl SurfaceBevy {
 		image_assets	: &mut Assets<Image>,
 		material_assets	: &mut Assets<StandardMaterial>,
 		commands		: &mut Commands,
+		
+		lines			: Option<&mut DebugLines>,
 	) {
 		if !self.update {
 			return;
@@ -378,7 +382,9 @@ impl SurfaceBevy {
 			image_assets,
 			material_assets,
 			
-			commands
+			commands,
+			
+			lines
 		);
 		
 		self.update_background_quad_color(&background_style, helix_colors_cache, material_assets, commands);
@@ -462,6 +468,8 @@ impl SurfaceBevy {
 		image_assets	: &mut Assets<Image>,
 		material_assets	: &mut Assets<StandardMaterial>,
 		commands		: &mut Commands,
+		
+		lines			: Option<&mut DebugLines>,
 	) {
 		let rows_in_page			= self.rows_in_page();
 		let columns_in_page			= self.columns_in_page();
@@ -483,6 +491,9 @@ impl SurfaceBevy {
 		
 		let mut surface_coords 		= SurfaceCoords::new(row_offset_dir, row_height, scroll_offset, cache_offset);
 		
+		let mut debug_coords		= [SurfaceCoords::default(); 4];
+		let mut debug_index			= 0;
+		
 		let reverse_range			= row_offset_dir == RowOffsetDirection::Up;
 		let row_range				= utils::create_range(0 .. rows_in_page, reverse_range);
 
@@ -496,6 +507,11 @@ impl SurfaceBevy {
 			let mut quads			= quads::Row::new();
 			
 			for column in 0 .. columns_in_page {
+				if (row == 0 || row == rows_in_page - 1) && (column == 0 || column == columns_in_page - 1) {
+					debug_coords[debug_index] = surface_coords.clone();
+					debug_index += 1;
+				}
+				
 				let content_index	= (row * columns_in_page + column) as usize;
 				let cell_helix		= &cells_helix[content_index];
 				
@@ -566,6 +582,17 @@ impl SurfaceBevy {
 		
 		if surface_children.len() > 0 {
 			commands.entity(surface_entity).push_children(surface_children.as_slice());
+		}
+		
+		if let Some(lines) = lines {
+			assert!(debug_index == 4, "debug_index: {}", debug_index);
+			let start	= Vec3::new(debug_coords[0].x - 1.0, debug_coords[0].y + row_height, SurfaceBevy::symbol_z_offset());
+			let end 	= Vec3::new(debug_coords[1].x + 1.0, debug_coords[1].y + row_height, SurfaceBevy::symbol_z_offset());
+			lines.line_colored	(start, end, 0.0, Color::LIME_GREEN);
+			
+			let start	= Vec3::new(debug_coords[2].x - 1.0, debug_coords[2].y, SurfaceBevy::symbol_z_offset());
+			let end 	= Vec3::new(debug_coords[3].x + 1.0, debug_coords[3].y, SurfaceBevy::symbol_z_offset());
+			lines.line_colored	(start, end, 0.0, Color::SALMON);
 		}
 	}
 	

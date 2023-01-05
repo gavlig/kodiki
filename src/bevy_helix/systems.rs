@@ -4,7 +4,9 @@ use bevy :: input :: mouse		:: { * };
 use bevy_tweening				:: { * };
 use bevy_mod_picking			:: { * };
 
+use bevy_prototype_debug_lines	:: { * };
 use bevy_debug_text_overlay		:: { screen_print };
+
 use bevy_reader_camera			:: { ReaderCamera };
 
 use super :: HelixColorsCache;
@@ -33,8 +35,7 @@ use std :: time :: Duration;
 
 pub fn startup_app(
 	world: &mut World,
-)
-{
+) {
 	let mut surfaces_helix	= SurfacesMapHelix::default();
 	let 	surfaces_bevy	= SurfacesMapBevy::default();
 	
@@ -133,7 +134,6 @@ pub fn startup_spawn(
 	
 	let mut camera		= q_reader_camera.single_mut();
 	camera.target		= surface_bevy_editor.entity;
-	camera.row			= 25u32;
 	camera.column		= (surface_bevy_editor.area.width / 2) as u32;
 	
 	surfaces_bevy.insert(surface_editor_name.clone(), surface_bevy_editor);
@@ -153,6 +153,8 @@ pub fn update_main(
 		mut _cursor,
 			font_assets,
 			font_handles,
+			
+		mut lines,
 	)
 	:
 	(
@@ -165,6 +167,8 @@ pub fn update_main(
 		ResMut<CursorBevy>,
 		Res<Assets<ABGlyphFont>>,
 		Res<FontAssetHandles>,
+		
+		ResMut<DebugLines>,
 	),
 		
 	mut	q_transform		: Query<&mut Transform>,
@@ -274,7 +278,9 @@ pub fn update_main(
 			&mut mesh_assets,
 			&mut image_assets,
 			&mut material_assets,
-			&mut commands
+			&mut commands,
+			
+			if layer_name == EditorView::ID { Some(&mut lines) } else { None }
 		);
 		
 		// update text_description on editor surface for proper camera navigation
