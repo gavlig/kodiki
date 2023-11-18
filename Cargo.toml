@@ -45,7 +45,7 @@ futures-lite		= { version = "1.11.3" }
 bevy 				= { version = "0.10", features = ["bevy_render", "wayland"] }
 
 bevy_framepace		= { version = "0.12" }
-bevy_reader_camera	= { path = "../bevy_reader_camera" } # { git = "https://github.com/gavlig/bevy_reader_camera.git" }
+bevy_reader_camera	= { git = "https://github.com/gavlig/bevy_reader_camera.git" }
 bevy_contrib_colors = { git = "https://github.com/gavlig/bevy_contrib_colors.git" }
 
 bevy_rapier3d		= { git = "https://github.com/gavlig/bevy_rapier", branch = "kodiki", features = ["simd-stable", "debug-render"] } # { version = "0.21", features = ["simd-stable", "debug-render"] }
