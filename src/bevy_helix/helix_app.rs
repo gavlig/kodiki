@@ -593,7 +593,7 @@ impl HelixApp {
 		self.editor.dark_theme
 	}
 
-	pub fn current_path(&self) -> Option<&str> {
+	pub fn current_document_path(&self) -> Option<&str> {
 		let doc = self.current_document();
 		if let Some(path) = doc.path() {
 			path.to_str()
