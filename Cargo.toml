@@ -81,8 +81,6 @@ helix-tui			= { git = "https://github.com/gavlig/helix-editor.git", branch = "wi
 
 anyhow				= "1"
 signal-hook			= "0.3"
-[target.'cfg(not(windows))'.dependencies]  # https://github.com/vorner/signal-hook/issues/100
-signal-hook-tokio	= { version = "0.3", features = ["futures-v0_3"] }
 
 tokio				= { version = "1", features = ["rt", "rt-multi-thread", "io-util", "io-std", "time", "process", "macros", "fs", "parking_lot"] }
 tokio-stream		= { version = "0.1" }
@@ -101,6 +99,8 @@ portable-pty		= { git = "https://github.com/gavlig/wezterm.git", branch = "porta
 termwiz				= { git = "https://github.com/gavlig/wezterm.git", branch = "portable", features = ["use_image"] }
 crossbeam-channel	= { version = "0.5" }
 
+[target.'cfg(not(windows))'.dependencies]  # https://github.com/vorner/signal-hook/issues/100
+signal-hook-tokio	= { version = "0.3", features = ["futures-v0_3"] }
 
 #
 #
