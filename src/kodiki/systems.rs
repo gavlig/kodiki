@@ -344,23 +344,7 @@ pub fn update_window_title(
 		AppContext::CodeEditor => {
 			let Some(helix_app) = helix_app_option else { return };
 			if helix_app.should_render() {
-				let mut title = String::from("Code Editor [");
-
-				// indicate current dir if available
-				if let Ok(cwd) = std::env::current_dir() {
-					if let Some(cwd_str) = cwd.to_str() {
-						title.push_str(cwd_str);
-						title.push_str(" - ");
-					}
-				}
-
-				// currently open document name
-				let doc = helix_app.current_document();
-				title.push_str(&doc.display_name());
-
-				title.push_str("]");
-
-				window.title = title;
+				window.title = helix_app.window_title();
 			}
 		},
 		AppContext::Terminal => {

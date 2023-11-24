@@ -1214,6 +1214,10 @@ pub fn on_context_switch_in(
 			camera.target_entity = Some(surface_bevy.entity);
 		}
 	}
+
+	if let Some(path) = app.current_document_path() {
+		window.title = app.window_title();
+	}
 }
 
 pub fn update_background_color(

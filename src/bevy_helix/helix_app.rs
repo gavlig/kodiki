@@ -602,6 +602,26 @@ impl HelixApp {
 		}
 	}
 
+	pub fn window_title(&self) -> String {
+		let mut title = String::from("Code Editor [");
+
+		// indicate current dir if available
+		if let Ok(cwd) = std::env::current_dir() {
+			if let Some(cwd_str) = cwd.to_str() {
+				title.push_str(cwd_str);
+				title.push_str(" - ");
+			}
+		}
+
+		// currently open document name
+		let doc = self.current_document();
+		title.push_str(&doc.display_name());
+
+		title.push_str("]");
+
+		title
+	}
+
 	pub async fn handle_input_event(&mut self, event : &helix_view::input::Event) {
 		let mut cx = helix_term::compositor::Context {
 			editor: &mut self.editor,
@@ -620,9 +640,6 @@ impl HelixApp {
 		tokio::select! {
 			biased;
 
-			Some(signal) = self.signals.next() => {
-				self.handle_signals(signal).await;
-			}
 			Some(callback) = self.jobs.futures.next() => {
 				self.jobs.handle_callback(&mut self.editor, &mut self.compositor, callback);
 				self.should_render = true;
