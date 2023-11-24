@@ -249,7 +249,7 @@ impl BevyWezTerm {
 		}
 
 		let modifiers = Self::key_modifiers_bevy_to_wez(input_key);
-		let shift_pressed = modifiers.intersects(ModifiersWezTerm::LEFT_SHIFT | ModifiersWezTerm::RIGHT_SHIFT);
+		let shift_pressed = modifiers.intersects(ModifiersWezTerm::LEFT_SHIFT | ModifiersWezTerm::RIGHT_SHIFT | ModifiersWezTerm::SHIFT);
 
 		let Some(key_code_wez) = Self::keyboard_input_bevy_to_wez(shift_pressed, keyboard_input) else { anyhow::bail!("keyboard_input_bevy_to_wez failed! keyboard_input: {:?}", keyboard_input); };
 
