@@ -3,7 +3,8 @@
 ### 3D Vim-like text editor with an IDE ambition built on top of Bevy, Helix Editor and WezTerm.
 As of version 0.1 it is possible to write your code with it, build it and commit to git with built-in terminal emulator.
 
-![kodiki_header](https://github.com/gavlig/kodiki/blob/kodiki_0.1/assets/readme/header.gif)
+![kodiki_header](https://github.com/gavlig/kodiki/blob/kodiki_0.1/assets/readme/header.gif)  
+[Timelapse Demo Video](https://rumble.com/v40lnba-kodiki-timelapse-demo.html)
 
 ### How to build
 0. Make sure you have Rust installed. See https://www.rust-lang.org/
@@ -27,39 +28,6 @@ quick tutorial provided by Helix Editor or refer to its [documentation](https://
 - Modern builtin features
 
 For more details please refer to [Helix Editor](https://helix-editor.com/) [documentation](https://docs.helix-editor.com/) currently.
-
-### Notable differences from Helix Editor
-  
-Added some functionality common for vs-like IDE-s:  
-- Word selection by double click
-- Selecting with shift + mouse click
-- Enabled inlay hints by pressing ctrl+alt
-- Added hints on mouse hover (initial implementation is already in Helix Editor, just needed small tweaking)
-- Added minimap
-- Added "current symbol under cursor" field in the status panel
-- Added smart tab indent that matches expected indentation in current line
-
-Other quality-of-life changes:  
-- Added formatting to symbol picker
-- Added insert mode overlay
-- Added avoiding of showing the same completion if it was closed by user in the same cursor position
-- Added initial focus on first completion item to apply it on first press of enter
-
-### Hotkey changes
-
-- Added selecting with shift+left/right/up/down/home/end in normal mode
-- Added word deleting with control+del/backspace in normal mode
-- Added control+/ for commenting
-- Removed control+c for commenting
-- Removed control+f/b for scrolling
-- Added control+f for search
-- Added control+c/v for copy/pasting in normal and insert modes
-- Added control+tab for buffer picker. Might be not the best choice but works for a migrant from vs-like IDE-s
-- Added alt+left/right for jumping forward/backward in jump list
-- Added control+space for completion suggestions
-- Added control+shift+space for signature help
-- Added control+f for search
-- Added enter for switching to insert mode
 
 ### In its current state Kodiki is built on:
 - [Bevy Engine](https://github.com/bevyengine/bevy) as base platform for rendering, handling input, windows and everything platform dependent
@@ -166,6 +134,39 @@ Polish of UI/UX with Helix
 Workspaces (currently you can have only 1 folder open in Helix)
 Multiple tabs in terminal
 Experimenting with more effects and 3d
+
+### Notable differences from Helix Editor
+  
+Added some functionality common for vs-like IDE-s:  
+- Word selection by double click
+- Selecting with shift + mouse click
+- Enabled inlay hints by pressing ctrl+alt
+- Added hints on mouse hover (initial implementation is already in Helix Editor, just needed small tweaking)
+- Added minimap
+- Added "current symbol under cursor" field in the status panel
+- Added smart tab indent that matches expected indentation in current line
+
+Other quality-of-life changes:  
+- Added formatting to symbol picker
+- Added insert mode overlay
+- Added avoiding of showing the same completion if it was closed by user in the same cursor position
+- Added initial focus on first completion item to apply it on first press of enter
+
+### Hotkey changes
+
+- Added selecting with shift+left/right/up/down/home/end in normal mode
+- Added word deleting with control+del/backspace in normal mode
+- Added control+/ for commenting
+- Removed control+c for commenting
+- Removed control+f/b for scrolling
+- Added control+f for search
+- Added control+c/v for copy/pasting in normal and insert modes
+- Added control+tab for buffer picker. Might be not the best choice but works for a migrant from vs-like IDE-s
+- Added alt+left/right for jumping forward/backward in jump list
+- Added control+space for completion suggestions
+- Added control+shift+space for signature help
+- Added control+f for search
+- Added enter for switching to insert mode
 
 ### Known Issues
 
