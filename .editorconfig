@@ -3,3 +3,7 @@ root = true
 [*.rs]
 indent_style = tab
 indent_size = 4
+
+[*.toml]
+indent_style = tab
+indent_size = 4
