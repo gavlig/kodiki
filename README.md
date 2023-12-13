@@ -7,12 +7,14 @@ As of version 0.1 it is possible to write your code with it, build it and commit
 [Timelapse Demo Video](https://rumble.com/v40lnba-kodiki-timelapse-demo.html)
 
 ### How to build
-0. Make sure you have Rust installed. See https://www.rust-lang.org/
-1. In prepare_runtime.sh uncomment PLATFORM, OSNAME and ARCHIVEFORMAT according to your OS.
-2. Run prepare_runtime.sh to obtain runtime of a Helix Editor that this release is based on.
-3. Run make_build.sh to get a working build of Kodiki in build/bin with all assets put in place.  
+1. Make sure you have Rust installed. See https://www.rust-lang.org/
+2. git lfs install (this has to be done once per OS user account, so it's optional for those who have already used lfs before)
+3. git clone https://github.com/gavlig/kodiki.git
+5. In prepare_runtime.sh uncomment PLATFORM, OSNAME and ARCHIVEFORMAT according to your OS.
+6. Run prepare_runtime.sh to obtain runtime of a Helix Editor that this release is based on.
+7. Run make_build.sh to get a working build of Kodiki in build/bin with all assets put in place.  
    Executable build/bin/kodiki should work out of the box.
-4. Alternatively use run.sh to invoke cargo run -r with HELIX_RUNTIME pointing towards build/bin/runtime which is required for Helix to work
+8. Alternatively use run.sh to invoke cargo run -r with HELIX_RUNTIME pointing towards build/bin/runtime which is required for Helix to work
 (these scripts were used on Linux, Mac and Windows([git bash](https://gitforwindows.org/) or [wsl](https://learn.microsoft.com/en-us/windows/wsl/install) should be able to execute those scripts))
 
 ### How to use
