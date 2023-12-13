@@ -7,10 +7,6 @@ Moving cursor after pasting puts it in the beginning of selection. Make it optio
 Insert closing pair of brackets or quotes only if there is empty space on the right  
 Entering insert mode within selection doesnt always have to put cursor in the beginning of that selection  
 Close both signature help and completion with esc  
-Copy/paste from OS (system clipboard commands are not bound to any key)  
-Copy/pasting experience is very frustrating  
-- Pasting yanked selection in the end of line makes a new line for some reason  
-- Paste where the helix cursor is when using middle mouse button  
 Search selected when pressing '/' (shift + * otherwise exists already)  
 Terminal: optionally scroll to end on output from pty  
 Bold text  
@@ -22,9 +18,9 @@ Mouse cursor should change when hovering over text
 Clicking beyond line end should put cursor on the last symbol mainly to highlight opposite brackets  
 Show symbol bookmarks in editor surface too  
 Highlight hovered line in editor  
-- Mirror highlighted line in editor to minimap  
+Mirror highlighted line in editor to minimap  
 Highlight hovered line in minimap  
-- Mirror highlighted line in minimap to editor  
+Mirror highlighted line in minimap to editor  
 Emojis for minimap preview  
 Smooth scrolling in minimap preview  
 Highlight bookmarks/symbols in minimap preview  
