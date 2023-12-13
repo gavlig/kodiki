@@ -18,8 +18,7 @@ As of version 0.1 it is possible to write your code with it, build it and commit
 (these scripts were used on Linux, Mac and Windows([git bash](https://gitforwindows.org/) or [wsl](https://learn.microsoft.com/en-us/windows/wsl/install) should be able to execute those scripts))
 
 ### How to use
-There is no Kodiki-specific documentation as of yet, but it works just like Helix Editor for the most part with some tweaks, see below for difference. Try typing :tutor + enter in normal mode for
-quick tutorial provided by Helix Editor or refer to its [documentation](https://docs.helix-editor.com/)
+The best source of documentation is the one provided by [Helix Editor](https://docs.helix-editor.com/). Also try Try typing :tutor + enter in normal mode for quick tutorial. There is no Kodiki-specific documentation as of yet, but it works just like Helix Editor with some tweaks and modifications, see below for the list of difference.
 
 ### Helix Editor highlights:
 - Multiple selections
@@ -28,8 +27,8 @@ quick tutorial provided by Helix Editor or refer to its [documentation](https://
 - Powerful code manipulation
 - Built in Rust, for the terminal
 - Modern builtin features
-
-For more details please refer to [Helix Editor](https://helix-editor.com/) [documentation](https://docs.helix-editor.com/) currently.
+  
+For more details please refer to [Helix Editor](https://helix-editor.com/)  
 
 ### In its current state Kodiki is built on:
 - [Bevy Engine](https://github.com/bevyengine/bevy) as base platform for rendering, handling input, windows and everything platform dependent
