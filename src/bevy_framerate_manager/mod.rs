@@ -377,7 +377,8 @@ impl FramerateDebug {
 
 		let current_framerate_mode = manager.mode();
 		let current_frame_duration = manager.current_frame_duration();
-		let framerate_string = format!("FPS mode: {:?} [{:.2}ms/{:?}]", current_framerate_mode, time.delta().as_secs_f32() * 1000.0, current_frame_duration);
+		let dt_secs = time.delta().as_secs_f32();
+		let framerate_string = format!("FPS: {:.1} mode: {:?} [{:.2}ms/{:?}]", 1.0 / dt_secs, current_framerate_mode, dt_secs * 1000.0, current_frame_duration);
 		let framerate_color = manager.current_framerate_color();
 		let background_color = manager.background_color();
 
