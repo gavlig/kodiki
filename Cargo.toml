@@ -18,9 +18,9 @@ opt-level = 3
 [features]
 
 default			    = []
-tracing				= ["bevy_egui", "puffin_egui", "bevy_puffin"]
-stats				= ["bevy-debug-text-overlay"]
-debug				= ["bevy_prototype_debug_lines", "bevy_polyline", "bevy-debug-text-overlay"]
+#tracing				= ["bevy_egui", "puffin_egui", "bevy_puffin"]
+#stats				= ["bevy-debug-text-overlay"]
+#debug				= ["bevy_prototype_debug_lines", "bevy_polyline", "bevy-debug-text-overlay"]
 word_spawn_debug	= []
 scroll_offset_debug	= []
 
@@ -42,28 +42,30 @@ futures-lite		= { version = "1.11.3" }
 # BEVY
 #
 
-bevy 				= { version = "0.10", features = ["bevy_render", "wayland"] }
+bevy 				= { version = "0.12", features = ["bevy_render", "wayland"] }
 
-bevy_framepace		= { version = "0.12" }
-bevy_tweening		= { version = "0.7" }
+bevy_framepace		= { version = "0.14" }
+bevy_tweening		= { version = "0.9" }
 
-bevy-debug-text-overlay		= { version = "5.1", optional = true }
-bevy_prototype_debug_lines	= { version = "0.10", optional = true, features = ["3d"] }
-bevy_polyline				= { version = "0.6", optional = true }
+#bevy-debug-text-overlay		= { version = "5.1", optional = true }
+#bevy_prototype_debug_lines	= { version = "0.10", optional = true, features = ["3d"] }
+#bevy_polyline				= { version = "0.6", optional = true }
 
 # modified for kodiki
 
 bevy_contrib_colors = { git = "https://github.com/gavlig/bevy_contrib_colors.git" }
-bevy_reader_camera	= { git = "https://github.com/gavlig/bevy_reader_camera.git", branch = "kodiki_0.1" }
+#bevy_reader_camera	= { git = "https://github.com/gavlig/bevy_reader_camera.git", branch = "kodiki" }
+bevy_reader_camera	= { path = "../bevy_reader_camera/" }
 
-bevy_rapier3d		= { git = "https://github.com/gavlig/bevy_rapier", branch = "kodiki_0.1", features = ["simd-stable", "debug-render"] } # { version = "0.21", features = ["simd-stable", "debug-render"] }
-bevy-vfx-bag		= { git = "https://github.com/gavlig/bevy-vfx-bag.git", branch = "kodiki_0.1", features = ["hdr"], default-features = false } # { version = "0.2.0" } #
+bevy_rapier3d		= { git = "https://github.com/gavlig/bevy_rapier", branch = "kodiki", features = ["simd-stable", "debug-render"] } # { version = "0.21", features = ["simd-stable", "debug-render"] }
+#bevy_rapier3d		= { path = "../bevy_rapier/bevy_rapier3d", features = ["simd-stable", "debug-render"] } # { version = "0.21", features = ["simd-stable", "debug-render"] }
+#bevy-vfx-bag		= { git = "https://github.com/gavlig/bevy-vfx-bag.git", branch = "kodiki_0.1", features = ["hdr"], default-features = false } # { version = "0.2.0" } #
 
 # perf tracing
 
-bevy_egui			= { version = "0.20", optional = true }
-puffin_egui			= { version = "0.20", optional = true }
-bevy_puffin			= { version = "0.4", optional = true }
+#bevy_egui			= { version = "0.20", optional = true }
+#puffin_egui			= { version = "0.20", optional = true }
+#bevy_puffin			= { version = "0.4", optional = true }
 
 # text rendering
 
@@ -74,13 +76,13 @@ lyon				= "1.0.1"   # convert paramteric glyphs to 2d geometry # { path = "../ly
 # HELIX
 #
 
-helix-core			= { git = "https://github.com/gavlig/helix-editor.git", branch = "kodiki_0.1" }
-helix-lsp			= { git = "https://github.com/gavlig/helix-editor.git", branch = "kodiki_0.1" }
-helix-dap			= { git = "https://github.com/gavlig/helix-editor.git", branch = "kodiki_0.1" }
-helix-loader		= { git = "https://github.com/gavlig/helix-editor.git", branch = "kodiki_0.1" }
-helix-view			= { git = "https://github.com/gavlig/helix-editor.git", branch = "kodiki_0.1" }
-helix-term			= { git = "https://github.com/gavlig/helix-editor.git", branch = "kodiki_0.1" }
-helix-tui			= { git = "https://github.com/gavlig/helix-editor.git", branch = "kodiki_0.1" }
+helix-core			= { git = "https://github.com/gavlig/helix-editor.git", branch = "kodiki" }
+helix-lsp			= { git = "https://github.com/gavlig/helix-editor.git", branch = "kodiki" }
+helix-dap			= { git = "https://github.com/gavlig/helix-editor.git", branch = "kodiki" }
+helix-loader		= { git = "https://github.com/gavlig/helix-editor.git", branch = "kodiki" }
+helix-view			= { git = "https://github.com/gavlig/helix-editor.git", branch = "kodiki" }
+helix-term			= { git = "https://github.com/gavlig/helix-editor.git", branch = "kodiki" }
+helix-tui			= { git = "https://github.com/gavlig/helix-editor.git", branch = "kodiki" }
 
 anyhow				= "1"
 signal-hook			= "0.3"
@@ -110,6 +112,8 @@ signal-hook-tokio	= { version = "0.3", features = ["futures-v0_3"] }
 #
 
 [patch.crates-io]
-bevy				= { git = "https://github.com/gavlig/bevy.git", branch = "kodiki_0.1" }
-rapier3d			= { git = "https://github.com/gavlig/rapier.git", branch = "kodiki_0.1" }
+# bevy				= { git = "https://github.com/gavlig/bevy.git", branch = "kodiki_0.1" }
+bevy				= { path = "../bevy" }
+# TODO
+#rapier3d			= { git = "https://github.com/gavlig/rapier.git", branch = "kodiki_0.1" }
 

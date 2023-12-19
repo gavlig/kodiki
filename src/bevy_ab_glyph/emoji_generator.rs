@@ -1,7 +1,7 @@
 use bevy :: {
 	prelude :: *,
 	render :: {
-		texture :: ImageType,
+		texture :: { ImageType, ImageSampler },
 		mesh :: Mesh,
 	}
 };
@@ -35,6 +35,7 @@ fn generate_emoji_image_char(
 		    ImageType::Extension(ext),
 		    compressed_image_formats,
 		    true,
+			ImageSampler::Default,
 		);
 
 		if let Ok(image) = image_result {

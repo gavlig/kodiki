@@ -1577,7 +1577,7 @@ impl Minimap {
 
 
 		commands.entity(click_point_visual_entity)
-			.insert(AssetAnimator::new(color_handle.clone(), tween_fade))
+			.insert(AssetAnimator::new(tween_fade))
 			.insert(Animator::new(tween_scale))
 		;
 

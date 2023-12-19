@@ -19,7 +19,7 @@ pub fn update(
 
 	mut	q_cursor			: Query<(Entity, &mut TextCursor)>,
 	mut q_transform			: Query<&mut Transform>,
-		q_visibility		: Query<&ComputedVisibility>,
+		q_visibility		: Query<&ViewVisibility>,
 ) {
 	profile_function!();
 
@@ -32,7 +32,7 @@ pub fn update(
 
 		let Ok(visibility) = q_visibility.get(cursor_entity) else { continue };
 
-		if visibility.is_visible() {
+		if visibility.get() {
 			cursor.update(
 				&mut cursor_transform,
 				&mut gltf_assets,

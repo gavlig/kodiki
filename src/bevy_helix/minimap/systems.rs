@@ -685,7 +685,6 @@ pub fn input_mouse(
 	mut	q_minimap_scaled_mode	: Query<&mut MinimapScaledMode>,
 	mut q_minimap_viewport		: Query<&mut MinimapViewport>,
 		q_minimap_hovered_line	: Query<(Entity, &MinimapHoveredLine)>,
-		q_material_handle		: Query<&Handle<StandardMaterial>>,
 		q_transform				: Query<&GlobalTransform>,
 		q_camera				: Query<&ReaderCamera>,
 
@@ -737,9 +736,7 @@ pub fn input_mouse(
 			}
 		);
 
-		let material_handle = q_material_handle.get(viewport_entity).unwrap();
-
-		commands.entity(viewport_entity).insert(AssetAnimator::new(material_handle.clone_weak(), tween));
+		commands.entity(viewport_entity).insert(AssetAnimator::new(tween));
 	};
 
 	let restore_viewport_opacity = |minimap: &Minimap, viewport: &mut MinimapViewport, commands: &mut Commands| {
@@ -761,9 +758,9 @@ pub fn input_mouse(
 	};
 
 	let try_to_switch_scaled_mode = |scaled_mode: &mut MinimapScaledMode, turning_on_allowed: bool| -> bool {
-		if key.just_pressed(KeyCode::LControl) && turning_on_allowed {
+		if key.just_pressed(KeyCode::ControlLeft) && turning_on_allowed {
 			scaled_mode.active = true;
-		} else if key.just_released(KeyCode::LControl) {
+		} else if key.just_released(KeyCode::ControlLeft) {
 			scaled_mode.active = false;
 		} else {
 			return false;

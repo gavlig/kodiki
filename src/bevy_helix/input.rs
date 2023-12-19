@@ -135,10 +135,10 @@ pub fn keycode_bevy_to_helix(key_code_bevy: KeyCode, shift : bool) -> Option<Key
 		KeyCode::Z if !shift	=> KeyCodeHelix::Char('z'),
 		KeyCode::Z if  shift	=> KeyCodeHelix::Char('Z'),
 
-		KeyCode::LBracket	if !shift	=> KeyCodeHelix::Char('['),
-		KeyCode::LBracket	if  shift	=> KeyCodeHelix::Char('{'),
-		KeyCode::RBracket	if !shift	=> KeyCodeHelix::Char(']'),
-		KeyCode::RBracket	if  shift	=> KeyCodeHelix::Char('}'),
+		KeyCode::BracketLeft	if !shift	=> KeyCodeHelix::Char('['),
+		KeyCode::BracketLeft	if  shift	=> KeyCodeHelix::Char('{'),
+		KeyCode::BracketRight	if !shift	=> KeyCodeHelix::Char(']'),
+		KeyCode::BracketRight	if  shift	=> KeyCodeHelix::Char('}'),
 		KeyCode::Backslash	if !shift	=> KeyCodeHelix::Char('\\'),
 		KeyCode::Backslash	if  shift	=> KeyCodeHelix::Char('|'),
 		KeyCode::Semicolon	if !shift	=> KeyCodeHelix::Char(';'),
@@ -222,15 +222,15 @@ pub fn keyboard_input_to_keycode_helix(
 pub fn key_code_to_helix_modifiers(key : &Input<KeyCode>) -> KeyModifiers {
 	let mut modifiers = helix_view::keyboard::KeyModifiers::NONE;
 
-	if key.pressed(KeyCode::LAlt) || key.pressed(KeyCode::RAlt) {
+	if key.pressed(KeyCode::AltLeft) || key.pressed(KeyCode::AltRight) {
 		modifiers.insert(helix_view::keyboard::KeyModifiers::ALT);
 	}
 
-	if key.pressed(KeyCode::LControl) || key.pressed(KeyCode::RControl) {
+	if key.pressed(KeyCode::ControlLeft) || key.pressed(KeyCode::ControlRight) {
 		modifiers.insert(helix_view::keyboard::KeyModifiers::CONTROL);
 	}
 
-	if key.pressed(KeyCode::LShift) || key.pressed(KeyCode::RShift) {
+	if key.pressed(KeyCode::ShiftLeft) || key.pressed(KeyCode::ShiftRight) {
 		modifiers.insert(helix_view::keyboard::KeyModifiers::SHIFT);
 	}
 
@@ -340,7 +340,7 @@ pub fn handle_scroll_events(
 	};
 
 	// let pixels_per_line = 53.0;
-	for scroll_event in scroll_events.iter() {
+	for scroll_event in scroll_events.read() {
 		match scroll_event.unit {
 			MouseScrollUnit::Line => {
 				let helix_mouse_event_kind = if scroll_event.y.is_sign_negative() {

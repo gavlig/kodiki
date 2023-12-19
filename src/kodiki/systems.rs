@@ -1,7 +1,7 @@
 use bevy :: {
 	prelude	:: *,
 	gltf	:: Gltf,
-	window	:: { WindowFocused, PrimaryWindow },
+	window	:: PrimaryWindow,
 };
 
 use bevy_reader_camera	:: *;
@@ -123,7 +123,7 @@ pub fn highlight_active_context_switcher(
 	for (app_context_switcher, mut entry, transform, entity) in q_switcher_entry.iter_mut() {
 		match app_context_switcher {
 			AppContextSwitcher::Entry(entry_app_context) => {
-				if *entry_app_context == app_context.0 && !entry.is_active {
+				if entry_app_context == app_context.get() && !entry.is_active {
 					entry.highlight(
 						entity,
 						transform,
@@ -132,7 +132,7 @@ pub fn highlight_active_context_switcher(
 						&mut commands
 					);
 					entry.is_active = true;
-				} else if *entry_app_context != app_context.0 && entry.is_active {
+				} else if entry_app_context != app_context.get() && entry.is_active {
 					entry.unhighlight(
 						entity,
 						transform,
@@ -199,7 +199,7 @@ pub fn keyboard_input(
 	mut next_camera_mode	: ResMut<NextState<AppCameraMode>>,
 	mut next_context		: ResMut<NextState<AppContext>>,
 ) {
-	if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Key9) {
+	if key.pressed(KeyCode::ControlLeft) && key.just_pressed(KeyCode::Key9) {
 		rapier_debug.enabled = !rapier_debug.enabled;
 	}
 
@@ -209,7 +209,7 @@ pub fn keyboard_input(
 		}
 	}
 
-	let ctrl_pressed = key.pressed(KeyCode::LControl) || key.pressed(KeyCode::RControl);
+	let ctrl_pressed = key.pressed(KeyCode::ControlLeft) || key.pressed(KeyCode::ControlRight);
 
 	if ctrl_pressed {
 		// switch to Helix
@@ -273,13 +273,13 @@ fn handle_camera_mode(
 	let fly_mode = camera.mode == CameraMode::Fly;
 
     // Zoom-only Reader mode
-    if key.just_pressed(KeyCode::LControl) && single_key_pressed && !fly_mode {
+    if key.just_pressed(KeyCode::ControlLeft) && single_key_pressed && !fly_mode {
 		camera.set_restrictions(false, false, true, false);
 
 		set_cursor_visibility(true, window);
 
 		next_state.set(AppCameraMode::Reader);
-	} else if key.just_released(KeyCode::LControl) && mode_is_reader && !fly_mode {
+	} else if key.just_released(KeyCode::ControlLeft) && mode_is_reader && !fly_mode {
 		camera.apply_default_restrictions();
 
 		set_cursor_visibility(true, window);
@@ -289,7 +289,7 @@ fn handle_camera_mode(
 
     // Fly mode
 
-	let fly_mode_keys_pressed = key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::Home) && keys_pressed == 2;
+	let fly_mode_keys_pressed = key.pressed(KeyCode::ControlLeft) && key.just_pressed(KeyCode::Home) && keys_pressed == 2;
 	let esc_pressed = key.pressed(KeyCode::Escape);
 
 	if fly_mode_keys_pressed && camera.mode != CameraMode::Fly {
@@ -308,29 +308,29 @@ fn handle_camera_mode(
 	}
 }
 
-pub fn on_window_unfocused(
-	mut focused_events	: EventReader<WindowFocused>,
-	mut q_reader_camera : Query<&mut ReaderCamera>,
-	mut q_window_primary : Query<(Entity, &mut Window), With<PrimaryWindow>>,
+// pub fn on_window_unfocused(
+// 	mut focused_events	: EventReader<WindowFocused>,
+// 	mut q_reader_camera : Query<&mut ReaderCamera>,
+// 	mut q_window_primary : Query<(Entity, &mut Window), With<PrimaryWindow>>,
 
-	mut	next_state : ResMut<NextState<AppCameraMode>>,
-) {
-	let (window_entity, mut window) = if let Ok((e, w)) = q_window_primary.get_single_mut() { (e, w) } else { return };
+// 	mut	next_state : ResMut<NextState<AppCameraMode>>,
+// ) {
+// 	let (window_entity, mut window) = if let Ok((e, w)) = q_window_primary.get_single_mut() { (e, w) } else { return };
 
-	let Ok(mut camera) = q_reader_camera.get_single_mut() else { return };
+// 	let Ok(mut camera) = q_reader_camera.get_single_mut() else { return };
 
-	for e in focused_events.iter() {
-		if e.window != window_entity || e.focused == true {
-			continue;
-		}
+// 	for e in focused_events.iter() {
+// 		if e.window != window_entity || e.focused == true {
+// 			continue;
+// 		}
 
-		camera.mode = CameraMode::Reader;
-		camera.set_restrictions(false, false, false, true);
-		set_cursor_visibility(true, &mut window);
+// 		camera.mode = CameraMode::Reader;
+// 		camera.set_restrictions(false, false, false, true);
+// 		set_cursor_visibility(true, &mut window);
 
-		next_state.set(AppCameraMode::Main);
-	}
-}
+// 		next_state.set(AppCameraMode::Main);
+// 	}
+// }
 
 pub fn update_window_title(
 	mut q_window_primary	: Query<&mut Window, With<PrimaryWindow>>,
@@ -340,7 +340,7 @@ pub fn update_window_title(
 ) {
 	let Ok(mut window) = q_window_primary.get_single_mut() else { return };
 
-	match app_context.0 {
+	match app_context.get() {
 		AppContext::CodeEditor => {
 			let Some(helix_app) = helix_app_option else { return };
 			if helix_app.should_render() {
@@ -429,15 +429,22 @@ pub fn font_asset_loading_events(
 ) {
 	let fonts_were_loaded = font_handles.loaded();
 
-	for ev in ev_asset.iter() {
+	for ev in ev_asset.read() {
 		match ev {
-			AssetEvent::Created { handle: _ } => {
+			AssetEvent::LoadedWithDependencies { id } => {
 				font_handles.loaded_cnt += 1;
+				
+				if id == &font_handles.main.id() {
+					println!("main font loaded! (fonts/UbuntuMonoNerdFont-Regular.ttf)");
+				} else if id == &font_handles.emoji.id() {
+					println!("emoji font loaded! (fonts/NotoColorEmoji.ttf)");
+				} else if let Some(fallback_handle) = font_handles.fallback.first() {
+					if id == &fallback_handle.id() {
+						println!("fallback font loaded! (fonts/DejaVuSerif.ttf)");
+					}
+				}
 			}
-			AssetEvent::Modified { handle: _ } => {
-			}
-			AssetEvent::Removed { handle: _ } => {
-			}
+			_ => {},
 		}
 	}
 
@@ -452,17 +459,14 @@ pub fn gltf_asset_loading_events(
 ) {
 	let cursor_was_loaded = cursor_asset.loaded;
 
-	for ev in ev_asset.iter() {
+	for ev in ev_asset.read() {
 		match ev {
-			AssetEvent::Created { handle: h } => {
-				if cursor_asset.handle == *h {
+			AssetEvent::LoadedWithDependencies { id } => {
+				if cursor_asset.handle.id() == *id {
 					cursor_asset.loaded = true;
 				}
-			}
-			AssetEvent::Modified { handle: _ } => {
-			}
-			AssetEvent::Removed { handle: _ } => {
-			}
+			},
+			_ => {}
 		}
 	}
 

@@ -160,12 +160,12 @@ impl Plugin for KodikiUIPlugin {
 			.insert_resource(Popups					:: default())
 
 			// raypick relies on camera transform so it has to be calculated only after camera gets updated
-			.add_system(
-				raypick::systems::cast_raypick
-					.in_base_set(CoreSet::PreUpdate)
-					.after(ReaderCameraUpdate)
+			.add_systems(
+				PreUpdate,
+				raypick::systems::cast_raypick.after(ReaderCameraUpdate)
 			)
 			.add_systems(
+				Update,
 				(
 					systems::process_string_spawn_requests,
 					systems::cleanup_string_mesh_attached,
@@ -175,6 +175,7 @@ impl Plugin for KodikiUIPlugin {
 				).in_set(KodikiUISystems)
 			)
 			.add_systems(
+				Update,
 				(
 					text_background_quad::systems::update_color,
 					text_background_quad::systems::update_transform,

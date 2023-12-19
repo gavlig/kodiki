@@ -232,14 +232,14 @@ impl BevyWezTerm {
 		if let Some(key_code_bevy) = keyboard_input.key_code {
 			// ignore modifier only key codes
 			match key_code_bevy {
-				KeyCodeBevy::LControl | KeyCodeBevy::RControl |
-				KeyCodeBevy::LAlt | KeyCodeBevy::RAlt |
-				KeyCodeBevy::LShift | KeyCodeBevy::RShift => return Ok(()),
+				KeyCodeBevy::ControlLeft | KeyCodeBevy::ControlRight |
+				KeyCodeBevy::AltLeft | KeyCodeBevy::AltRight |
+				KeyCodeBevy::ShiftLeft | KeyCodeBevy::ShiftRight => return Ok(()),
 				_ => ()
 			};
 
 			// ignore ctrl+1..0 as those are used for context switching
-			if input_key.pressed(KeyCode::LControl) || input_key.pressed(KeyCode::RControl) {
+			if input_key.pressed(KeyCode::ControlLeft) || input_key.pressed(KeyCode::ControlRight) {
 				match key_code_bevy {
 					KeyCode::Key1 | KeyCode::Key2 | KeyCode::Key3 | KeyCode::Key4 | KeyCode::Key5 |
 					KeyCode::Key6 | KeyCode::Key7 | KeyCode::Key8 | KeyCode::Key9 | KeyCode::Key0 => return Ok(()),
@@ -299,14 +299,16 @@ impl Plugin for BevyWezTermPlugin {
 			// actions are obtained from pty that gets polled in an independent thread
 			// we want to poll the buffer of actions in every mode, not just terminal so that buffer doesnt
 			// get overflown and in general to keep terminal state always updated regardless if its focused or not
-			.add_system(
-				systems::update_actions.in_set(OnUpdate(AppMode::Main))
+			.add_systems(
+				Update,
+				systems::update_actions.run_if(in_state(AppMode::Main))
 			)
 			// all terminal systems chained into a sequence
 			// apply_system_buffers + .before(KodikiCommonSystems) guarantees that we avoid desync
 			// between setting state for KodikiUI to render and rendering itself
 			// TODO: decouple from app
 			.add_systems(
+				Update,
 				(
 					systems::update_text_surface,
 					systems::update_resizer,
@@ -316,19 +318,21 @@ impl Plugin for BevyWezTermPlugin {
 					systems::mouse,
 					systems::mouse_goto_path,
 
-					apply_system_buffers
+					apply_deferred
 				)
 				.chain()
 				.before(KodikiUISystems)
-				.in_set(OnUpdate(AppContext::Terminal))
+				.run_if(in_state(AppContext::Terminal))
 			)
 
-			.add_system(
-				systems::on_context_switch_out.in_schedule(OnExit(AppContext::Terminal))
+			.add_systems(
+				OnExit(AppContext::Terminal),
+				systems::on_context_switch_out
 			)
 
-			.add_system(
-				systems::on_context_switch_in.in_schedule(OnEnter(AppContext::Terminal))
+			.add_systems(
+				OnEnter(AppContext::Terminal),
+				systems::on_context_switch_in
 			)
 		;
 	}

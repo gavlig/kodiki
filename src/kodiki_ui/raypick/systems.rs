@@ -10,7 +10,7 @@ pub fn cast_raypick(
 		q_camera		: Query<(&Camera, &GlobalTransform), With<ReaderCamera>>,
 	mut	q_hover			: Query<&mut RaypickHover>,
 		q_parent		: Query<&Parent>,
-		q_visibility	: Query<&ComputedVisibility>,
+		q_visibility	: Query<&ViewVisibility>,
 		q_window_primary : Query<&Window, With<PrimaryWindow>>,
 ) {
 	let window = if let Ok(w) = q_window_primary.get_single() { w } else { return; };
@@ -59,7 +59,7 @@ pub fn cast_raypick(
 		// we want to avoid hitting invisible entities so check Visibility
 
 		let visible = if let Ok(visibility) = q_visibility.get(hit_entity) {
-			visibility.is_visible()
+			visibility.get()
 		} else {
 			// entities with Hover but without Visibility are likely children of a complex entity with visible part separated
 			// so we want to keep finding them

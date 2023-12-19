@@ -236,42 +236,50 @@ impl Plugin for BevyHelixPlugin {
 			// Long chain of consecutive system sets representing most of the stuff that happens during the frame
 			//
 
-			.configure_set(
-				TweenEvents.in_base_set(CoreSet::Update)
+			.configure_sets(
+				Update,
+				TweenEvents
 				.run_if(run_condition::text_editor_context)
 			)
-			.configure_set(
-				HelixInput.in_base_set(CoreSet::Update)
+			.configure_sets(
+				Update,
+				HelixInput
 				.after(TweenEvents)
 				.run_if(run_condition::text_editor_context_no_fly)
 			)
-			.configure_set(
-				HelixRender.in_base_set(CoreSet::Update)
+			.configure_sets(
+				Update,
+				HelixRender
 				.after(HelixInput)
 				.run_if(run_condition::text_editor_context)
 			)
-			.configure_set(
-				ManageSurfaces.in_base_set(CoreSet::Update)
+			.configure_sets(
+				Update,
+				ManageSurfaces
 				.after(HelixRender)
 				.run_if(run_condition::text_editor_context_no_fly)
 			)
-			.configure_set(
-				UpdateCursor.in_base_set(CoreSet::Update)
+			.configure_sets(
+				Update,
+				UpdateCursor
 				.after(ManageSurfaces)
 				.run_if(run_condition::text_editor_context_no_fly)
 			)
-			.configure_set(
-				UpdateMain.in_base_set(CoreSet::Update)
+			.configure_sets(
+				Update,
+				UpdateMain
 				.after(UpdateCursor)
 				.run_if(run_condition::text_editor_context)
 			)
-			.configure_set(
-				UpdateSecondary.in_base_set(CoreSet::Update)
+			.configure_sets(
+				Update,
+				UpdateSecondary
 				.after(UpdateMain)
 				.run_if(run_condition::text_editor_context_no_fly)
 			)
-			.configure_set(
-				ContextSwitch.in_base_set(CoreSet::Update)
+			.configure_sets(
+				Update,
+				ContextSwitch
 				.after(UpdateSecondary)
 				.before(KodikiUISystems)
 				.run_if(run_condition::main_app_mode)
@@ -282,20 +290,22 @@ impl Plugin for BevyHelixPlugin {
 			//
 
 			.add_systems(
+				OnExit(AppMode::AssetsLoaded),
 				(
 					systems::startup_app,
 					systems::startup_spawn
 				)
 				.chain()
-				.in_schedule(OnExit(AppMode::AssetsLoaded))
 			)
 			.add_systems(
+				Update,
 				(
 					systems::helix_mode_tween_events,
 					minimap::systems::update_click_point
 				).in_set(TweenEvents)
 			)
 			.add_systems(
+				Update,
 				(
 					systems::input_mouse,
 					systems::input_keyboard,
@@ -308,6 +318,7 @@ impl Plugin for BevyHelixPlugin {
 				).in_set(HelixInput)
 			)
 			.add_systems(
+				Update,
 				(
 					systems::camera_update,
 					systems::render_helix
@@ -316,12 +327,14 @@ impl Plugin for BevyHelixPlugin {
 				.in_set(HelixRender)
 			)
 			.add_systems(
+				Update,
 				(
 					systems::manage_surfaces,
 					systems::manage_cursors
 				).in_set(ManageSurfaces)
 			)
-			.add_system(
+			.add_systems(
+				Update,
 				systems::update_cursor
 				.in_set(UpdateCursor)
 			)
@@ -330,6 +343,7 @@ impl Plugin for BevyHelixPlugin {
 
 			// these are order dependant so isolated from the rest of UpdateMain
 			.add_systems(
+				Update,
 				(
 					surface::systems::update,
 					surface::systems::spawn_words,
@@ -339,6 +353,7 @@ impl Plugin for BevyHelixPlugin {
 				.in_set(UpdateMain)
 			)
 			.add_systems(
+				Update,
 				(
 					systems::update_background_color,
 					systems::update_search_matches,
@@ -351,6 +366,7 @@ impl Plugin for BevyHelixPlugin {
 
 			// UpdateSecondary START
 			.add_systems(
+				Update,
 				(
 					systems::helix_mode_effect,
 					systems::update_debug_stats,
@@ -368,6 +384,7 @@ impl Plugin for BevyHelixPlugin {
 			)
 			// same set as above split in two because it's too big and doesnt compile
 			.add_systems(
+				Update,
 				(
 					minimap::systems::update_bookmarks,
 					minimap::systems::update_diagnostics_highlights,
@@ -382,40 +399,41 @@ impl Plugin for BevyHelixPlugin {
 			// UpdateSecondary END
 
 			.add_systems(
+				Update,
 				(
 					component_animator_system::<MinimapScrollAnimation>,
 				).in_set(AnimationSystem::AnimationUpdate)
 			)
 			.add_systems(
+				OnExit(AppContext::CodeEditor),
 				(
 					systems::on_context_switch_out,
 				)
 				.in_set(ContextSwitch)
-				.in_schedule(OnExit(AppContext::CodeEditor))
 			)
 			.add_systems(
+				OnEnter(AppContext::CodeEditor),
 				(
 					systems::on_context_switch_in,
 				)
 				.in_set(ContextSwitch)
-				.in_schedule(OnEnter(AppContext::CodeEditor))
 			)
 
 			// independent systems
 			.add_systems(
+				PostUpdate,
 				(
 					systems::animations_keepalive,
 					systems::animations_cleanup_components,
 				)
-				.in_base_set(CoreSet::PostUpdate)
 			)
 			// tokio events processing is kept alive even when Helix is not in focus to keep Helix updated
-			.add_system(
-				systems::tokio_events.in_set(OnUpdate(AppMode::Main))
-			)
-
-			.add_system(systems::on_window_close_requested)
-			.add_system(systems::exit_app)
+			.add_systems(
+				Update, (
+				systems::tokio_events.run_if(in_state(AppMode::Main)),
+				systems::on_window_close_requested,
+				systems::exit_app,
+			))
  		;
 	}
 }

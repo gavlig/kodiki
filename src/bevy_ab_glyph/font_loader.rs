@@ -1,7 +1,9 @@
 use std :: path :: PathBuf;
 use std :: sync :: Arc;
 
-use bevy :: asset :: { AssetLoader, BoxedFuture, LoadContext, LoadedAsset };
+use bevy :: asset :: { AssetLoader, BoxedFuture, LoadContext, io::Reader };
+
+use futures_lite :: AsyncReadExt;
 
 use ab_glyph :: FontVec;
 
@@ -11,12 +13,20 @@ use super :: ABGlyphFont;
 pub struct FontLoader;
 
 impl AssetLoader for FontLoader {
+	type Asset = ABGlyphFont;
+    type Settings = ();
+	type Error = anyhow::Error;
+
 	fn load<'a>(
 		&'a self,
-		bytes: &'a [u8],
+		reader: &'a mut Reader,
+		_settings: &'a Self::Settings,
 		load_context: &'a mut LoadContext,
-	) -> BoxedFuture<'a, anyhow::Result<()>> {
+	) -> BoxedFuture<'a, Result<Self::Asset, Self::Error>> {
 		Box::pin(async move {
+			let mut bytes = Vec::new();
+			reader.read_to_end(&mut bytes).await?;
+
 			let f = FontVec::try_from_vec(bytes.to_vec())?;
 			let font = ABGlyphFont {
 				f:			Arc::new(f),
@@ -26,9 +36,7 @@ impl AssetLoader for FontLoader {
 				tolerance:  1.0,
 			};
 
-			load_context.set_default_asset(LoadedAsset::new(font));
-
-			Ok(())
+			Ok(font)
 		})
 	}
 

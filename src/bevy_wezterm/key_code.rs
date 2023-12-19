@@ -126,10 +126,10 @@ impl BevyWezTerm {
 			KeyCodeBevy::Z if !shift	=> KeyCodeWezTerm::Char('z'),
 			KeyCodeBevy::Z if  shift	=> KeyCodeWezTerm::Char('Z'),
 
-			KeyCodeBevy::LBracket	if !shift	=> KeyCodeWezTerm::Char('['),
-			KeyCodeBevy::LBracket	if  shift	=> KeyCodeWezTerm::Char('{'),
-			KeyCodeBevy::RBracket	if !shift	=> KeyCodeWezTerm::Char(']'),
-			KeyCodeBevy::RBracket	if  shift	=> KeyCodeWezTerm::Char('}'),
+			KeyCodeBevy::BracketLeft	if !shift	=> KeyCodeWezTerm::Char('['),
+			KeyCodeBevy::BracketLeft	if  shift	=> KeyCodeWezTerm::Char('{'),
+			KeyCodeBevy::BracketRight	if !shift	=> KeyCodeWezTerm::Char(']'),
+			KeyCodeBevy::BracketRight	if  shift	=> KeyCodeWezTerm::Char('}'),
 			KeyCodeBevy::Backslash	if !shift	=> KeyCodeWezTerm::Char('\\'),
 			KeyCodeBevy::Backslash	if  shift	=> KeyCodeWezTerm::Char('|'),
 			KeyCodeBevy::Semicolon	if !shift	=> KeyCodeWezTerm::Char(';'),
@@ -193,13 +193,13 @@ impl BevyWezTerm {
 		for pressed in key.get_pressed() {
 			let modifier = match pressed {
 				// making left/right distinction breaks wezterm logic, so using generic ctrl,alt,shift instead
-				KeyCodeBevy::LAlt        => ModifiersWezTerm::ALT,
-				KeyCodeBevy::RAlt        => ModifiersWezTerm::ALT,
-				KeyCodeBevy::LControl    => ModifiersWezTerm::CTRL,
-				KeyCodeBevy::RControl    => ModifiersWezTerm::CTRL,
-				KeyCodeBevy::LShift      => ModifiersWezTerm::SHIFT,
-				KeyCodeBevy::RShift      => ModifiersWezTerm::SHIFT,
-				_                        => ModifiersWezTerm::NONE,
+				KeyCodeBevy::AltLeft		=> ModifiersWezTerm::ALT,
+				KeyCodeBevy::AltRight		=> ModifiersWezTerm::ALT,
+				KeyCodeBevy::ControlLeft	=> ModifiersWezTerm::CTRL,
+				KeyCodeBevy::ControlRight	=> ModifiersWezTerm::CTRL,
+				KeyCodeBevy::ShiftLeft		=> ModifiersWezTerm::SHIFT,
+				KeyCodeBevy::ShiftRight		=> ModifiersWezTerm::SHIFT,
+				_                        	=> ModifiersWezTerm::NONE,
 			};
 			modifiers.insert(modifier);
 		}

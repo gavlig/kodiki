@@ -134,7 +134,6 @@ pub fn startup_spawn(
 
 	(mut mesh_assets, mut material_assets) : (ResMut<Assets<Mesh>>, ResMut<Assets<StandardMaterial>>),
 
-	bevy_helix_settings	: Res<BevyHelixSettings>,
 	mut commands		: Commands,
 		app_option		: Option<NonSendMut<HelixApp>>,
 ) {
@@ -231,7 +230,6 @@ pub fn render_helix(
 	// surface area depends on camera frustum
 	app.resize_editor_height(reader_camera.visible_rows.ceil() as u16 + 1); // + 1 to make sure we don't show empty rows on camera when scrolling
 	app.resize_screen_width	(reader_camera.visible_columns.floor() as u16);
-
 	app.render(&mut surfaces_helix);
 }
 
@@ -756,9 +754,9 @@ pub fn mouse_goto_definition(
 
 	profile_function!();
 
-	let ctrl_pressed	= key.pressed(KeyCode::LControl);
-	let alt_pressed		= key.pressed(KeyCode::LAlt);
-	let shift_pressed	= key.pressed(KeyCode::LShift);
+	let ctrl_pressed	= key.pressed(KeyCode::ControlLeft) || key.pressed(KeyCode::ControlRight);
+	let alt_pressed		= key.pressed(KeyCode::AltLeft) || key.pressed(KeyCode::AltRight);
+	let shift_pressed	= key.pressed(KeyCode::ShiftLeft) || key.pressed(KeyCode::ShiftRight);
 
 	let fonts			= ABGlyphFonts::new(&font_assets, &font_handles);
 	let row_height		= fonts.main.vertical_advance();
@@ -1111,7 +1109,7 @@ pub fn input_keyboard(
 
 	// sending all keyboard events to Helix
 
-	for keyboard_input in keyboard_events.iter() {
+	for keyboard_input in keyboard_events.read() {
 		if let Some(keycode_bevy) = keyboard_input.key_code {
 			match keycode_bevy {
 				// ignore up and down arrows because they are processed via Input<KeyCode>
@@ -1120,7 +1118,7 @@ pub fn input_keyboard(
 				// ignore ctrl+1..0 as those are used for context switching
 				KeyCode::Key1 | KeyCode::Key2 | KeyCode::Key3 | KeyCode::Key4 | KeyCode::Key5 |
 				KeyCode::Key6 | KeyCode::Key7 | KeyCode::Key8 | KeyCode::Key9 | KeyCode::Key0
-				if key.pressed(KeyCode::LControl) || key.pressed(KeyCode::RControl) => continue,
+				if key.pressed(KeyCode::ControlLeft) || key.pressed(KeyCode::ControlRight) => continue,
 				_ => (),
 			}
 		}
@@ -1133,9 +1131,9 @@ pub fn input_keyboard(
 	// bevy_helix specific controls
 
 	// inlay hints
-	if key.pressed(KeyCode::LControl) && key.just_pressed(KeyCode::LAlt){
+	if key.pressed(KeyCode::ControlLeft) && key.just_pressed(KeyCode::AltLeft){
 		app.enable_inlay_hints();
-	} else if key.just_released(KeyCode::LControl) || key.just_released(KeyCode::LAlt) {
+	} else if key.just_released(KeyCode::ControlLeft) || key.just_released(KeyCode::AltLeft) {
 		app.disable_inlay_hints();
 	}
 }
@@ -1249,7 +1247,7 @@ pub fn on_window_close_requested(
 
 	let primary_window_entity = q_window_primary.single_mut();
 
-	for e in close_req_events.iter() {
+	for e in close_req_events.read() {
 		if e.window != primary_window_entity {
 			continue;
 		}

@@ -84,70 +84,77 @@ impl Plugin for KodikiPlugin {
 
 			.insert_resource(DespawnResource::default())
 
-			.configure_set(
-				BevyFramerateManagerSystems.in_base_set(CoreSet::Update)
+			.configure_sets(
+				Update,
+				BevyFramerateManagerSystems
 				.run_if(run_condition::main_app_mode_no_fly)
 			)
 
-			.configure_set(
-				KodikiUISystems.in_base_set(CoreSet::Update)
+			.configure_sets(
+				Update,
+				KodikiUISystems
 				.after(BevyFramerateManagerSystems)
 				.run_if(run_condition::main_app_mode_no_fly)
 			)
 
-			.add_startup_system(systems::load_assets)
-
 			// asset loading
+			.add_systems(Startup, systems::load_assets)
 			.add_systems(
+				Update,
 				(
 					systems::font_asset_loading_events,
 					systems::gltf_asset_loading_events,
 					systems::asset_loading_tracking,
-				).in_set(OnUpdate(AppMode::AssetLoading))
+				).run_if(in_state(AppMode::AssetLoading))
 			)
 
 			// setup systems, run only once
 			.add_systems(
+				OnEnter(AppMode::AssetsLoaded),
 				(
 					systems::setup_world,
-				).in_schedule(OnEnter(AppMode::AssetsLoaded))
+				)
 			)
 			.add_systems(
+				OnEnter(AppContext::Terminal),
 				(
 					systems::spawn_first_terminal,
-				).in_schedule(OnEnter(AppContext::Terminal))
+				)
 			)
 
 			// generic app systems
 			.add_systems(
+				Update,
 				(
 					systems::kodiki_ui_sync,
 					systems::keyboard_input,
 					systems::stats,
 					systems::process_clicked_terminal_path,
 					systems::update_window_title
-				).in_set(OnUpdate(AppMode::Main))
+				).run_if(in_state(AppMode::Main))
 			)
 			// context switching
 			.add_systems(
+				Update,
 				(
 					systems::apply_context_switcher_state,
 					systems::highlight_active_context_switcher,
 				)
 				.chain()
-				.in_set(OnUpdate(AppMode::Main))
+				.run_if(in_state(AppMode::Main))
 			)
 			// workaround for stuck alt when switching desktop with ctrl+alt+X
-			.add_system(systems::on_window_unfocused.in_set(OnUpdate(AppCameraMode::Fly)))
+			// .add_system(systems::on_window_unfocused.in_set(OnUpdate(AppCameraMode::Fly)))
 			// bevy_tweening animator systems
 			.add_systems(
+				Update,
 				(
 					asset_animator_system::<StandardMaterial>,
 					component_animator_system::<Mask>,
 				).in_set(AnimationSystem::AnimationUpdate)
 			)
 			// unified despawning through a resource
-			.add_system(systems::despawn.in_base_set(CoreSet::PostUpdate))
+			.add_systems(PostUpdate, systems::despawn)
  		;
 	}
 }

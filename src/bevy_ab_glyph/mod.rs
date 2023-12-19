@@ -4,20 +4,23 @@ use bevy :: utils	:: HashMap;
 
 use ab_glyph :: { Font, FontVec, GlyphId };
 
-use std :: path :: PathBuf;
+use std :: {
+	path :: PathBuf,
+	sync :: Arc,
+};
 
-use std :: sync :: Arc;
-
-mod font_loader;
 mod generator_common;
+pub mod font_loader;
 pub mod glyph_image_generator;
 pub mod glyph_mesh_generator;
 pub mod emoji_generator;
 
+pub use font_loader :: FontLoader;
+
 use glyph_mesh_generator :: generate_string_mesh_wcache;
 use emoji_generator :: generate_emoji_mesh_wcache;
 
-#[derive(TypeUuid, Debug)]
+#[derive(Asset, TypePath, TypeUuid, Debug)]
 #[uuid = "1a92e0e6-6915-11ed-9022-0242ac120002"]
 pub struct ABGlyphFont {
 	pub f			: Arc<FontVec>,
@@ -141,7 +144,7 @@ impl ABGlyphFonts<'_> {
 
 		let mut fallback = Vec::new();
 		for handle in font_handles.fallback.iter() {
-			fallback.push(font_assets.get(&handle).unwrap());
+			fallback.push(font_assets.get(handle.id()).unwrap());
 		}
 
 		ABGlyphFonts {
@@ -294,12 +297,13 @@ pub struct ABGlyphPlugin;
 impl Plugin for ABGlyphPlugin {
 	fn build(&self, app: &mut App) {
 		app
+			.register_asset_loader(FontLoader)
+		    .init_asset::<ABGlyphFont>()
+
 			.insert_resource	(GlyphMeshesCache::default())
 			.insert_resource	(TextMeshesCache::default())
 			.insert_resource	(FontAssetHandles::default())
 			.insert_resource	(EmojiMaterialsCache::default())
-			.add_asset          :: <ABGlyphFont>()
-			.init_asset_loader  :: <font_loader::FontLoader>()
 
 //			.add_system         (mesh_generator::ab_glyph_curve_debug_system)
 			;

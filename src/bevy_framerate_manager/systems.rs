@@ -60,7 +60,7 @@ pub fn update(
 				bevy::winit::UpdateMode::Continuous | bevy::winit::UpdateMode::Reactive { .. } => {
 					panic!("in FramerateMode::Idle winit_settings.focused_mode should only be UpdateMode::ReactiveLowPower!");
 				},
-				bevy::winit::UpdateMode::ReactiveLowPower { max_wait, .. } => max_wait
+				bevy::winit::UpdateMode::ReactiveLowPower { wait, .. } => wait
 			}
 		},
 		_ => {
@@ -139,7 +139,7 @@ pub fn update(
 			// and allows user interactions to trigger instant updates instead of waiting for idle timer to finish
 			FramerateMode::Idle => {
 				winit_settings.focused_mode = bevy::winit::UpdateMode::ReactiveLowPower {
-					max_wait: new_frame_duration,
+					wait: new_frame_duration,
 					ignore_cursor_movement: true
 				};
 

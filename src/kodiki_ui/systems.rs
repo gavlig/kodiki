@@ -204,7 +204,7 @@ pub fn update_hotkey_hints(
 		kodiki_ui		: Res<KodikiUI>,
 	mut commands		: Commands
 ) {
-	let ctrl_pressed = key.pressed(KeyCode::LControl);
+	let ctrl_pressed = key.pressed(KeyCode::ControlLeft);
 	let hint_text_color = if kodiki_ui.dark_theme { Color::ANTIQUE_WHITE } else { Color::DARK_GRAY };
 
 	for (owner_entity, mut hint) in q_hint.iter_mut() {

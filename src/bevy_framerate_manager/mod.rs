@@ -656,26 +656,29 @@ impl Plugin for BevyFramerateManagerPlugin {
 			.insert_resource(FramerateDebug::default())
 
 			// animate tweens only with adequate fps
-			.configure_set(
-				AnimationSystem::AnimationUpdate.in_base_set(CoreSet::Update)
+			.configure_sets(
+				Update,
+				AnimationSystem::AnimationUpdate
 				.run_if(conditions::animations_allowed)
 			)
 
 			.add_systems(
+				Update,
 				(
 					systems::visualize,
 					systems::update,
 					systems::mouse_input,
-					apply_system_buffers
+					apply_deferred
 				)
 				.chain()
 				.in_set(BevyFramerateManagerSystems)
 			)
 			.add_systems(
+				PostUpdate,
 				(
 					systems::animations_keepalive,
 					systems::animations_cleanup_components,
-				).in_base_set(CoreSet::PostUpdate)
+				)
 			)
 		;
 	}

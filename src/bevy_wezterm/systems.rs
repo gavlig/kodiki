@@ -276,13 +276,13 @@ pub fn update_background_color(
 pub fn update_cursor(
 	mut q_cursor 		: Query<(Entity, &mut TextCursor)>,
 		q_terminal		: Query<&BevyWezTerm>,
-	mut	q_visibility	: Query<(&mut Visibility, &ComputedVisibility)>,
+	mut	q_visibility	: Query<(&mut Visibility, &ViewVisibility)>,
 ) {
 	use termwiz::surface::CursorVisibility;
 
 	for terminal in q_terminal.iter() {
-		let Ok((cursor_entity, mut cursor))				= q_cursor.get_mut(terminal.cursor_entity)	else { continue };
-		let Ok((mut visibility, computed_visibility))	= q_visibility.get_mut(cursor_entity)		else { continue };
+		let Ok((cursor_entity, mut cursor))			= q_cursor.get_mut(terminal.cursor_entity)	else { continue };
+		let Ok((mut visibility, view_visibility))	= q_visibility.get_mut(cursor_entity)		else { continue };
 
 		let cursor_pos_wez = terminal.wez_state.cursor_pos();
 
@@ -291,7 +291,7 @@ pub fn update_cursor(
 
 		let target_visibility = wez_visible && !out_of_range;
 
-		if computed_visibility.is_visible() != target_visibility {
+		if view_visibility.get() != target_visibility {
 			*visibility = if target_visibility { Visibility::Inherited } else { Visibility::Hidden };
 		}
 
@@ -361,7 +361,7 @@ pub fn keyboard(
 ) {
 	let Ok(mut terminal) = q_terminal.get_single_mut() else { return };
 
-	for keyboard_event in keyboard_events.iter() {
+	for keyboard_event in keyboard_events.read() {
 		let _res = terminal.key_up_down(
 			keyboard_event,
 			&input_key,
@@ -463,7 +463,7 @@ pub fn mouse(
 
 	let scroll_multiplier = 3.0;
 
-	for scroll_event in scroll_events.iter() {
+	for scroll_event in scroll_events.read() {
 		let x = scroll_event.x;
 		let y = scroll_event.y;
 
@@ -542,9 +542,9 @@ pub fn mouse_goto_path(
 ) {
 	profile_function!();
 
-	let ctrl_pressed	= key.pressed(KeyCode::LControl);
-	let alt_pressed		= key.pressed(KeyCode::LAlt);
-	let shift_pressed	= key.pressed(KeyCode::LShift);
+	let ctrl_pressed	= key.pressed(KeyCode::ControlLeft) || key.pressed(KeyCode::ControlRight);
+	let alt_pressed		= key.pressed(KeyCode::AltLeft) || key.pressed(KeyCode::AltRight);
+	let shift_pressed	= key.pressed(KeyCode::ShiftLeft) || key.pressed(KeyCode::ShiftRight);
 
 	let fonts			= ABGlyphFonts::new(&font_assets, &font_handles);
 	let row_height		= fonts.main.vertical_advance();

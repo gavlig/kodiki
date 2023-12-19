@@ -65,7 +65,7 @@ fn main() {
 
 	primary_window.set_maximized(true);
 
-	app.add_plugins(
+	app.add_plugins((
 		DefaultPlugins
 		.set(WindowPlugin {
 				primary_window : Some(primary_window),
@@ -76,29 +76,29 @@ fn main() {
 		.set(TaskPoolPlugin {
 			task_pool_options: TaskPoolOptions::with_num_threads(2),
 		})
-		.disable::<LogPlugin>()
-	)
+		.disable::<LogPlugin>(),
+	
+		FramepacePlugin,
+		RapierPhysicsPlugin::<NoUserData>::default(),
+		RapierDebugRenderPlugin::default(),
 
-	.add_plugin(FramepacePlugin)
-	.add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
-	.add_plugin(RapierDebugRenderPlugin::default())
+		KodikiUIPlugin,
+		KodikiPlugin,
+		ABGlyphPlugin,
+		BevyFramerateManagerPlugin,
+		BevyHelixPlugin,
+		BevyWezTermPlugin,
 
-	.add_plugin(KodikiUIPlugin)
-	.add_plugin(KodikiPlugin)
-	.add_plugin(ABGlyphPlugin)
-	.add_plugin(BevyFramerateManagerPlugin)
-	.add_plugin(BevyHelixPlugin)
-	.add_plugin(BevyWezTermPlugin)
-
-	.add_plugin(ReaderCameraPlugin)
-	.add_plugin(TweeningPlugin)
-	.add_plugin(BevyVfxBagPlugin::default())
+		ReaderCameraPlugin,
+		TweeningPlugin,
+	))
+		
 
 	.insert_resource(WinitSettings {
 		focused_mode: bevy::winit::UpdateMode::Continuous,
 		unfocused_mode: bevy::winit::UpdateMode::ReactiveLowPower {
-			max_wait: Duration::from_millis(300),
-			ignore_cursor_movement: false
+			wait: Duration::from_millis(300),
+			ignore_cursor_movement: true
 		},
 		..default()
 	});
