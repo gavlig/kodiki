@@ -15,7 +15,7 @@ use bevy_rapier3d :: prelude :: { RapierPhysicsPlugin, RapierDebugRenderPlugin, 
 use bevy_framepace		:: FramepacePlugin;
 use bevy_reader_camera	:: ReaderCameraPlugin;
 use bevy_tweening		:: TweeningPlugin;
-use bevy_vfx_bag		:: BevyVfxBagPlugin;
+// use bevy_vfx_bag		:: BevyVfxBagPlugin;
 
 #[cfg(feature = "stats")]
 use bevy_debug_text_overlay	:: { OverlayPlugin, screen_print };
@@ -91,6 +91,7 @@ fn main() {
 
 		ReaderCameraPlugin,
 		TweeningPlugin,
+		// BevyVfxBagPlugin::default()
 	))
 		
 

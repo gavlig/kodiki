@@ -6,7 +6,7 @@ use bevy_framepace				:: { FramepaceSettings, Limiter };
 use bevy_reader_camera			:: ReaderCamera;
 use bevy_tweening				:: *;
 
-use bevy_vfx_bag :: post_processing :: masks :: Mask;
+// use bevy_vfx_bag :: post_processing :: masks :: Mask;
 
 #[cfg(feature = "debug")]
 use bevy_prototype_debug_lines	:: *;
@@ -265,7 +265,7 @@ pub fn visualize(
 pub fn animations_keepalive(
 		q_transform			: Query<&Animator<Transform>>,
 		q_standard_material	: Query<&AssetAnimator<StandardMaterial>>,
-		q_mask				: Query<&Animator<Mask>>,
+		// q_mask				: Query<&Animator<Mask>>,
 	mut framerate_manager	: ResMut<FramerateManager>
 ) {
 	if !q_transform.is_empty() {
@@ -278,10 +278,10 @@ pub fn animations_keepalive(
 		framerate_manager.request_active_framerate(format!("active StandardMaterial animator {:.2}%", animator.tweenable().progress() * 100.));
 	}
 
-	if !q_mask.is_empty() {
-		let animator = q_mask.iter().next().unwrap();
-		framerate_manager.request_active_framerate(format!("active Mask animator {:.2}%", animator.tweenable().progress() * 100.));
-	}
+	// if !q_mask.is_empty() {
+	// 	let animator = q_mask.iter().next().unwrap();
+	// 	framerate_manager.request_active_framerate(format!("active Mask animator {:.2}%", animator.tweenable().progress() * 100.));
+	// }
 }
 
 // FIXME: dirty solution. we either need a centralized solution like a flag when animator is created to remove itself from entity or do this manually for each case (craaaazy)

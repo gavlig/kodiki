@@ -1,6 +1,6 @@
 use bevy :: prelude :: *;
 use bevy_tweening	:: *;
-use bevy_vfx_bag :: post_processing :: masks :: Mask;
+// use bevy_vfx_bag :: post_processing :: masks :: Mask;
 
 /// A lens to manipulate the whole [`Transform`] component.
 ///
@@ -46,27 +46,27 @@ impl Lens<StandardMaterial> for StandardMaterialAlphaLens {
 /// A lens to manipulate strength field of [`Mask`] component.
 ///
 /// [`Mask`]
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub struct MaskLens {
-	pub start_strength	: f32,
-	pub end_strength	: f32,
-	pub start_fade		: f32,
-	pub end_fade		: f32,
-}
+// #[derive(Debug, Copy, Clone, PartialEq)]
+// pub struct MaskLens {
+// 	pub start_strength	: f32,
+// 	pub end_strength	: f32,
+// 	pub start_fade		: f32,
+// 	pub end_fade		: f32,
+// }
 
-impl Lens<Mask> for MaskLens {
-	fn lerp(&mut self, target: &mut Mask, ratio: f32) {
-		let v0 = self.start_strength;
-		let v1 = self.end_strength;
-		let value = v0.lerp(&v1, &ratio);
-		target.strength = value;
+// impl Lens<Mask> for MaskLens {
+// 	fn lerp(&mut self, target: &mut Mask, ratio: f32) {
+// 		let v0 = self.start_strength;
+// 		let v1 = self.end_strength;
+// 		let value = v0.lerp(&v1, &ratio);
+// 		target.strength = value;
 
-		let v0 = self.start_fade;
-		let v1 = self.end_fade;
-		let value = v0.lerp(&v1, &ratio);
-		target.fade = value;
-	}
-}
+// 		let v0 = self.start_fade;
+// 		let v1 = self.end_fade;
+// 		let value = v0.lerp(&v1, &ratio);
+// 		target.fade = value;
+// 	}
+// }
 
 #[derive(Component)]
 pub struct MaskFadingIn;

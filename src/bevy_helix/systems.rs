@@ -7,7 +7,7 @@ use bevy :: {
 };
 use bevy_tweening		:: *;
 use bevy_reader_camera	:: ReaderCamera;
-use bevy_vfx_bag		:: post_processing :: masks :: { Mask, MaskVariant };
+// use bevy_vfx_bag		:: post_processing :: masks :: { Mask, MaskVariant };
 
 #[cfg(feature = "debug")]
 use bevy_prototype_debug_lines	:: *;
@@ -524,120 +524,120 @@ pub fn update_selection_search_matches(
 	}
 }
 
-pub fn helix_mode_effect(
-	mut q_camera	: Query<Entity, With<ReaderCamera>>,
-		q_mask		: Query<&Mask>,
-		q_mask_animator_in	: Query<&Animator<Mask>, Without<MaskFadingOut>>,
-		q_mask_animator_out	: Query<&Animator<Mask>, Without<MaskFadingIn>>,
-		app_option	: Option<NonSend<HelixApp>>,
-	mut commands	: Commands
-) {
-	let app = if let Some(app) = app_option { app } else { return };
+// pub fn helix_mode_effect(
+// 	mut q_camera	: Query<Entity, With<ReaderCamera>>,
+// 		q_mask		: Query<&Mask>,
+// 		q_mask_animator_in	: Query<&Animator<Mask>, Without<MaskFadingOut>>,
+// 		q_mask_animator_out	: Query<&Animator<Mask>, Without<MaskFadingIn>>,
+// 		app_option	: Option<NonSend<HelixApp>>,
+// 	mut commands	: Commands
+// ) {
+// 	let app = if let Some(app) = app_option { app } else { return };
 
-	if app.should_close() { return }
+// 	if app.should_close() { return }
 
-	let helix_mode = app.mode();
+// 	let helix_mode = app.mode();
 
-	let camera_entity = q_camera.single_mut();
+// 	let camera_entity = q_camera.single_mut();
 
-	let mask_animator_in = q_mask_animator_in.get(camera_entity);
-	let mask_animator_out = q_mask_animator_out.get(camera_entity);
-	let mask = q_mask.get(camera_entity);
+// 	let mask_animator_in = q_mask_animator_in.get(camera_entity);
+// 	let mask_animator_out = q_mask_animator_out.get(camera_entity);
+// 	let mask = q_mask.get(camera_entity);
 
-	let make_tween = |
-		start_strength	: f32,
-		end_strength	: f32,
-		start_fade		: f32,
-		end_fade		: f32
-	| -> Tween<Mask> {
-		Tween::new(
-			EaseFunction::ExponentialInOut,
-			Duration::from_millis(300),
-			MaskLens {
-				start_strength,
-				end_strength,
-				start_fade,
-				end_fade
-			}
-		)
-	};
+// 	let make_tween = |
+// 		start_strength	: f32,
+// 		end_strength	: f32,
+// 		start_fade		: f32,
+// 		end_fade		: f32
+// 	| -> Tween<Mask> {
+// 		Tween::new(
+// 			EaseFunction::ExponentialInOut,
+// 			Duration::from_millis(300),
+// 			MaskLens {
+// 				start_strength,
+// 				end_strength,
+// 				start_fade,
+// 				end_fade
+// 			}
+// 		)
+// 	};
 
-	let full_strength		= 1_000_000.;
-	let zero_strength		= 1_000_000_000.; // almost no effect
-	let fade_to_hidden		= 1.0;
-	let fade_to_visible		= 0.0;
+// 	let full_strength		= 1_000_000.;
+// 	let zero_strength		= 1_000_000_000.; // almost no effect
+// 	let fade_to_hidden		= 1.0;
+// 	let fade_to_visible		= 0.0;
 
-	// we're in insert mode and mask is not yet enabled
-	if Mode::Insert == helix_mode && mask.is_err() {
-		let start_strength	= zero_strength;
-		let end_strength	= full_strength;
-		let start_fade		= fade_to_hidden;
-		let end_fade		= fade_to_visible;
+// 	// we're in insert mode and mask is not yet enabled
+// 	if Mode::Insert == helix_mode && mask.is_err() {
+// 		let start_strength	= zero_strength;
+// 		let end_strength	= full_strength;
+// 		let start_fade		= fade_to_hidden;
+// 		let end_fade		= fade_to_visible;
 
-		commands.entity(camera_entity).insert((
-			Mask {
-				strength	: start_strength,
-				fade		: start_fade,
-				variant		: MaskVariant::Crt,
-			},
-			Animator::new(make_tween(start_strength, end_strength, start_fade, end_fade)),
-			MaskFadingIn
-		));
-	// we're in insert mode but there is an active fading out animation so we replace it with fading in
-	} else if Mode::Insert == helix_mode && mask.is_ok() && mask_animator_in.is_err() && mask_animator_out.is_ok() {
-		let mask			= mask.unwrap();
-		let end_strength	= full_strength;
-		let end_fade		= fade_to_visible;
+// 		commands.entity(camera_entity).insert((
+// 			Mask {
+// 				strength	: start_strength,
+// 				fade		: start_fade,
+// 				variant		: MaskVariant::Crt,
+// 			},
+// 			Animator::new(make_tween(start_strength, end_strength, start_fade, end_fade)),
+// 			MaskFadingIn
+// 		));
+// 	// we're in insert mode but there is an active fading out animation so we replace it with fading in
+// 	} else if Mode::Insert == helix_mode && mask.is_ok() && mask_animator_in.is_err() && mask_animator_out.is_ok() {
+// 		let mask			= mask.unwrap();
+// 		let end_strength	= full_strength;
+// 		let end_fade		= fade_to_visible;
 
-		commands.entity(camera_entity)
-			.insert((
-				Animator::new(make_tween(mask.strength, end_strength, mask.fade, end_fade)),
-				MaskFadingIn
-			))
-			.remove::<MaskFadingOut>();
-	// we're in any other mode and mask is enabled
-	} else if Mode::Insert != helix_mode && mask.is_ok() && mask_animator_out.is_err() {
-		let mask			= mask.unwrap();
-		let end_strength	= zero_strength;
-		let end_fade		= 1.0;
+// 		commands.entity(camera_entity)
+// 			.insert((
+// 				Animator::new(make_tween(mask.strength, end_strength, mask.fade, end_fade)),
+// 				MaskFadingIn
+// 			))
+// 			.remove::<MaskFadingOut>();
+// 	// we're in any other mode and mask is enabled
+// 	} else if Mode::Insert != helix_mode && mask.is_ok() && mask_animator_out.is_err() {
+// 		let mask			= mask.unwrap();
+// 		let end_strength	= zero_strength;
+// 		let end_fade		= 1.0;
 
-		commands.entity(camera_entity)
-			.insert((
-				Animator::new(make_tween(mask.strength, end_strength, mask.fade, end_fade)),
-				MaskFadingOut
-			))
-			.remove::<MaskFadingIn>();
-	}
-}
+// 		commands.entity(camera_entity)
+// 			.insert((
+// 				Animator::new(make_tween(mask.strength, end_strength, mask.fade, end_fade)),
+// 				MaskFadingOut
+// 			))
+// 			.remove::<MaskFadingIn>();
+// 	}
+// }
 
-pub fn helix_mode_tween_events(
-		q_mask_animator	: Query<(Entity, &Animator<Mask>)>,
-		app_option	: Option<NonSend<HelixApp>>,
-	mut commands	: Commands
-) {
-	profile_function!();
+// pub fn helix_mode_tween_events(
+// 		q_mask_animator	: Query<(Entity, &Animator<Mask>)>,
+// 		app_option	: Option<NonSend<HelixApp>>,
+// 	mut commands	: Commands
+// ) {
+// 	profile_function!();
 
-	let app = if let Some(app) = app_option { app } else { return };
+// 	let app = if let Some(app) = app_option { app } else { return };
 
-	if app.should_close() { return }
+// 	if app.should_close() { return }
 
-	let helix_mode = app.mode();
+// 	let helix_mode = app.mode();
 
-	// remove Mask component from camera after animation is done
-	for (entity, animator) in q_mask_animator.iter() {
-		if animator.tweenable().progress() >= 1.0 {
-			if helix_mode != Mode::Insert {
-				commands.entity(entity).remove::<Mask>();
-			}
+// 	// remove Mask component from camera after animation is done
+// 	for (entity, animator) in q_mask_animator.iter() {
+// 		if animator.tweenable().progress() >= 1.0 {
+// 			if helix_mode != Mode::Insert {
+// 				commands.entity(entity).remove::<Mask>();
+// 			}
 
-			commands.entity(entity)
-				.remove::<Animator<Mask>>()
-				.remove::<MaskFadingIn>()
-				.remove::<MaskFadingOut>()
-			;
-		}
-	}
-}
+// 			commands.entity(entity)
+// 				.remove::<Animator<Mask>>()
+// 				.remove::<MaskFadingIn>()
+// 				.remove::<MaskFadingOut>()
+// 			;
+// 		}
+// 	}
+// }
 
 pub fn mouse_last_clicked(
 	mut mouse_button_state	: ResMut<MouseButtonState>,

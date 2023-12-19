@@ -1,6 +1,6 @@
 use bevy :: prelude :: *;
 use bevy_tweening :: *;
-use bevy_vfx_bag :: post_processing :: masks :: Mask;
+// use bevy_vfx_bag :: post_processing :: masks :: Mask;
 
 pub mod run_condition;
 pub mod spawn;
@@ -150,7 +150,7 @@ impl Plugin for KodikiPlugin {
 				Update,
 				(
 					asset_animator_system::<StandardMaterial>,
-					component_animator_system::<Mask>,
+					// component_animator_system::<Mask>,
 				).in_set(AnimationSystem::AnimationUpdate)
 			)
 			// unified despawning through a resource

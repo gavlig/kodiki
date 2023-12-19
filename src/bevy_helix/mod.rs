@@ -300,7 +300,7 @@ impl Plugin for BevyHelixPlugin {
 			.add_systems(
 				Update,
 				(
-					systems::helix_mode_tween_events,
+					// systems::helix_mode_tween_events,
 					minimap::systems::update_click_point
 				).in_set(TweenEvents)
 			)
@@ -368,7 +368,7 @@ impl Plugin for BevyHelixPlugin {
 			.add_systems(
 				Update,
 				(
-					systems::helix_mode_effect,
+					// systems::helix_mode_effect,
 					systems::update_debug_stats,
 
 					surface::systems::highlight_insert_mode,
