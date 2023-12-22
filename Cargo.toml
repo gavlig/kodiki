@@ -18,7 +18,8 @@ opt-level = 3
 [features]
 
 default			    = []
-#tracing				= ["bevy_egui", "puffin_egui", "bevy_puffin"]
+# tracing, stats and debug are broken in bevy 0.12
+#tracing			= ["bevy_egui", "puffin_egui", "bevy_puffin"]
 #stats				= ["bevy-debug-text-overlay"]
 #debug				= ["bevy_prototype_debug_lines", "bevy_polyline", "bevy-debug-text-overlay"]
 word_spawn_debug	= []
@@ -47,30 +48,29 @@ bevy 				= { version = "0.12", features = ["bevy_render", "wayland"] }
 bevy_framepace		= { version = "0.14" }
 bevy_tweening		= { version = "0.9" }
 
-#bevy-debug-text-overlay		= { version = "5.1", optional = true }
+bevy-debug-text-overlay	= { version = "7", optional = true }
+# probably not required anymore since bevy has its own debug lines api now
 #bevy_prototype_debug_lines	= { version = "0.10", optional = true, features = ["3d"] }
+# still on bevy 0.11
 #bevy_polyline				= { version = "0.6", optional = true }
 
 # modified for kodiki
 
-bevy_contrib_colors = { git = "https://github.com/gavlig/bevy_contrib_colors.git" }
-#bevy_reader_camera	= { git = "https://github.com/gavlig/bevy_reader_camera.git", branch = "kodiki" }
-bevy_reader_camera	= { path = "../bevy_reader_camera/" }
+bevy_contrib_colors = { git = "https://github.com/gavlig/bevy_contrib_colors.git", branch = "kodiki" }
+bevy_reader_camera	= { git = "https://github.com/gavlig/bevy_reader_camera.git", branch = "kodiki" }
 
-bevy_rapier3d		= { git = "https://github.com/gavlig/bevy_rapier", branch = "kodiki", features = ["simd-stable", "debug-render"] } # { version = "0.21", features = ["simd-stable", "debug-render"] }
-#bevy_rapier3d		= { path = "../bevy_rapier/bevy_rapier3d", features = ["simd-stable", "debug-render"] } # { version = "0.21", features = ["simd-stable", "debug-render"] }
-#bevy-vfx-bag		= { git = "https://github.com/gavlig/bevy-vfx-bag.git", branch = "kodiki_0.1", features = ["hdr"], default-features = false } # { version = "0.2.0" } #
+bevy_rapier3d		= { git = "https://github.com/gavlig/bevy_rapier", branch = "kodiki", features = ["simd-stable", "debug-render"] }
 
-# perf tracing
+# perf tracing(broken in bevy 0.12, bevy_puffin needs update)
 
-#bevy_egui			= { version = "0.20", optional = true }
-#puffin_egui			= { version = "0.20", optional = true }
-#bevy_puffin			= { version = "0.4", optional = true }
+#bevy_egui			= { version = "0.24", optional = true }
+#puffin				= { version = "0.24", optional = true }
+#bevy_puffin		= { version = "0.4", optional = true }
 
 # text rendering
 
-ab_glyph			= "0.2.18"  # read ttf/otf and get parametric glyphs # { path = "../ab-glyph/glyph" }
-lyon				= "1.0.1"   # convert paramteric glyphs to 2d geometry # { path = "../lyon" }
+ab_glyph			= "0.2.18"  # read ttf/otf and get parametric glyphs 
+lyon				= "1.0.1"   # convert paramteric glyphs to 2d geometry
 
 #
 # HELIX
@@ -112,8 +112,6 @@ signal-hook-tokio	= { version = "0.3", features = ["futures-v0_3"] }
 #
 
 [patch.crates-io]
-# bevy				= { git = "https://github.com/gavlig/bevy.git", branch = "kodiki_0.1" }
-bevy				= { path = "../bevy" }
-# TODO
-#rapier3d			= { git = "https://github.com/gavlig/rapier.git", branch = "kodiki_0.1" }
+ bevy				= { git = "https://github.com/gavlig/bevy.git", branch = "kodiki" }
+rapier3d			= { git = "https://github.com/gavlig/rapier.git", branch = "kodiki" }
 
