@@ -605,6 +605,10 @@ impl HelixApp {
 	pub fn window_title(&self) -> String {
 		let mut title = String::new();
 
+		if self.should_close() {
+			return title;
+		}
+
 		// currently open document name
 		let doc = self.current_document();
 
