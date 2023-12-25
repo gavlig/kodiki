@@ -30,7 +30,7 @@ pub fn update(
 	mut winit_settings		: ResMut<WinitSettings>,
 		time				: Res<Time>,
 		mouse_button		: Res<Input<MouseButton>>,
-		mouse_wheel_events	: EventReader<MouseWheel>,
+	mut mouse_wheel_events	: EventReader<MouseWheel>,
 		key					: Res<Input<KeyCode>>,
 ) {
 	let Ok((mut camera, camera_transform)) = q_camera.get_single_mut() else { return };
@@ -153,6 +153,8 @@ pub fn update(
 			}
 		}
 	}
+
+	mouse_wheel_events.clear();
 }
 
 use crate :: bevy_ab_glyph :: {

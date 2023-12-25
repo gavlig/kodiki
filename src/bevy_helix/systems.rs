@@ -655,17 +655,18 @@ pub fn mouse_last_clicked(
 }
 
 pub fn mouse_hover(
-	mut mouse_hover	: ResMut<MouseHoverState>,
-	mouse_pos		: Res<MousePosState>,
-	cursor_events	: EventReader<CursorMoved>,
-	time			: Res<Time>,
-	app_option		: Option<NonSendMut<HelixApp>>,
+	mut cursor_events	: EventReader<CursorMoved>,
+	mut mouse_hover		: ResMut<MouseHoverState>,
+		mouse_pos		: Res<MousePosState>,
+		time			: Res<Time>,
+		app_option		: Option<NonSendMut<HelixApp>>,
 ) {
 	let mut app = if let Some(app) = app_option { app } else { return };
 
 	if app.should_close() { return }
 
 	let mouse_moved = !cursor_events.is_empty();
+	cursor_events.clear();
 	let cursor_coordinates_changed = mouse_pos.col != mouse_hover.col || mouse_pos.row != mouse_hover.row;
 
 	if !app.editor_focused() || mouse_pos.surface_name != EditorView::ID {
@@ -914,7 +915,7 @@ pub fn input_mouse(
 	mouse_button		: Res<Input<MouseButton>>,
 	mouse_button_state	: Res<MouseButtonState>,
 	key					: Res<Input<KeyCode>>,
-	cursor_events		: EventReader<CursorMoved>,
+	mut cursor_events	: EventReader<CursorMoved>,
 
 	surfaces			: Res<SurfacesMapBevy>,
 	font_assets			: Res<Assets<ABGlyphFont>>,
@@ -1007,6 +1008,8 @@ pub fn input_mouse(
 		&tokio_runtime,
 		&mut app
 	);
+
+	cursor_events.clear();
 }
 
 // currently not used since scrolling is handled by camera. Keeping it in case we need to pass wheel events to Helix for other reasons in the future

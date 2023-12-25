@@ -378,7 +378,7 @@ pub fn mouse(
 		mouse_button	: Res<Input<MouseButton>>,
 		input_key		: Res<Input<KeyCode>>,
 	mut scroll_events	: EventReader<MouseWheel>,
-		cursor_events	: EventReader<CursorMoved>,
+	mut cursor_events	: EventReader<CursorMoved>,
 	mut q_terminal		: Query<(&mut BevyWezTerm, Entity)>,
 		q_transform		: Query<&GlobalTransform>,
 		raypick			: Res<Raypick>,
@@ -456,6 +456,8 @@ pub fn mouse(
 
 	if !cursor_events.is_empty() {
 		send_mouse_event(MouseEventKindWezTerm::Move, MouseButtonWezTerm::None);
+
+		cursor_events.clear();
 	}
 
 	let mut line_accumulator = Vec2::ZERO;

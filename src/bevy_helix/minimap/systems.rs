@@ -693,7 +693,7 @@ pub fn input_mouse(
 		key				: Res<Input<KeyCode>>,
 	mut dragging_state	: ResMut<DraggingState>,
 	mut framerate_manager : ResMut<FramerateManager>,
-		cursor_events	: EventReader<CursorMoved>,
+	mut cursor_events	: EventReader<CursorMoved>,
 
 	(
 		mut glyph_meshes_cache,
@@ -980,6 +980,8 @@ pub fn input_mouse(
 	} else {
 		despawn_preview_area(&mut commands);
 	}
+
+	cursor_events.clear();
 }
 
 pub fn input_mouse_bookmark(
