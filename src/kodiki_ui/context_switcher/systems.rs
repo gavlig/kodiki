@@ -54,7 +54,7 @@ pub fn update_position(
 }
 
 pub fn update_color(
-	mut	q_switcher_entries	: Query<(Entity, &mut ContextSwitcherEntry, &ContextSwitcherGlyph)>,
+	mut	q_switcher_entries	: Query<(Entity, &mut ContextSwitcherEntry, &mut ContextSwitcherGlyph)>,
 	mut	color_materials_cache : ResMut<ColorMaterialsCache>,
 	mut	material_assets		: ResMut<Assets<StandardMaterial>>,
 		kodiki_ui			: Res<KodikiUI>,
@@ -62,7 +62,7 @@ pub fn update_color(
 ) {
 	profile_function!();
 
-	for (entity, mut entry, glyph) in q_switcher_entries.iter_mut() {
+	for (entity, mut entry, mut glyph) in q_switcher_entries.iter_mut() {
 		let quad_color	= get_color_wmodified_lightness(kodiki_ui.context_switch_color, 0.1);
 		if quad_color == entry.quad_color {
 			continue;
@@ -82,7 +82,10 @@ pub fn update_color(
 
 		// update glyph color material
 
-		commands.entity(glyph.entity).despawn_recursive();
+		if let Some(glyph_entity) = glyph.entity {
+			commands.entity(glyph_entity).despawn_recursive();
+			glyph.entity = None;
+		}
 
 		let glyph_color = if kodiki_ui.dark_theme { Color::ANTIQUE_WHITE } else { Color::DARK_GRAY };
 		commands.entity(entity).insert(

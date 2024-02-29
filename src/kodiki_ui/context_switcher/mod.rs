@@ -138,7 +138,7 @@ impl ContextSwitcherEntry {
 	pub fn glyph_spawn_callback() -> Box<dyn Fn(Entity, Entity, &mut Commands) + Send + Sync> {
 		Box::new(
 			|owner_entity: Entity, glyph_entity, commands: &mut Commands| {
-				commands.entity(owner_entity).insert(ContextSwitcherGlyph { entity: glyph_entity });
+				commands.entity(owner_entity).insert(ContextSwitcherGlyph { entity: Some(glyph_entity) });
 			}
 		)
 	}
@@ -146,7 +146,7 @@ impl ContextSwitcherEntry {
 
 #[derive(Component)]
 pub struct ContextSwitcherGlyph {
-	pub entity : Entity,
+	pub entity : Option<Entity>,
 }
 
 const CONTEXT_SWITCH_WIDTH	: f32 = 0.2;
