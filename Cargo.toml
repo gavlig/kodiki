@@ -112,4 +112,4 @@ signal-hook-tokio	= { version = "0.3", features = ["futures-v0_3"] }
 [patch.crates-io]
 bevy				= { git = "https://github.com/gavlig/bevy.git", branch = "kodiki_0.1" }
 rapier3d			= { git = "https://github.com/gavlig/rapier.git", branch = "kodiki_0.1" }
-
+parry3d				= { git = "https://github.com/gavlig/parry.git", branch = "kodiki_0.1" }
