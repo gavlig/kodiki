@@ -357,7 +357,7 @@ pub fn on_context_switch_in(
 pub fn keyboard(
 	mut q_terminal		: Query<&mut BevyWezTerm>,
 	mut keyboard_events : EventReader<KeyboardInput>,
-		input_key		: Res<Input<KeyCode>>,
+		input_key		: Res<ButtonInput<KeyCode>>,
 ) {
 	let Ok(mut terminal) = q_terminal.get_single_mut() else { return };
 
@@ -375,8 +375,8 @@ pub fn keyboard(
 }
 
 pub fn mouse(
-		mouse_button	: Res<Input<MouseButton>>,
-		input_key		: Res<Input<KeyCode>>,
+		mouse_button	: Res<ButtonInput<MouseButton>>,
+		input_key		: Res<ButtonInput<KeyCode>>,
 	mut scroll_events	: EventReader<MouseWheel>,
 	mut cursor_events	: EventReader<CursorMoved>,
 	mut q_terminal		: Query<(&mut BevyWezTerm, Entity)>,
@@ -526,8 +526,8 @@ pub fn mouse(
 }
 
 pub fn mouse_goto_path(
-		mouse_button	: Res<Input<MouseButton>>,
-		key				: Res<Input<KeyCode>>,
+		mouse_button	: Res<ButtonInput<MouseButton>>,
+		key				: Res<ButtonInput<KeyCode>>,
 		raypick			: Res<Raypick>,
 		q_highlight		: Query<Entity, With<GotoPathHighlight>>,
 		q_word			: Query<(&WordDescription, &WordSubEntities)>,

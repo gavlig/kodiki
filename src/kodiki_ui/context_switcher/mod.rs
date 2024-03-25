@@ -1,5 +1,4 @@
 use bevy :: prelude :: *;
-use bevy :: render :: mesh :: Mesh;
 
 use bevy_rapier3d :: prelude :: *;
 use bevy_tweening :: *;
@@ -209,7 +208,7 @@ impl ContextSwitcher {
 
 		while let Some(mut entry) = entries.pop_front() {
 			let quad_size = Vec2::new(entry_width, entry_height);
-			let quad_mesh_handle = mesh_assets.add(shape::Quad::new(quad_size).into());
+			let quad_mesh_handle = mesh_assets.add(Rectangle::from_size(quad_size));
 			let quad_material_handle = material_assets.add(StandardMaterial {
 				base_color : entry.quad_color,
 				unlit : true,

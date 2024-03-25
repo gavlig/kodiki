@@ -1,7 +1,10 @@
 use bevy :: {
 	prelude :: *,
-	render :: render_resource :: { Extent3d, TextureDimension, TextureFormat, TextureUsages },
-	render :: mesh :: { Mesh, shape as render_shape },
+	render :: {
+		render_resource :: { Extent3d, TextureDimension, TextureFormat, TextureUsages },
+		mesh :: shape as render_shape,
+		render_asset :: RenderAssetUsages,
+	},
 	tasks :: { AsyncComputeTaskPool, Task },
 };
 use bevy_rapier3d :: prelude :: *;
@@ -330,7 +333,7 @@ impl Minimap {
 		material_assets	: &mut Assets<StandardMaterial>,
 		commands		: &mut Commands
 	) -> Entity {
-		let pointer_mesh_handle = mesh_assets.add(shape::RegularPolygon::new(POINTER_SIZE / 2.0, 3).into());
+		let pointer_mesh_handle = mesh_assets.add(RegularPolygon::new(POINTER_SIZE / 2.0, 3));
 
 		let pointer_material_handle = material_assets.add(StandardMaterial {
 			base_color: Color::WHITE,
@@ -361,7 +364,7 @@ impl Minimap {
 	) -> Entity {
 		let viewport_size = MinimapViewport::default().size;
 		let viewport_thickness = z_order::thickness();
-		let viewport_mesh_handle = mesh_assets.add(shape::Quad::new(viewport_size).into());
+		let viewport_mesh_handle = mesh_assets.add(Rectangle::from_size(viewport_size));
 
 		let viewport_material_handle = material_assets.add(StandardMaterial {
 			base_color: Color::Rgba { red: 1.0, green: 1.0, blue: 1.0, alpha: VIEWPORT_ALPHA },
@@ -422,7 +425,7 @@ impl Minimap {
 
 		// rendered image chunks
 		for chunk_id in (0 .. chunks_cnt).rev() {
-			let quad_mesh_handle = mesh_assets.add(shape::Quad::new(quad_chunk_size).into());
+			let quad_mesh_handle = mesh_assets.add(Rectangle::from_size(quad_chunk_size));
 
 			let image_handle = image_assets.add(minimap_chunks.pop().unwrap());
 			let text_image_material_handle = material_assets.add(StandardMaterial {
@@ -530,6 +533,7 @@ impl Minimap {
 					TextureDimension::D2,
 					&[0, 0, 0, 0],
 					TextureFormat::Bgra8Unorm,
+					RenderAssetUsages::all()
 				);
 
 				image.texture_descriptor.usage = TextureUsages::COPY_DST | TextureUsages::TEXTURE_BINDING;
@@ -721,7 +725,7 @@ impl Minimap {
 				_						=> Color::ALICE_BLUE,
 			};
 
-			let bookmark_mesh_handle = mesh_assets.add(shape::Quad::new(SYMBOL_BOOKMARK_SIZE).into());
+			let bookmark_mesh_handle = mesh_assets.add(Rectangle::from_size(SYMBOL_BOOKMARK_SIZE));
 
 			let bookmark_material_handle = get_color_material_handle(
 				base_color,
@@ -797,7 +801,7 @@ impl Minimap {
 
 				let hunk_rows = hunk.after.end - hunk.after.start;
 				let hunk_size = Vec2::new(DIFF_HUNK_WIDTH, self.row_height * hunk_rows as f32);
-				let hunk_mesh_handle = mesh_assets.add(shape::Quad::new(hunk_size).into());
+				let hunk_mesh_handle = mesh_assets.add(Rectangle::from_size(hunk_size));
 
 				let base_color = color_from_helix(
 					if hunk.is_pure_insertion() {
@@ -932,7 +936,7 @@ impl Minimap {
 
 			let highlight_width = highlight_len as f32 * column_width;
 			let highlight_size	= Vec2::new(highlight_width, self.row_height);
-			let highlight_mesh_handle = mesh_assets.add(shape::Quad::new(highlight_size).into());
+			let highlight_mesh_handle = mesh_assets.add(Rectangle::from_size(highlight_size));
 
 			let highlight_x		= (offset_len as f32 * column_width) + (highlight_width / 2.0) - (highlight_width_max / 2.0);
 			let highlight_y		= -((line + 1) as f32 * self.row_height) + self.row_height / 2.0 + self.size.y / 2.0;
@@ -963,7 +967,7 @@ impl Minimap {
 	) {
 		let rows_cnt		= (highlight_row_end - highlight_row_start + 1) as f32;
 		let highlight_size	= Vec2::new(MINIMAP_WIDTH, rows_cnt * self.row_height);
-		let highlight_mesh_handle = mesh_assets.add(shape::Quad::new(highlight_size).into());
+		let highlight_mesh_handle = mesh_assets.add(Rectangle::from_size(highlight_size));
 
 		let highlight_x		= 0.0;
 
@@ -1541,7 +1545,7 @@ impl Minimap {
 		// while holder entity keeps its scale 1 / minimap_scale to avoid getting squeezed
 		let click_point_visual_entity = commands.spawn((
 			PbrBundle {
-				mesh : mesh_assets.add(render_shape::Circle { radius: 0.02, vertices: 16 }.into()),
+				mesh : mesh_assets.add(Circle::new(0.02)),
 				material : color_handle.clone(),
 				..default()
 			},

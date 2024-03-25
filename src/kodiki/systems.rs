@@ -162,7 +162,7 @@ pub fn setup_ab_glyph_tests(
 
 	let mesh			= generate_string_mesh(&text, glyph_with_fonts.current_font(), None);
 	let mesh_handle		= mesh_assets.add(mesh);
-	let material_handle	= material_assets.add(Color::WHITE.into());
+	let material_handle	= material_assets.add(Color::WHITE);
 
 	commands.spawn(PbrBundle {
 		mesh		: mesh_handle,
@@ -190,7 +190,7 @@ pub fn kodiki_ui_sync(
 }
 
 pub fn keyboard_input(
-		key			: Res<Input<KeyCode>>,
+		key			: Res<ButtonInput<KeyCode>>,
 	mut rapier_debug: ResMut<DebugRenderContext>,
 
 	mut q_reader_camera 	: Query<&mut ReaderCamera>,
@@ -199,7 +199,7 @@ pub fn keyboard_input(
 	mut next_camera_mode	: ResMut<NextState<AppCameraMode>>,
 	mut next_context		: ResMut<NextState<AppContext>>,
 ) {
-	if key.pressed(KeyCode::ControlLeft) && key.just_pressed(KeyCode::Key9) {
+	if key.pressed(KeyCode::ControlLeft) && key.just_pressed(KeyCode::Digit9) {
 		rapier_debug.enabled = !rapier_debug.enabled;
 	}
 
@@ -213,12 +213,12 @@ pub fn keyboard_input(
 
 	if ctrl_pressed {
 		// switch to Helix
-		if key.just_pressed(KeyCode::Key1) {
+		if key.just_pressed(KeyCode::Digit1) {
 			next_context.set(AppContext::CodeEditor);
 		}
 
 		// switch to WezTerm
-		if key.just_pressed(KeyCode::Key2) {
+		if key.just_pressed(KeyCode::Digit2) {
 			next_context.set(AppContext::Terminal);
 		}
 	}
@@ -227,7 +227,7 @@ pub fn keyboard_input(
 fn handle_camera_mode(
 	camera		: &mut ReaderCamera,
 	window		: &mut Window,
-	key			: &Input<KeyCode>,
+	key			: &ButtonInput<KeyCode>,
 	next_state	: &mut NextState<AppCameraMode>,
 ) {
 	// let restrictions_are_default = camera.restrictions_are_default();

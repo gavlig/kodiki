@@ -1,6 +1,9 @@
 use bevy :: prelude :: *;
-use bevy :: render :: render_resource :: PrimitiveTopology;
-use bevy :: render :: mesh :: { Indices, Mesh };
+use bevy :: render :: {
+	render_resource :: PrimitiveTopology,
+	render_asset :: RenderAssetUsages,
+	mesh :: Indices,
+};
 
 use bevy_rapier3d :: prelude :: *;
 
@@ -69,14 +72,14 @@ impl Resizer {
 	) -> Entity {
 		let quad_size	= Vec2::new(Resizer::default().width, Resizer::default().height);
 
-		let quad_mesh_handle = mesh_assets.add(shape::Quad::new(quad_size).into());
+		let quad_mesh_handle = mesh_assets.add(Rectangle::from_size(quad_size));
 		let quad_material_handle = material_assets.add(StandardMaterial {
 			base_color: Resizer::default().quad_color,
 			unlit : true,
 			..default()
 		});
 
-		let circles_mesh_handle = mesh_assets.add(mesh_circles(shape::Quad::new(quad_size)));
+		let circles_mesh_handle = mesh_assets.add(mesh_circles(Rectangle::from_size(quad_size)));
 		let circles_material_handle = material_assets.add(StandardMaterial {
 			base_color: Resizer::default().quad_color,
 			unlit : true,
@@ -136,14 +139,14 @@ impl Resizer {
 
 }
 
-fn mesh_circles(quad: shape::Quad) -> Mesh {
+fn mesh_circles(quad: Rectangle) -> Mesh {
 	let num_circles = 8;
 	let circles_per_row = 2;
 	let circles_per_column = num_circles / circles_per_row;
 
 	let circle_resolution = 12;
 
-	let diameter_full = quad.size.x / circles_per_row as f32;
+	let diameter_full = quad.size().x / circles_per_row as f32;
 	let circle_radius_full = diameter_full / 2.0;
 	let circle_margin = circle_radius_full / 3.0;
 	let circle_radius_inner = circle_radius_full - circle_margin;
@@ -192,8 +195,8 @@ fn mesh_circles(quad: shape::Quad) -> Mesh {
 		}
 	}
 
-	let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-	mesh.set_indices(Some(Indices::U32(indices)));
+	let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::all());
+	mesh.insert_indices(Indices::U32(indices));
 	mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
 	mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
 	mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);

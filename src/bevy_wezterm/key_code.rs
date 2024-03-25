@@ -187,7 +187,7 @@ impl BevyWezTerm {
 		if success { Some(key_code_wez) } else { None }
 	}
 
-	pub fn key_modifiers_bevy_to_wez(key : &Input<KeyCodeBevy>) -> ModifiersWezTerm {
+	pub fn key_modifiers_bevy_to_wez(key : &ButtonInput<KeyCodeBevy>) -> ModifiersWezTerm {
 		let mut modifiers = ModifiersWezTerm::NONE;
 
 		for pressed in key.get_pressed() {

@@ -12,7 +12,7 @@ use std :: time :: Duration;
 
 pub fn input_mouse(
 	mut	q_resizer		: Query<&mut Resizer>,
-		mouse_button	: Res<Input<MouseButton>>,
+		mouse_button	: Res<ButtonInput<MouseButton>>,
 		raypick			: Res<Raypick>,
 	mut	dragging_state	: ResMut<DraggingState>,
 ) {

@@ -29,9 +29,9 @@ pub fn update(
 	mut framepace_settings	: ResMut<FramepaceSettings>,
 	mut winit_settings		: ResMut<WinitSettings>,
 		time				: Res<Time>,
-		mouse_button		: Res<Input<MouseButton>>,
+		mouse_button		: Res<ButtonInput<MouseButton>>,
 	mut mouse_wheel_events	: EventReader<MouseWheel>,
-		key					: Res<Input<KeyCode>>,
+		key					: Res<ButtonInput<KeyCode>>,
 ) {
 	let Ok((mut camera, camera_transform)) = q_camera.get_single_mut() else { return };
 
@@ -315,7 +315,7 @@ pub fn animations_cleanup_components(
 
 pub fn mouse_input(
 		raypick			: Res<Raypick>,
-		mouse_button	: Res<Input<MouseButton>>,
+		mouse_button	: Res<ButtonInput<MouseButton>>,
 	mut q_framerate_indicator : Query<(Entity, &mut FramerateIndicator)>,
 		q_transform		: Query<&Transform>,
 

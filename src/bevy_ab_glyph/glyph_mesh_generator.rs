@@ -1,6 +1,9 @@
 use bevy :: prelude :: *;
-use bevy :: render :: render_resource :: PrimitiveTopology;
-use bevy :: render :: mesh :: { Indices, Mesh };
+use bevy :: render :: {
+	render_resource :: PrimitiveTopology,
+	render_asset :: RenderAssetUsages,
+	mesh :: Indices,
+};
 
 #[cfg(feature = "debug")]
 use bevy_debug_text_overlay	:: screen_print;
@@ -390,7 +393,7 @@ pub fn generate_string_mesh(
 	let mut vertex_buffer_string: VertexBuffer = VertexBuffers::new();
 	let mut normals_string		: NormalBuffer = Vec::new();
 
-	let mut mesh	= Mesh::new(PrimitiveTopology::TriangleList);
+	let mut mesh	= Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::all());
 	let mut x		= 0.0;
 
 	let generate_glyph_mesh_with_optional_cache = |glyph_char: char, glyph_meshes_cache: &mut Option<&mut GlyphMeshesCache>| -> MeshInternal {
@@ -432,7 +435,7 @@ pub fn generate_string_mesh(
 
 	mesh.insert_attribute	(Mesh::ATTRIBUTE_POSITION, vertex_buffer_string.vertices);
 	mesh.insert_attribute	(Mesh::ATTRIBUTE_NORMAL, normals_string);
-	mesh.set_indices(Some	(Indices::U16(vertex_buffer_string.indices)));
+	mesh.insert_indices		(Indices::U16(vertex_buffer_string.indices));
 
 	mesh
 }

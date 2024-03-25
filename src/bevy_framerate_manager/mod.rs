@@ -177,7 +177,7 @@ impl FramerateManager {
 		self.idle_timer.tick(time.delta());
 
 		if !self.idle_timer.finished() {
-			self.log(format!("tick idle timer {:.2}%", self.idle_timer.percent() * 100.));
+			self.log(format!("tick idle timer {:.2}%", self.idle_timer.fraction() * 100.));
 		}
 	}
 
@@ -506,7 +506,7 @@ impl FramerateDebug {
 	) -> Entity {
 		profile_function!();
 
-		let mesh_handle = mesh_assets.add(shape::Circle::new(dot_radius).into());
+		let mesh_handle = mesh_assets.add(Circle::new(dot_radius));
 
 		let material_handle = get_color_material_handle(
 			framerate_color,
@@ -669,7 +669,6 @@ impl Plugin for BevyFramerateManagerPlugin {
 					systems::visualize,
 					systems::update,
 					systems::mouse_input,
-					apply_deferred
 				)
 				.chain()
 				.in_set(BevyFramerateManagerSystems)

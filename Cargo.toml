@@ -43,16 +43,10 @@ futures-lite		= { version = "1.11.3" }
 # BEVY
 #
 
-bevy 				= { version = "0.12", features = ["bevy_render", "wayland"] }
+bevy 				= { version = "0.13", features = ["bevy_render", "wayland"] }
 
-bevy_framepace		= { version = "0.14" }
-bevy_tweening		= { version = "0.9" }
-
-bevy-debug-text-overlay	= { version = "7", optional = true }
-# probably not required anymore since bevy has its own debug lines api now
-#bevy_prototype_debug_lines	= { version = "0.10", optional = true, features = ["3d"] }
-# still on bevy 0.11
-#bevy_polyline				= { version = "0.6", optional = true }
+bevy_framepace		= { version = "0.15" }
+bevy_tweening		= { version = "0.10" }
 
 # modified for kodiki
 
@@ -60,12 +54,6 @@ bevy_contrib_colors = { git = "https://github.com/gavlig/bevy_contrib_colors.git
 bevy_reader_camera	= { git = "https://github.com/gavlig/bevy_reader_camera.git", branch = "kodiki" }
 
 bevy_rapier3d		= { git = "https://github.com/gavlig/bevy_rapier", branch = "kodiki", features = ["simd-stable", "debug-render"] }
-
-# perf tracing(broken in bevy 0.12, bevy_puffin needs update)
-
-#bevy_egui			= { version = "0.24", optional = true }
-#puffin				= { version = "0.24", optional = true }
-#bevy_puffin		= { version = "0.4", optional = true }
 
 # text rendering
 
@@ -112,6 +100,6 @@ signal-hook-tokio	= { version = "0.3", features = ["futures-v0_3"] }
 #
 
 [patch.crates-io]
- bevy				= { git = "https://github.com/gavlig/bevy.git", branch = "kodiki" }
-rapier3d			= { git = "https://github.com/gavlig/rapier.git", branch = "kodiki" }
+# bevy				= { git = "https://github.com/gavlig/bevy.git", branch = "kodiki" }
+# rapier3d			= { git = "https://github.com/gavlig/rapier.git", branch = "kodiki" }
 

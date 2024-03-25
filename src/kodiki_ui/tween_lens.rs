@@ -38,7 +38,7 @@ pub struct StandardMaterialAlphaLens {
 
 impl Lens<StandardMaterial> for StandardMaterialAlphaLens {
     fn lerp(&mut self, target: &mut StandardMaterial, ratio: f32) {
-        let value = self.start.lerp(&self.end, &ratio);
+        let value = self.start.lerp(self.end, ratio);
 		target.base_color.set_a(value);
     }
 }

@@ -9,20 +9,15 @@ pub use bevy_puffin :: *;
 use helix_term	:: ui		:: EditorView;
 use helix_view	:: graphics :: Color as HelixColor;
 
-use std 		:: time		:: Duration;
 use futures_lite			:: future;
 
 use super :: *;
 
 use crate :: {
 	bevy_framerate_manager :: FramerateManager,
-	bevy_helix :: { SyncDataDoc, Matches, MatchesMapCache },
-	bevy_ab_glyph :: {
-		glyph_mesh_generator :: generate_string_mesh_wcache,
-		{ ABGlyphFont, FontAssetHandles, ABGlyphFonts, GlyphMeshesCache, TextMeshesCache },
-	},
+	bevy_helix :: { Matches, MatchesMapCache },
+	bevy_ab_glyph :: FontAssetHandles,
 	kodiki_ui :: {
-		DraggingState,
 		spawn as spawn_common,
 		text_cursor :: TextCursor,
 		raypick :: *,
@@ -469,9 +464,9 @@ pub fn update_transform(
 		if !minimap_scaled_mode.transition_timer.finished() {
 			// first scale/unscale minimap gradually according to transition timer
 			minimap_scaled_mode.transition_timer.tick(time.delta());
-			let lerp_coef = minimap_scaled_mode.transition_timer.percent();
+			let lerp_coef = minimap_scaled_mode.transition_timer.fraction();
 
-			minimap_transform.scale.y = minimap_scaled_mode.scale_from.lerp(&minimap_scaled_mode.scale_to, &lerp_coef);
+			minimap_transform.scale.y = minimap_scaled_mode.scale_from.lerp(minimap_scaled_mode.scale_to, lerp_coef);
 
 			// apply offset vertical offset also gradually according to transition timer
 			let (y_offset_from, y_offset_to) = if minimap_scaled_mode.active {
@@ -480,7 +475,7 @@ pub fn update_transform(
 				(y_offset_full_view, y_offset_progress_scroll)
 			};
 
-			new_translation.y += y_offset_from.lerp(&y_offset_to, &lerp_coef)
+			new_translation.y += y_offset_from.lerp(y_offset_to, lerp_coef)
 		} else if excess_rows > 0 && !minimap_scaled_mode.active {
 			new_translation.y += y_offset_progress_scroll;
 		} else {
@@ -688,9 +683,9 @@ pub fn input_mouse(
 		q_transform				: Query<&GlobalTransform>,
 		q_camera				: Query<&ReaderCamera>,
 
-		mouse_button	: Res<Input<MouseButton>>,
+		mouse_button	: Res<ButtonInput<MouseButton>>,
+		key				: Res<ButtonInput<KeyCode>>,
 		raypick			: Res<Raypick>,
-		key				: Res<Input<KeyCode>>,
 	mut dragging_state	: ResMut<DraggingState>,
 	mut framerate_manager : ResMut<FramerateManager>,
 	mut cursor_events	: EventReader<CursorMoved>,
@@ -985,7 +980,7 @@ pub fn input_mouse(
 }
 
 pub fn input_mouse_bookmark(
-	mouse_button		: Res<Input<MouseButton>>,
+	mouse_button		: Res<ButtonInput<MouseButton>>,
 	dragging_state		: Res<DraggingState>,
 	q_minimap			: Query<&Minimap>,
 	q_symbol_bookmark	: Query<&Bookmark>,

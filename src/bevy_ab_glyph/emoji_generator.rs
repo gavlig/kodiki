@@ -3,6 +3,7 @@ use bevy :: {
 	render :: {
 		texture :: { ImageType, ImageSampler },
 		mesh :: Mesh,
+		render_asset :: RenderAssetUsages,
 	}
 };
 
@@ -36,6 +37,7 @@ fn generate_emoji_image_char(
 		    compressed_image_formats,
 		    true,
 			ImageSampler::Default,
+			RenderAssetUsages::all()
 		);
 
 		if let Ok(image) = image_result {

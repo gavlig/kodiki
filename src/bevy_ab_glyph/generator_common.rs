@@ -1,6 +1,9 @@
 use bevy :: prelude :: *;
-use bevy :: render :: render_resource :: PrimitiveTopology;
-use bevy :: render :: mesh :: { Indices, Mesh };
+use bevy :: render :: {
+	render_resource :: PrimitiveTopology,
+	render_asset :: RenderAssetUsages,
+	mesh :: { Indices, Mesh },
+};
 
 use lyon :: tessellation :: *;
 
@@ -85,10 +88,10 @@ pub fn generate_quad_vertices(
 pub fn bevy_mesh_from_internal(
 	mesh_internal		: &MeshInternal
 ) -> Mesh {
-	let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+	let mut mesh = Mesh::new(PrimitiveTopology::TriangleList, RenderAssetUsages::all());
 	mesh.insert_attribute	(Mesh::ATTRIBUTE_POSITION, mesh_internal.vertices().clone());
 	mesh.insert_attribute	(Mesh::ATTRIBUTE_NORMAL, mesh_internal.normals.clone());
-	mesh.set_indices(Some	(Indices::U16(mesh_internal.indices().clone())));
+	mesh.insert_indices		(Indices::U16(mesh_internal.indices().clone()));
 	if let Some(uvs) = &mesh_internal.uvs {
 		mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs.clone())
 	}

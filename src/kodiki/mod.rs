@@ -71,9 +71,9 @@ impl Plugin for KodikiPlugin {
 		let clear_color = ClearColor(Color::hex("282c34").unwrap());
 
 		app
-			.add_state::<AppMode>()
-			.add_state::<AppContext>()
-			.add_state::<AppCameraMode>()
+			.init_state::<AppMode>()
+			.init_state::<AppContext>()
+			.init_state::<AppCameraMode>()
 
 			.insert_resource(AppState::default())
 			.insert_resource(MouseCursorState::default())

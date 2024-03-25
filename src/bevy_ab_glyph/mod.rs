@@ -1,5 +1,5 @@
 use bevy :: prelude :: *;
-use bevy :: reflect :: TypeUuid;
+// use bevy :: reflect :: TypeUuid;
 use bevy :: utils	:: HashMap;
 
 use ab_glyph :: { Font, FontVec, GlyphId };
@@ -20,8 +20,8 @@ pub use font_loader :: FontLoader;
 use glyph_mesh_generator :: generate_string_mesh_wcache;
 use emoji_generator :: generate_emoji_mesh_wcache;
 
-#[derive(Asset, TypePath, TypeUuid, Debug)]
-#[uuid = "1a92e0e6-6915-11ed-9022-0242ac120002"]
+#[derive(Asset, TypePath, Debug)] // TypeUuid
+// #[uuid = "1a92e0e6-6915-11ed-9022-0242ac120002"]
 pub struct ABGlyphFont {
 	pub f			: Arc<FontVec>,
 	pub path		: PathBuf,

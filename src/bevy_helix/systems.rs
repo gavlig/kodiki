@@ -412,7 +412,7 @@ pub fn update_editor_resizer(
 
 pub fn update_search_matches(
 	mut matches_cache	: ResMut<MatchesMapCache>,
-		key				: Res<Input<KeyCode>>,
+		key				: Res<ButtonInput<KeyCode>>,
 		app_option		: Option<NonSend<HelixApp>>
 ) {
 	let app = if let Some(app) = app_option { app } else { return };
@@ -641,7 +641,7 @@ pub fn update_selection_search_matches(
 
 pub fn mouse_last_clicked(
 	mut mouse_button_state	: ResMut<MouseButtonState>,
-		mouse_button		: Res<Input<MouseButton>>,
+		mouse_button		: Res<ButtonInput<MouseButton>>,
 		framerate_manager	: Res<FramerateManager>,
 ) {
 	// with idle fps we sometimes get a release event in the same frame when it was pressed. It's a dirty workaround, but will do for now
@@ -734,7 +734,7 @@ pub fn mouse_hover(
 }
 
 pub fn mouse_goto_definition(
-		key				: Res<Input<KeyCode>>,
+		key				: Res<ButtonInput<KeyCode>>,
 		raypick			: Res<Raypick>,
 		q_goto_definition : Query<Entity, With<GotoDefinitionHighlight>>,
 		q_word			: Query<(&WordDescription, &WordChildren)>,
@@ -912,9 +912,9 @@ pub fn mouse_goto_definition(
 
 pub fn input_mouse(
 	mut mouse_pos_state	: ResMut<MousePosState>,
-	mouse_button		: Res<Input<MouseButton>>,
+	mouse_button		: Res<ButtonInput<MouseButton>>,
 	mouse_button_state	: Res<MouseButtonState>,
-	key					: Res<Input<KeyCode>>,
+	key					: Res<ButtonInput<KeyCode>>,
 	mut cursor_events	: EventReader<CursorMoved>,
 
 	surfaces			: Res<SurfacesMapBevy>,
@@ -1053,7 +1053,7 @@ pub fn input_scroll_deprecated(
 pub fn input_keyboard(
 	mut arrow_keys		: ResMut<ArrowKeysState>,
 	mut keyboard_events : EventReader<KeyboardInput>,
-		key				: Res<Input<KeyCode>>,
+		key				: Res<ButtonInput<KeyCode>>,
 
 		bevy_helix_settings : Res<BevyHelixSettings>,
 		tokio_runtime	: Res<TokioRuntime>,
@@ -1105,25 +1105,23 @@ pub fn input_keyboard(
 		}
 	};
 
-	arrow_key_fn(KeyCode::Up, 	&mut arrow_keys.last_event_up);
-	arrow_key_fn(KeyCode::Down, &mut arrow_keys.last_event_down);
-	arrow_key_fn(KeyCode::Left, &mut arrow_keys.last_event_left);
-	arrow_key_fn(KeyCode::Right, &mut arrow_keys.last_event_right);
+	arrow_key_fn(KeyCode::ArrowUp, 	&mut arrow_keys.last_event_up);
+	arrow_key_fn(KeyCode::ArrowDown, &mut arrow_keys.last_event_down);
+	arrow_key_fn(KeyCode::ArrowLeft, &mut arrow_keys.last_event_left);
+	arrow_key_fn(KeyCode::ArrowRight, &mut arrow_keys.last_event_right);
 
 	// sending all keyboard events to Helix
 
 	for keyboard_input in keyboard_events.read() {
-		if let Some(keycode_bevy) = keyboard_input.key_code {
-			match keycode_bevy {
-				// ignore up and down arrows because they are processed via Input<KeyCode>
-				KeyCode::Up | KeyCode::Down	| KeyCode::Left	| KeyCode::Right => continue,
+		match keyboard_input.key_code {
+			// ignore up and down arrows because they are processed via Input<KeyCode>
+			KeyCode::ArrowUp | KeyCode::ArrowDown | KeyCode::ArrowLeft | KeyCode::ArrowRight => continue,
 
-				// ignore ctrl+1..0 as those are used for context switching
-				KeyCode::Key1 | KeyCode::Key2 | KeyCode::Key3 | KeyCode::Key4 | KeyCode::Key5 |
-				KeyCode::Key6 | KeyCode::Key7 | KeyCode::Key8 | KeyCode::Key9 | KeyCode::Key0
-				if key.pressed(KeyCode::ControlLeft) || key.pressed(KeyCode::ControlRight) => continue,
-				_ => (),
-			}
+			// ignore ctrl+1..0 as those are used for context switching
+			KeyCode::Digit1 | KeyCode::Digit2 | KeyCode::Digit3 | KeyCode::Digit4 | KeyCode::Digit5 |
+			KeyCode::Digit6 | KeyCode::Digit7 | KeyCode::Digit8 | KeyCode::Digit9 | KeyCode::Digit0
+			if key.pressed(KeyCode::ControlLeft) || key.pressed(KeyCode::ControlRight) => continue,
+			_ => (),
 		}
 
 		if let Some(keycode_helix) = input::keyboard_input_to_keycode_helix(shift, keyboard_input) {

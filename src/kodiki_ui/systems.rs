@@ -200,7 +200,7 @@ pub fn cleanup_hover_hints(
 pub fn update_hotkey_hints(
 	mut q_hint			: Query<(Entity, &mut HintHotkey)>,
 	mut q_string_mesh_attached : Query<&mut StringMeshAttached>,
-		key				: Res<Input<KeyCode>>,
+		key				: Res<ButtonInput<KeyCode>>,
 		kodiki_ui		: Res<KodikiUI>,
 	mut commands		: Commands
 ) {

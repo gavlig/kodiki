@@ -1,5 +1,4 @@
 use bevy :: prelude :: *;
-use bevy_reader_camera :: ReaderCamera;
 
 #[cfg(feature = "tracing")]
 pub use bevy_puffin :: *;
@@ -9,7 +8,7 @@ use super :: *;
 use crate :: {
 	bevy_framerate_manager :: FramerateManager,
 	bevy_ab_glyph :: {
-		ABGlyphFont, ABGlyphFonts, FontAssetHandles,
+		ABGlyphFont, FontAssetHandles,
 	},
 };
 
@@ -97,7 +96,7 @@ pub fn update_color(
 
 pub fn mouse_input(
 		raypick			: Res<Raypick>,
-		mouse_button	: Res<Input<MouseButton>>,
+		mouse_button	: Res<ButtonInput<MouseButton>>,
 
 	mut q_switcher_entry : Query<&mut ContextSwitcherEntry>,
 		q_switcher_highlight : Query<Entity, With<ContextSwitcherHighlight>>,

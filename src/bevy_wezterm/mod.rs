@@ -226,7 +226,7 @@ impl BevyWezTerm {
 	pub fn key_up_down(
 		&mut self,
 		keyboard_input: &KeyboardInput,
-		input_key: &Input<KeyCodeBevy>,
+		input_key: &ButtonInput<KeyCodeBevy>,
 		is_down: bool
 	) -> anyhow::Result<()> {
 		if let Some(key_code_bevy) = keyboard_input.key_code {
@@ -317,8 +317,6 @@ impl Plugin for BevyWezTermPlugin {
 					systems::keyboard,
 					systems::mouse,
 					systems::mouse_goto_path,
-
-					apply_deferred
 				)
 				.chain()
 				.before(KodikiUISystems)

@@ -1,9 +1,5 @@
 use bevy :: prelude		:: *;
-use bevy :: render 		:: mesh :: shape as render_shape;
-use bevy :: core_pipeline :: {
-	bloom				:: { BloomSettings, BloomPrefilterSettings },
-	clear_color			:: ClearColorConfig,
-};
+use bevy :: core_pipeline :: bloom :: { BloomSettings, BloomPrefilterSettings };
 
 use bevy_reader_camera	:: { ReaderCamera, CameraMode };
 
@@ -26,12 +22,8 @@ pub fn camera(
 				translation: Vec3::new(1.5, 0., 7.),
 				..default()
 			},
-			camera_3d: Camera3d {
-				// don't clear the color while rendering this camera
-				clear_color: ClearColorConfig::None,
-				..default()
-			},
 			camera: Camera {
+				clear_color: ClearColorConfig::None,
 				// renders after / on top of the main camera
 				order: 1,
 				// needed for bloom
@@ -111,25 +103,25 @@ pub fn axis(
 	// X
 	transform.translation = transform_in.translation + offset_x;
 	let x_entity = commands.spawn(PbrBundle {
-		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(max_dim, min_dim, min_dim))),
-		material	: materials.add			(Color::rgb(max_color, min_color, min_color).into()),
-		transform	: transform,
+		mesh		: meshes.add			(Mesh::from(Cuboid::new(max_dim, min_dim, min_dim))),
+		material	: materials.add			(Color::rgb(max_color, min_color, min_color)),
+		transform,
 		..Default::default()
 	}).id();
 	// Y
 	transform.translation = transform_in.translation + offset_y;
 	let y_entity = commands.spawn(PbrBundle {
-		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(min_dim, max_dim, min_dim))),
-		material	: materials.add			(Color::rgb(min_color, max_color, min_color).into()),
-		transform	: transform,
+		mesh		: meshes.add			(Mesh::from(Cuboid::new(min_dim, max_dim, min_dim))),
+		material	: materials.add			(Color::rgb(min_color, max_color, min_color)),
+		transform,
 		..Default::default()
 	}).id();
 	// Z
 	transform.translation = transform_in.translation + offset_z;
 	let z_entity = commands.spawn(PbrBundle {
-		mesh		: meshes.add			(Mesh::from(render_shape::Box::new(min_dim, min_dim, max_dim))),
-		material	: materials.add			(Color::rgb(min_color, min_color, max_color).into()),
-		transform	: transform,
+		mesh		: meshes.add			(Mesh::from(Cuboid::new(min_dim, min_dim, max_dim))),
+		material	: materials.add			(Color::rgb(min_color, min_color, max_color)),
+		transform,
 		..Default::default()
 	}).id();
 
@@ -149,8 +141,8 @@ pub fn fixed_cube(
 	commands			: &mut Commands
 ) {
 	commands.spawn		(PbrBundle {
-		mesh			: meshes.add	(Mesh::from(render_shape::Box::new(hsize.x * 2.0, hsize.y * 2.0, hsize.z * 2.0))),
-		material		: materials.add	(color.into()),
+		mesh			: meshes.add	(Mesh::from(Cuboid::new(hsize.x * 2.0, hsize.y * 2.0, hsize.z * 2.0))),
+		material		: materials.add	(color),
 		..default()
 	})
 	.insert				(pose)
@@ -166,7 +158,7 @@ pub fn fixed_sphere(
 	commands			: &mut Commands
 ) {
 	commands.spawn		(PbrBundle {
-		mesh			: meshes.add	(Mesh::from(render_shape::UVSphere { radius: radius, ..default() } )),
+		mesh			: meshes.add	(Mesh::from(Sphere::new(radius))),
 		material		: materials.add	(StandardMaterial { base_color: color, unlit: true, ..default() }),
 		..default()
 	})

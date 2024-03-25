@@ -1034,7 +1034,7 @@ impl SurfaceBevy {
 			}
 
 			let highlight_size	= Vec2::new(highlight_len as f32 * column_width, row_height);
-			let highlight_mesh_handle = mesh_assets.add(shape::Quad::new(highlight_size).into());
+			let highlight_mesh_handle = mesh_assets.add(Rectangle::from_size(highlight_size));
 
 			let highlight_x = (gutter_len as f32 + offset_len as f32 + highlight_len as f32 / 2.0) * column_width;
 			let highlight_y	= -((line + 1) as f32 * row_height) + row_height / 2.0; // FIXME: surface anchor is not accounted for. +1 because in editor rows grow downwards and their surface anchor is top
@@ -1071,7 +1071,7 @@ impl SurfaceBevy {
 		let highlight_width = highlight_len as f32 * column_width;
 
 		let highlight_size	= Vec2::new(highlight_width, row_height);
-		let highlight_mesh_handle = mesh_assets.add(shape::Quad::new(highlight_size).into());
+		let highlight_mesh_handle = mesh_assets.add(Rectangle::from_size(highlight_size));
 
 		let highlight_x		= (gutter_len as f32 * column_width) + (highlight_width / 2.0);
 		let highlight_y		= -((highlight_line + 1) as f32 * row_height) + row_height / 2.0; // FIXME: surface anchor is not accounted for. +1 because in editor rows grow downwards and their surface anchor is top

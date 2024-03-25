@@ -219,7 +219,7 @@ pub fn keyboard_input_to_keycode_helix(
 	Some(key_code_helix)
 }
 
-pub fn key_code_to_helix_modifiers(key : &Input<KeyCode>) -> KeyModifiers {
+pub fn key_code_to_helix_modifiers(key : &ButtonInput<KeyCode>) -> KeyModifiers {
 	let mut modifiers = helix_view::keyboard::KeyModifiers::NONE;
 
 	if key.pressed(KeyCode::AltLeft) || key.pressed(KeyCode::AltRight) {
@@ -253,7 +253,7 @@ pub fn send_keyboard_event(
 }
 
 pub fn handle_mouse_events(
-	mouse_button	: &Input<MouseButton>,
+	mouse_button	: &ButtonInput<MouseButton>,
 	mouse_button_state : &MouseButtonState,
 	modifiers		: &KeyModifiers,
 	column			: u16,
