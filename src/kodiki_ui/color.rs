@@ -2,9 +2,9 @@ use bevy :: prelude :: *;
 
 use super :: *;
 
-pub const EMISSIVE_MULTIPLIER_STRONG : f32 = 10.;
-pub const EMISSIVE_MULTIPLIER_MEDIUM : f32 = 7.;
-pub const EMISSIVE_MULTIPLIER_SMALL : f32 = 3.;
+pub const EMISSIVE_MULTIPLIER_STRONG : f32 = 60.;
+pub const EMISSIVE_MULTIPLIER_MEDIUM : f32 = 40.;
+pub const EMISSIVE_MULTIPLIER_SMALL : f32 = 30.;
 
 pub fn get_color_material_handle(
 	color				: Color,

@@ -271,7 +271,7 @@ pub fn highlight_insert_mode(
 			commands.entity(first_word.mesh_entity.unwrap())
 			.insert(
 				get_emissive_material_handle(
-					Color::rgb(0.9, 0.1, 0.1).as_rgba_linear() * EMISSIVE_MULTIPLIER_STRONG,
+					Color::rgb(0.9, 0.1, 0.1) * EMISSIVE_MULTIPLIER_STRONG,
 					&mut color_materials_cache,
 					&mut material_assets
 				)

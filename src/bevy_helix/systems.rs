@@ -831,7 +831,7 @@ pub fn mouse_goto_definition(
 				}
 			);
 
-			let new_color = word.color.as_rgba_linear() * EMISSIVE_MULTIPLIER_STRONG;
+			let new_color = word.color * EMISSIVE_MULTIPLIER_STRONG;
 
 			let material_handle = get_emissive_material_handle(
 				new_color,
