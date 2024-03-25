@@ -705,8 +705,6 @@ impl SurfaceBevy {
 		#[cfg(feature = "debug")]
 		lines			: Option<&mut DebugLines>,
 	) {
-		profile_scope!("surface update_rows");
-
 		let rows_in_page			= self.rows_in_viewport();
 		let columns_in_page			= self.columns_in_viewport();
 

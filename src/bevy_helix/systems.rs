@@ -189,8 +189,6 @@ pub fn camera_update(
 
 	if app.should_close() { return }
 
-	profile_function!();
-
 	let mut reader_camera = q_camera.single_mut();
 
 	// scrolling offset coming from camera to Helix
@@ -214,8 +212,6 @@ pub fn render_helix(
 	let Some(mut app) = app_option else { return };
 
 	if app.should_close() { return }
-
-	profile_function!();
 
 	if app.should_render() {
 		framerate_manager.request_active_framerate("Helix requested render".into());
@@ -255,8 +251,6 @@ pub fn manage_surfaces(
 	mut despawn			: ResMut<DespawnResource>,
 	mut commands		: Commands,
 ) {
-	profile_function!();
-
 	let fonts = ABGlyphFonts::new(&font_assets, &font_handles);
 
 	let (camera_entity, reader_camera) = q_camera.single();
@@ -339,8 +333,6 @@ pub fn update_cursor(
 
 	if app.should_close() || !app.editor_focused() { return }
 
-	profile_function!();
-
 	let (cursor_positions, cursor_surface_name) = if let Some(cursors) = app.cursor() { cursors } else { return };
 
 	// there can be no cursor visible in current viewport
@@ -415,8 +407,6 @@ pub fn update_search_matches(
 
 	if app.should_close() { return }
 
-	profile_function!();
-
 	let new_search_pattern = app.active_search_pattern();
 
 	let doc = app.current_document();
@@ -447,8 +437,6 @@ pub fn update_selection_search_matches(
 	let app = if let Some(app) = app_option { app } else { return };
 
 	if app.should_close() { return }
-
-	profile_function!();
 
 	// highlight currently selected text as if it was searched but only if it's on 1 line and from 1 cursor
 	let (view, doc) = app.current_ref();
@@ -611,8 +599,6 @@ pub fn update_selection_search_matches(
 // 		app_option	: Option<NonSend<HelixApp>>,
 // 	mut commands	: Commands
 // ) {
-// 	profile_function!();
-
 // 	let app = if let Some(app) = app_option { app } else { return };
 
 // 	if app.should_close() { return }
@@ -748,8 +734,6 @@ pub fn mouse_goto_definition(
 	let Some(app) = app_option else { return };
 
 	if app.should_close() || !app.editor_focused() { return }
-
-	profile_function!();
 
 	let ctrl_pressed	= key.pressed(KeyCode::ControlLeft) || key.pressed(KeyCode::ControlRight);
 	let alt_pressed		= key.pressed(KeyCode::AltLeft) || key.pressed(KeyCode::AltRight);
@@ -934,8 +918,6 @@ pub fn input_mouse(
 
 	let hovered_entity = if let Some(e) = raypick.last_hover { e } else { return };
 
-	profile_function!();
-
 	let surface_name = if let Ok(word) = q_word.get(hovered_entity) {
 		&word.surface_name
 	} else {
@@ -1027,8 +1009,6 @@ pub fn input_scroll_deprecated(
 
 	let hover_entity = if let Some(entity) = raypick.last_hover { entity } else { return };
 
-	profile_function!();
-
 	let surface_editor = surfaces.get(&String::from(EditorView::ID)).unwrap();
 
 	// if mouse is not over editor, minimap or minimap viewport we shouldnt scroll
@@ -1060,8 +1040,6 @@ pub fn input_keyboard(
 
 	use KeyCode as KeyCodeBevy;
 	use helix_view::keyboard::KeyCode as KeyCodeHelix;
-
-	profile_function!();
 
 	let now = Instant::now();
 
@@ -1142,8 +1120,6 @@ pub fn tokio_events(
 
 	if app.should_close() { return }
 
-	profile_function!();
-
 	tokio_runtime.block_on(app.handle_tokio_events());
 }
 
@@ -1218,8 +1194,6 @@ pub fn update_background_color(
 	let Some(app) = app_option else { return };
 
 	if app.should_close() { return }
-
-	profile_function!();
 
 	let background_style_default = app.editor.theme.get("ui.background");
 	let background_color_default = color_from_helix(background_style_default.bg.unwrap_or(HelixColor::Cyan));

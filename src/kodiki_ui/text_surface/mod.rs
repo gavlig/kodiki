@@ -494,8 +494,6 @@ impl TextSurface {
 	 	row_colors		: &mut ColoringLineRow,
 		fonts			: &ABGlyphFonts,
 	) {
-		profile_scope!("TextSurface process_cell_into_row");
-
 		let columns_in_page		= self.columns_count;
 
 		let column_width		= fonts.main.horizontal_advance_mono();
@@ -544,8 +542,6 @@ impl TextSurface {
 		lines_to_spawn	: &mut ColoringLinesToSpawn,
 		entities_to_despawn	: &mut DespawnResource,
 	) {
-		profile_scope!("TextSurface update_cached_row");
-
 		// This can happen when camera changes the amount of visible rows and resize hasn't happened yet
 		if row_index >= self.rows.len() {
 			return;

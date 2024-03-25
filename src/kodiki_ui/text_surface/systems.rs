@@ -45,8 +45,6 @@ pub fn spawn_words(
 ) {
 	let fonts = ABGlyphFonts::new(&font_assets, &font_handles);
 
-	profile_function!();
-
 	for (mut text_surface, to_spawn, text_surface_entity) in q_text_surface.iter_mut() {
 		let mut surface_children = Vec::new();
 
@@ -163,8 +161,6 @@ pub fn spawn_coloring_lines(
 	mut q_text_surface		: Query<(&mut TextSurface, &ColoringLinesToSpawn, Entity)>,
 	mut commands			: Commands,
 ) {
-	profile_function!();
-
 	for (mut text_surface, lines_to_spawn, text_surface_entity) in q_text_surface.iter_mut() {
 		let mut surface_children = Vec::new();
 

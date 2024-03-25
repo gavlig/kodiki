@@ -21,8 +21,6 @@ pub fn update(
 	mut q_transform			: Query<&mut Transform>,
 		q_visibility		: Query<&ViewVisibility>,
 ) {
-	profile_function!();
-
 	let fonts = ABGlyphFonts::new(&font_assets, &font_handles);
 
 	let low_fps_mode = framerate_manager.mode() == FramerateMode::Idle;

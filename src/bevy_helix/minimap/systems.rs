@@ -41,8 +41,6 @@ pub fn update(
 	// wait until previous async task is done before starting a new one
 	if !minimap_render_task.is_empty() { return }
 
-	profile_scope!("minimap update");
-
 	let mut minimap = q_minimap.single_mut();
 
 	let current_document = app.current_document();
@@ -150,8 +148,6 @@ pub fn update_bookmarks(
 
 	if app.should_close() { return }
 
-	profile_scope!("minimap update_bookmarks");
-
 	let current_document = app.current_document();
 	let current_symbols_version = Some(current_document.symbols_version());
 
@@ -184,9 +180,6 @@ pub fn update_diagnostics_highlights(
 	let app = if let Some(app) = app_option { app } else { return };
 
 	if app.should_close() { return }
-
-
-	profile_scope!("minimap update_diagnostics_highlights");
 
 	let doc = app.current_document();
 
@@ -239,8 +232,6 @@ pub fn update_search_highlights(
 
 	if app.should_close() { return }
 
-	profile_scope!("minimap update_search_highlights");
-
 	let mut minimap = q_minimap.single_mut();
 
 	// offsets are calculated with minimap size in mind and if there is an ongoing render task it means the size is going to change
@@ -281,8 +272,6 @@ pub fn update_selection_search_highlights(
 
 	if app.active_search_pattern().is_some() { return }
 	
-	profile_scope!("minimap update_selection_search_highlights");
-
 	let mut minimap = q_minimap.single_mut();
 
 	// offsets are calculated with minimap size in mind and if there is an ongoing render task it means the size is going to change
@@ -359,8 +348,6 @@ pub fn update_selection_highlights(
 
 	if app.should_close() { return }
 
-	profile_scope!("minimap update_selection_highlights");
-
 	let (view, doc) = app.current_ref();
 
 	let mut minimap = q_minimap.single_mut();
@@ -413,8 +400,6 @@ pub fn update_transform(
 		q_cursor			: Query<&TextCursor>,
 		time				: Res<Time>,
 ) {
-	profile_scope!("minimap update_position");
-
 	let fonts = ABGlyphFonts::new(&font_assets, &font_handles);
 	let column_width	= fonts.main.horizontal_advance_mono();
 	let row_height		= fonts.main.vertical_advance();
@@ -558,8 +543,6 @@ pub fn reveal_hovered_bookmark(
 	if app.should_close() { return }
 
 	if dragging_state.is_active() { return }
-
-	profile_scope!("minimap reveal_hovered_bookmark");
 
 	let minimap			= q_minimap.single();
 	let minimap_transform = q_transform.get(minimap.entity).unwrap();
@@ -718,8 +701,6 @@ pub fn input_mouse(
 	let mut app = if let Some(app) = app_option { app } else { return };
 
 	if app.should_close() { return }
-
-	profile_scope!("minimap input_mouse");
 
 	let animate_viewport_opacity = |viewport_entity: Entity, alpha_start: f32, alpha_end: f32, commands: &mut Commands| {
 		let tween = Tween::new(
@@ -995,8 +976,6 @@ pub fn input_mouse_bookmark(
 
 	if dragging_state.is_active() { return }
 
-	profile_scope!("minimap input_mouse_bookmark");
-
 	if mouse_button.just_pressed(MouseButton::Left) {
 		let hover_entity	= if let Some(entity)	= raypick.last_hover 					{ entity } else { return };
 		let symbol_bookmark	= if let Ok(symbol)		= q_symbol_bookmark.get(hover_entity)	{ symbol } else { return };
@@ -1020,8 +999,6 @@ pub fn update_minimap_scroll_animation(
 
 	if app.should_close() { return }
 
-	profile_function!();
-
 	for mut animation in q_minimap_scroll.iter_mut() {
 		if let Some(row) = animation.row_read_to_apply() {
 			app.set_row_offset_internal(row);
@@ -1035,8 +1012,6 @@ pub fn update_click_point(
 	mut q_click_point_visual : Query<(Entity, &AssetAnimator<StandardMaterial>), With<ClickPointVisual>>,
 	mut commands		: Commands
 ) {
-	profile_scope!("minimap update_click_point");
-
 	let minimap_transform = q_minimap_transform.single();
 
 	for mut transform in q_click_point.iter_mut() {

@@ -141,8 +141,6 @@ pub fn process_hover_hints(
 		kodiki_ui		: Res<KodikiUI>,
 	mut commands		: Commands
 ) {
-	profile_function!();
-
 	let Some(hovered_entity) = raypick.last_hover else { return };
 
 	let Ok(mut hovered_hint) = q_hint_hover.get_mut(hovered_entity) else { return };
@@ -173,8 +171,6 @@ pub fn cleanup_hover_hints(
 	mut	q_string_mesh_attached	: Query<&mut StringMeshAttached>,
 		raypick					: Res<Raypick>,
 ) {
-	profile_function!();
-
 	let hovered_entity = raypick.last_hover;
 
 	for (hint_entity, mut hint) in q_hint_hover.iter_mut() {

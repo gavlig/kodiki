@@ -58,8 +58,6 @@ pub fn spawn_words(
 
 	let (reader_camera, camera_transform) = q_camera.single();
 
-	profile_function!();
-
 	for message in popups.messages.iter() {
 		let color = Color::ANTIQUE_WHITE;
 

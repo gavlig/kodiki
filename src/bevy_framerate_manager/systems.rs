@@ -324,8 +324,6 @@ pub fn mouse_input(
 	mut despawn			: ResMut<DespawnResource>,
 	mut commands		: Commands
 ) {
-	profile_function!();
-
 	let hovered_entity = raypick.last_hover;
 
 	let left_button_just_pressed = mouse_button.just_pressed(MouseButton::Left);

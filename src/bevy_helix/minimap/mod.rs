@@ -781,8 +781,6 @@ impl Minimap {
 		material_assets		: &mut Assets<StandardMaterial>,
 		commands			: &mut Commands,
 	) {
-		profile_function!();
-
 		// despawn old diff hunks
 		for diff_entity in self.diff_entities.iter() {
 			commands.entity(*diff_entity).despawn_recursive();

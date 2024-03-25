@@ -12,8 +12,6 @@ pub fn update_transform(
 		font_assets		: Res<Assets<ABGlyphFont>>,
 		font_handles	: Res<FontAssetHandles>,
 ) {
-	profile_function!();
-
 	let font			= font_assets.get(&font_handles.main).unwrap();
 	let row_height		= font.vertical_advance();
 	let column_width	= font.horizontal_advance_mono();
@@ -72,8 +70,6 @@ pub fn update_color(
 	mut	material_assets		: ResMut<Assets<StandardMaterial>>,
 	mut commands			: Commands,
 ) {
-	profile_function!();
-
 	for (bg_quad_entity, mut bg_quad) in q_bg_quad.iter_mut() {
 		if bg_quad.color.is_none() || bg_quad.color_internal == bg_quad.color {
 			continue;

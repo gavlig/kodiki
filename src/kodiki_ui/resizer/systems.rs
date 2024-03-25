@@ -16,8 +16,6 @@ pub fn input_mouse(
 		raypick			: Res<Raypick>,
 	mut	dragging_state	: ResMut<DraggingState>,
 ) {
-	profile_function!();
-
 	let (mut resizer, resizer_entity) = {
 		let hovered_entity = raypick.last_hover.unwrap_or(Entity::from_raw(0));
 		let resizer_probe = q_resizer.get_mut(hovered_entity);
@@ -78,8 +76,6 @@ pub fn update_color(
 	mut	material_assets		: ResMut<Assets<StandardMaterial>>,
 	mut commands			: Commands,
 ) {
-	profile_function!();
-
 	for mut resizer in q_resizer.iter_mut() {
 		if resizer.quad_color_cached == resizer.quad_color {
 			continue;
@@ -119,8 +115,6 @@ pub fn highlight_hovered(
 
 	mut commands		: Commands
 ) {
-	profile_function!();
-
 	let duration_hovered = Duration::from_millis(150);
 	let ease_hovered	= EaseFunction::CircularInOut;
 

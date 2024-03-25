@@ -42,8 +42,6 @@ pub fn update(
 
 	if app.should_close() { return }
 
-	profile_scope!("surface update");
-
 	let fonts = ABGlyphFonts::new(&font_assets, &font_handles);
 
 	let row_offset = app.row_offset_external() as i32;
@@ -115,8 +113,6 @@ pub fn spawn_words(
 	mut commands		: Commands,
 ) {
 	let fonts = ABGlyphFonts::new(&font_assets, &font_handles);
-
-	profile_function!();
 
 	for (surface_name, surface_bevy) in surfaces_bevy.iter_mut() {
 		let words_to_spawn = if let Some(words) = to_spawn.per_surface.get(surface_name) { words } else { continue; };
@@ -210,8 +206,6 @@ pub fn spawn_coloring_lines(
 	mut to_spawn			: ResMut<ColoringLinesToSpawn>,
 	mut commands			: Commands,
 ) {
-	profile_function!();
-
 	for (surface_name, surface_bevy) in surfaces_bevy.iter_mut() {
 		let lines_to_spawn = if let Some(words) = to_spawn.per_surface.get(surface_name) { words } else { continue; };
 		let mut surface_children = Vec::new();
@@ -261,8 +255,6 @@ pub fn highlight_insert_mode(
 	let app = if let Some(app) = app_option { app } else { return };
 
 	if app.should_close() { return }
-
-	profile_function!();
 
 	let surface_bevy = if let Some(surface) = surfaces_bevy.get_mut(EditorView::ID_STATUSLINE) { surface } else { return };
 
@@ -317,8 +309,6 @@ pub fn update_diagnostics_highlights(
 
 	if app.should_close() { return }
 
-	profile_scope!("surface update_diagnostics_highlights");
-
 	let (view, doc) = app.current_ref();
 
 	let surface_editor = if let Some(e) = surfaces_bevy.get_mut(EditorView::ID) { e } else { return };
@@ -372,8 +362,6 @@ pub fn update_search_highlights(
 
 	if app.should_close() { return }
 
-	profile_scope!("surface update_search_highlights");
-
 	let surface_editor = if let Some(e) = surfaces_bevy.get_mut(EditorView::ID) { e } else { return };
 
 	let search_kind = SearchKind::Common;
@@ -410,8 +398,6 @@ pub fn update_selection_search_highlights(
 	if app.should_close() { return }
 
 	if app.active_search_pattern().is_some() { return }
-
-	profile_scope!("surface update_selection_search_highlights");
 
 	let surface_editor = if let Some(e) = surfaces_bevy.get_mut(EditorView::ID) { e } else { return };
 
@@ -489,8 +475,6 @@ pub fn update_selection_highlights(
 
 	if app.should_close() { return }
 
-	profile_function!();
-
 	let surface_editor = if let Some(e) = surfaces_bevy.get_mut(EditorView::ID) { e } else { return };
 
 	let (view, doc) = app.current_ref();
@@ -544,8 +528,6 @@ pub fn update_cursor_highlights(
 
 	if app.should_close() { return }
 
-	profile_function!();
-
 	let surface_editor = if let Some(e) = surfaces_bevy.get_mut(EditorView::ID) { e } else { return };
 
 	if surface_editor.cursor_entities.is_empty() { return }
@@ -580,8 +562,6 @@ pub fn update_size(
 		font_handles	: Res<FontAssetHandles>,
 	mut q_bg_quad		: Query<&mut TextBackgroundQuad>,
 ) {
-	profile_function!();
-
 	let font			= font_assets.get(&font_handles.main).unwrap();
 	let row_height		= font.vertical_advance();
 	let column_width	= font.horizontal_advance_mono();
@@ -608,8 +588,6 @@ pub fn update_background_color(
 
 	if app.should_close() { return }
 
-	profile_function!();
-
 	let background_style_default = app.editor.theme.get("ui.background");
 	let background_color_default = color_from_helix(background_style_default.bg.unwrap_or(HelixColor::Cyan));
 
@@ -630,8 +608,6 @@ pub fn update_transform(
 		q_camera		: Query<(Entity, &ReaderCamera)>,
 	mut	q_transform		: Query<&mut Transform>,
 ) {
-	profile_function!();
-
 	let fonts = ABGlyphFonts::new(&font_assets, &font_handles);
 
 	let surface_editor_helix	= surfaces_helix.get(&String::from(EditorView::ID)).unwrap();

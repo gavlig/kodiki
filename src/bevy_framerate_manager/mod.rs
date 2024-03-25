@@ -356,8 +356,6 @@ impl FramerateDebug {
 		manager		: &FramerateManager,
 		lines		: &mut Vec<DebugLine>
 	) {
-		profile_function!();
-
 		let color_logs = if manager.clear_logs_on_next_entry { Color::GRAY } else { Color::ANTIQUE_WHITE };
 		lines.push(DebugLine::new_default_bg("=== logs ===".into(), color_logs));
 
@@ -371,8 +369,6 @@ impl FramerateDebug {
 		time		: &Time,
 		lines		: &mut Vec<DebugLine>
 	) {
-		profile_function!();
-
 		// current framerate
 
 		let current_framerate_mode = manager.mode();
@@ -454,8 +450,6 @@ impl FramerateDebug {
 		lines			: &Vec<DebugLine>,
 		commands		: &mut Commands,
 	) -> Entity {
-		profile_function!();
-
 		let mut translation = translation_in;
 		translation.x += column_width;
 
@@ -504,8 +498,6 @@ impl FramerateDebug {
 		color_materials_cache : &mut ColorMaterialsCache,
 		commands		: &mut Commands,
 	) -> Entity {
-		profile_function!();
-
 		let mesh_handle = mesh_assets.add(Circle::new(dot_radius));
 
 		let material_handle = get_color_material_handle(

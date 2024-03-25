@@ -20,8 +20,6 @@ pub fn update_position(
 		font_assets		: Res<Assets<ABGlyphFont>>,
 		font_handles	: Res<FontAssetHandles>,
 ) {
-	profile_function!();
-
 	let fonts = ABGlyphFonts::new(&font_assets, &font_handles);
 	let row_height = fonts.main.horizontal_advance_mono();
 
@@ -59,8 +57,6 @@ pub fn update_color(
 		kodiki_ui			: Res<KodikiUI>,
 	mut commands			: Commands,
 ) {
-	profile_function!();
-
 	for (entity, mut entry, glyph) in q_switcher_entries.iter_mut() {
 		let quad_color	= get_color_wmodified_lightness(kodiki_ui.context_switch_color, 0.1);
 		if quad_color == entry.quad_color {
@@ -110,8 +106,6 @@ pub fn mouse_input(
 
 	mut commands		: Commands
 ) {
-	profile_function!();
-
 	let hovered_entity = raypick.last_hover;
 
 	let left_button_just_pressed = mouse_button.just_pressed(MouseButton::Left);
@@ -185,8 +179,6 @@ pub fn highlights_cleanup(
 
 	mut commands : Commands
 ) {
-	profile_function!();
-
 	let hovered_entity = raypick.last_hover;
 	
 	// remove highlight from all switchers that are no longer hovered over and not active

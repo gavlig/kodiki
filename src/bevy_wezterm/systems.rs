@@ -206,8 +206,6 @@ pub fn update_resizer(
 	mut entities_to_despawn	: ResMut<DespawnResource>,
 	mut commands			: Commands,
 ) {
-	profile_function!();
-
 	let fonts = ABGlyphFonts::new(&font_assets, &font_handles);
 
 	let Ok(camera) = q_reader_camera.get_single() else { return };
@@ -253,8 +251,6 @@ pub fn update_background_color(
 		q_terminal_surface	: Query<(&TextSurface, &BevyWezTerm)>,
 	mut q_bg_quad			: Query<&mut TextBackgroundQuad>,
 ) {
-	profile_function!();
-
 	for (text_surface, terminal) in q_terminal_surface.iter() {
 		let srgba = terminal.wez_state.get_config().color_palette().background;
 		let background_color = Color::Rgba { red: srgba.0, green: srgba.1, blue: srgba.2, alpha: srgba.3 };
@@ -381,8 +377,6 @@ pub fn mouse(
 		font_assets		: Res<Assets<ABGlyphFont>>,
 		font_handles	: Res<FontAssetHandles>,
 ) {
-	profile_function!();
-
 	let Ok((mut terminal, terminal_entity)) = q_terminal.get_single_mut() else { return };
 
 	let Ok(surface_transform) = q_transform.get(terminal_entity) else { return };
@@ -538,8 +532,6 @@ pub fn mouse_goto_path(
 
 	mut commands		: Commands,
 ) {
-	profile_function!();
-
 	let ctrl_pressed	= key.pressed(KeyCode::ControlLeft) || key.pressed(KeyCode::ControlRight);
 	let alt_pressed		= key.pressed(KeyCode::AltLeft) || key.pressed(KeyCode::AltRight);
 	let shift_pressed	= key.pressed(KeyCode::ShiftLeft) || key.pressed(KeyCode::ShiftRight);
