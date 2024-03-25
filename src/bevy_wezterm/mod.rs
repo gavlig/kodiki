@@ -229,29 +229,28 @@ impl BevyWezTerm {
 		input_key: &ButtonInput<KeyCodeBevy>,
 		is_down: bool
 	) -> anyhow::Result<()> {
-		if let Some(key_code_bevy) = keyboard_input.key_code {
-			// ignore modifier only key codes
-			match key_code_bevy {
-				KeyCodeBevy::ControlLeft | KeyCodeBevy::ControlRight |
-				KeyCodeBevy::AltLeft | KeyCodeBevy::AltRight |
-				KeyCodeBevy::ShiftLeft | KeyCodeBevy::ShiftRight => return Ok(()),
-				_ => ()
-			};
+		let key_code_bevy = keyboard_input.key_code;
 
-			// ignore ctrl+1..0 as those are used for context switching
-			if input_key.pressed(KeyCode::ControlLeft) || input_key.pressed(KeyCode::ControlRight) {
-				match key_code_bevy {
-					KeyCode::Key1 | KeyCode::Key2 | KeyCode::Key3 | KeyCode::Key4 | KeyCode::Key5 |
-					KeyCode::Key6 | KeyCode::Key7 | KeyCode::Key8 | KeyCode::Key9 | KeyCode::Key0 => return Ok(()),
-					_ => (),
-				}
+		// ignore modifier only key codes
+		match key_code_bevy {
+			KeyCodeBevy::ControlLeft | KeyCodeBevy::ControlRight |
+			KeyCodeBevy::AltLeft | KeyCodeBevy::AltRight |
+			KeyCodeBevy::ShiftLeft | KeyCodeBevy::ShiftRight => return Ok(()),
+			_ => ()
+		};
+
+		// ignore ctrl+1..0 as those are used for context switching
+		if input_key.pressed(KeyCode::ControlLeft) || input_key.pressed(KeyCode::ControlRight) {
+			match key_code_bevy {
+				KeyCode::Digit1 | KeyCode::Digit2 | KeyCode::Digit3 | KeyCode::Digit4 | KeyCode::Digit5 |
+				KeyCode::Digit6 | KeyCode::Digit7 | KeyCode::Digit8 | KeyCode::Digit9 | KeyCode::Digit0 => return Ok(()),
+				_ => (),
 			}
 		}
 
 		let modifiers = Self::key_modifiers_bevy_to_wez(input_key);
-		let shift_pressed = modifiers.intersects(ModifiersWezTerm::LEFT_SHIFT | ModifiersWezTerm::RIGHT_SHIFT | ModifiersWezTerm::SHIFT);
 
-		let Some(key_code_wez) = Self::keyboard_input_bevy_to_wez(shift_pressed, keyboard_input) else { anyhow::bail!("keyboard_input_bevy_to_wez failed! keyboard_input: {:?}", keyboard_input); };
+		let Some(key_code_wez) = Self::keycode_wez_from_bevy(keyboard_input) else { anyhow::bail!("keyboard_input_bevy_to_wez failed! keyboard_input: {:?}", keyboard_input); };
 
 		self.wez_state.key_up_down(key_code_wez, modifiers, is_down)
 	}
