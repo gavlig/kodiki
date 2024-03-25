@@ -3,33 +3,20 @@ use bevy :: prelude :: *;
 #[cfg(feature = "debug")]
 use bevy_prototype_debug_lines :: *;
 
-use bevy_reader_camera :: ReaderCamera;
-
-use super :: {
-	MatchesMapCache,
-	SyncDataDoc,
-	ColorMaterialsCache,
-	helix_app :: HelixApp,
-	surface :: *,
-};
+use super :: surface :: *;
 
 use crate :: {
-	kodiki :: DespawnResource,
 	bevy_helix :: spawn,
 	kodiki_ui :: {
 		spawn as spawn_common,
-		text_background_quad :: TextBackgroundQuad,
 		text_cursor :: TextCursor
 	},
 	bevy_ab_glyph :: {
-		{ ABGlyphFont, FontAssetHandles, ABGlyphFonts, GlyphWithFonts, GlyphMeshesCache, TextMeshesCache, EmojiMaterialsCache },
+		{ FontAssetHandles, GlyphWithFonts, GlyphMeshesCache, TextMeshesCache, EmojiMaterialsCache },
 		glyph_mesh_generator :: generate_string_mesh_wcache,
 		emoji_generator :: { generate_emoji_mesh_wcache, generate_emoji_material_wcache },
 	},
 };
-
-use helix_tui :: buffer	:: SurfacePlacement;
-use helix_term :: ui	:: EditorView;
 
 use helix_view :: {
 	graphics :: Color as HelixColor,

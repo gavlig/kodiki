@@ -4,10 +4,7 @@ use helix_tui :: buffer :: Cell as CellHelix;
 
 use super :: *;
 
-use crate :: {
-	bevy_ab_glyph::{ ABGlyphFonts, GlyphWithFonts },
-	kodiki :: DespawnResource,
-};
+use crate :: bevy_ab_glyph :: GlyphWithFonts;
 
 #[derive(Default)]
 pub struct RowState {

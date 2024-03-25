@@ -2,7 +2,6 @@ use bevy :: {
 	prelude :: *,
 	render :: {
 		render_resource :: { Extent3d, TextureDimension, TextureFormat, TextureUsages },
-		mesh :: shape as render_shape,
 		render_asset :: RenderAssetUsages,
 	},
 	tasks :: { AsyncComputeTaskPool, Task },
@@ -30,7 +29,7 @@ use helix_view :: {
 
 use crate :: {
 	z_order,
-	kodiki_ui :: { * , color :: * , tween_lens :: * , spawn, raypick :: RaypickHover },
+	kodiki_ui :: { * , color :: * , tween_lens :: * , raypick :: RaypickHover },
 	bevy_helix :: { SyncDataDoc, SyncDataDiagnostics, MatchRange, Highlights, HighlightKind, SearchKind, VersionType },
 	bevy_ab_glyph :: {
 		{ ABGlyphFonts, ABGlyphFont, GlyphMeshesCache, TextMeshesCache },

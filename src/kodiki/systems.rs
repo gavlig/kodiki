@@ -19,7 +19,7 @@ use crate :: {
 	z_order,
 	bevy_wezterm	:: BevyWezTerm,
 	bevy_helix		:: { HelixApp, TokioRuntime, utils :: * },
-	bevy_ab_glyph	:: { ABGlyphFont, glyph_mesh_generator :: generate_string_mesh },
+	bevy_ab_glyph	:: glyph_mesh_generator :: generate_string_mesh,
 	kodiki_ui :: {
 		text_cursor		:: CursorVisualAsset,
 		text_surface	:: PathRowCol,

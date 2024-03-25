@@ -2,7 +2,6 @@ use bevy :: {
 	prelude :: *,
 	render :: {
 		texture :: { ImageType, ImageSampler },
-		mesh :: Mesh,
 		render_asset :: RenderAssetUsages,
 	}
 };

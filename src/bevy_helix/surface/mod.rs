@@ -1,5 +1,4 @@
 use bevy :: prelude :: *;
-use bevy :: utils :: HashMap;
 use bevy_tweening :: { *, lens :: * };
 
 #[cfg(feature = "debug")]
@@ -25,7 +24,6 @@ use helix_term	:: ui :: EditorView;
 use helix_tui	:: buffer :: { Buffer as SurfaceHelix, SurfaceAnchor, SurfacePlacement };
 
 use helix_view :: {
-	Document,
 	View,
 	Theme,
 	graphics :: {

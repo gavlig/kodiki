@@ -2,7 +2,7 @@ use bevy :: prelude :: *;
 use bevy :: render :: {
 	render_resource :: PrimitiveTopology,
 	render_asset :: RenderAssetUsages,
-	mesh :: { Indices, Mesh },
+	mesh :: Indices,
 };
 
 use lyon :: tessellation :: *;

@@ -21,10 +21,7 @@ use helix_term :: {
 	ui		:: EditorView,
 };
 
-use helix_view :: {
-	document :: Mode,
-	graphics :: { Rect, Color as HelixColor },
-};
+use helix_view :: graphics :: { Rect, Color as HelixColor };
 
 use helix_tui :: buffer :: { Buffer as SurfaceHelix, SurfaceFlags, SurfaceAnchor };
 
@@ -40,9 +37,8 @@ use super :: {
 	BevyHelixSettings,
 	GotoDefinitionHighlight,
 
-	{ MatchesMapCache, SearchKind },
-	{ ArrowKeysState, KeyPressTiming, MousePosState, MouseButtonState, MouseHoverState },
-	{ Minimap, MinimapViewport },
+	MatchesMapCache, SearchKind,
+	ArrowKeysState, KeyPressTiming, MousePosState, MouseButtonState, MouseHoverState,
 
 	systems_util	:: *,
 	surface			:: *,

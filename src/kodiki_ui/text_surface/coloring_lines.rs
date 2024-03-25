@@ -1,7 +1,5 @@
 use bevy :: prelude :: *;
 
-use crate :: bevy_ab_glyph :: ABGlyphFonts;
-
 use super :: *;
 
 #[derive(Default)]

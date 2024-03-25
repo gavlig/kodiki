@@ -6,7 +6,7 @@ use crate :: {
 	z_order,
 	kodiki_ui :: { self, *, color :: * },
 	bevy_ab_glyph :: {
-		{ ABGlyphFont, GlyphMeshesCache, TextMeshesCache },
+		ABGlyphFont, GlyphMeshesCache, TextMeshesCache,
 		glyph_mesh_generator :: generate_string_mesh_wcache,
 	}
 };
@@ -19,7 +19,7 @@ pub fn background_quad(
 	mesh_assets		: &mut Assets<Mesh>,
 	commands		: &mut Commands
 ) -> Entity {
-	let quad_mesh_handle = mesh_assets.add(Mesh::from(shape::Quad::new(quad_size)));
+	let quad_mesh_handle = mesh_assets.add(Mesh::from(Rectangle::from_size(quad_size)));
 
 	let entity = commands.spawn(PbrBundle {
 		mesh			: quad_mesh_handle.clone(),

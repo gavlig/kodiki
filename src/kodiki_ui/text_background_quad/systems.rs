@@ -1,10 +1,9 @@
 use bevy 				:: prelude :: *;
-use bevy_reader_camera	:: ReaderCamera;
 
 use super :: *;
 
 use crate :: kodiki_ui :: { * , color :: * };
-use crate :: bevy_ab_glyph :: { ABGlyphFont, FontAssetHandles };
+use crate :: bevy_ab_glyph :: FontAssetHandles;
 
 pub fn update_transform(
 		q_bg_quad		: Query<(Entity, &TextBackgroundQuad)>,

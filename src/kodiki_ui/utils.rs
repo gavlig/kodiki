@@ -1,5 +1,4 @@
 use std::ops::Range;
-use itertools;
 
 pub fn create_range<T: std::iter::Step>(
 	range: Range<T>,

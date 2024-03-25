@@ -19,7 +19,6 @@ use crate :: {
 };
 
 use portable_pty :: { CommandBuilder, NativePtySystem, MasterPty, PtySize, PtySystem };
-use termwiz :: input :: Modifiers as ModifiersWezTerm;
 use crossbeam_channel :: unbounded;
 
 use std :: path :: PathBuf;
@@ -220,7 +219,7 @@ impl BevyWezTerm {
 
 		self.wez_state.resize(new_size);
 
-		return true;
+		true
 	}
 
 	pub fn key_up_down(

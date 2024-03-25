@@ -3,7 +3,7 @@ use bevy :: prelude	:: *;
 use super :: *;
 
 use crate :: {
-	bevy_ab_glyph :: { ABGlyphFont, FontAssetHandles, ABGlyphFonts },
+	bevy_ab_glyph :: { FontAssetHandles, ABGlyphFonts },
 	bevy_framerate_manager :: { FramerateManager, FramerateMode },
 };
 

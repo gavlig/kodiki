@@ -12,13 +12,10 @@ use termwiz :: {
 	color	:: { ColorAttribute, SrgbaTuple },
 };
 
-use wezterm_portable :: {
-	color :: ColorPalette,
-	terminalstate :: mouse :: {
-		MouseEvent as MouseEventWezTerm,
-		MouseButton as MouseButtonWezTerm,
-		MouseEventKind as MouseEventKindWezTerm,
-	}
+use wezterm_portable :: terminalstate :: mouse :: {
+	MouseEvent as MouseEventWezTerm,
+	MouseButton as MouseButtonWezTerm,
+	MouseEventKind as MouseEventKindWezTerm,
 };
 
 use super :: *;
@@ -28,7 +25,6 @@ use crate :: kodiki_ui :: {
 	ColorMaterialsCache,
 	WordSubEntities,
 	text_surface :: {
-		TextSurface,
 		WordDescription, PathRowCol,
 		WordsRow, ClusterRowState, WordSpawnInfo,
 		ColoringLineRow, ColoringLineRowState, ColoringLinesToSpawn,

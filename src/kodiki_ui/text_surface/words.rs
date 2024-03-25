@@ -1,9 +1,6 @@
 use bevy :: prelude :: *;
 
-use crate :: {
-	kodiki :: DespawnResource,
-	bevy_ab_glyph :: { ABGlyphFonts, GlyphWithFonts },
-};
+use crate :: bevy_ab_glyph :: GlyphWithFonts;
 
 use super :: *;
 

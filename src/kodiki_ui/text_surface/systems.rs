@@ -5,7 +5,7 @@ use super :: *;
 use crate :: {
 	kodiki_ui :: { spawn as spawn_common, color :: * },
 	bevy_ab_glyph :: {
-		ABGlyphFont, ABGlyphFonts, FontAssetHandles,
+		ABGlyphFont, FontAssetHandles,
 		GlyphWithFonts, GlyphMeshesCache, TextMeshesCache, EmojiMaterialsCache,
 		glyph_mesh_generator :: generate_string_mesh_wcache, 
 		emoji_generator :: { generate_emoji_mesh_wcache, generate_emoji_material_wcache }
