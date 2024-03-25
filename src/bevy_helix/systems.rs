@@ -1054,7 +1054,6 @@ pub fn input_keyboard(
 	mut arrow_keys		: ResMut<ArrowKeysState>,
 	mut keyboard_events : EventReader<KeyboardInput>,
 		key				: Res<ButtonInput<KeyCode>>,
-
 		bevy_helix_settings : Res<BevyHelixSettings>,
 		tokio_runtime	: Res<TokioRuntime>,
 		app_option		: Option<NonSendMut<HelixApp>>,
@@ -1062,18 +1061,18 @@ pub fn input_keyboard(
 	let Some(mut app) = app_option else { return };
 
 	if app.should_close() { return }
-	
+
+	use KeyCode as KeyCodeBevy;
+	use helix_view::keyboard::KeyCode as KeyCodeHelix;
 
 	profile_function!();
 
-	let modifiers_helix = input::key_code_to_helix_modifiers(&key);
-	let shift = modifiers_helix.contains(helix_view::keyboard::KeyModifiers::SHIFT);
-
 	let now = Instant::now();
 
+	let modifiers_helix = input::key_code_to_helix_modifiers(&key);
+
 	// EventReader<KeyboardInput> gets updated irregularly and if arrow key is being held we want to send updates with more consistent delays between them
-	let mut arrow_key_fn = |keycode_bevy: KeyCode, key_press_timing: &mut Option<KeyPressTiming>| {
-		let keycode_helix	= input::keycode_bevy_to_helix(keycode_bevy, shift).unwrap();
+	let mut arrow_key_fn = |keycode_bevy: KeyCodeBevy, keycode_helix: KeyCodeHelix, key_press_timing: &mut Option<KeyPressTiming>| {
 		let expected_init_press_delay = bevy_helix_settings.key_press_init_delay_seconds;
 		let expected_long_press_delay = bevy_helix_settings.key_press_long_delay_seconds;
 
@@ -1084,6 +1083,7 @@ pub fn input_keyboard(
 
 		} else if key.pressed(keycode_bevy) {
 			let Some(key_press_timing) = key_press_timing.as_mut() else { panic!("key_press_timing should have been set to Some in key.just_pressed above!") };
+
 			let init_press_time	= key_press_timing.init;
 			let long_press_time	= key_press_timing.long;
 
@@ -1105,16 +1105,15 @@ pub fn input_keyboard(
 		}
 	};
 
-	arrow_key_fn(KeyCode::ArrowUp, 	&mut arrow_keys.last_event_up);
-	arrow_key_fn(KeyCode::ArrowDown, &mut arrow_keys.last_event_down);
-	arrow_key_fn(KeyCode::ArrowLeft, &mut arrow_keys.last_event_left);
-	arrow_key_fn(KeyCode::ArrowRight, &mut arrow_keys.last_event_right);
+	arrow_key_fn(KeyCode::ArrowUp,		KeyCodeHelix::Up, 		&mut arrow_keys.last_event_up);
+	arrow_key_fn(KeyCode::ArrowDown,	KeyCodeHelix::Down, 	&mut arrow_keys.last_event_down);
+	arrow_key_fn(KeyCode::ArrowLeft,	KeyCodeHelix::Left,		&mut arrow_keys.last_event_left);
+	arrow_key_fn(KeyCode::ArrowRight,	KeyCodeHelix::Right,	&mut arrow_keys.last_event_right);
 
 	// sending all keyboard events to Helix
-
 	for keyboard_input in keyboard_events.read() {
 		match keyboard_input.key_code {
-			// ignore up and down arrows because they are processed via Input<KeyCode>
+			// ignore up and down arrows because they are processed via ButtonInput<KeyCode>
 			KeyCode::ArrowUp | KeyCode::ArrowDown | KeyCode::ArrowLeft | KeyCode::ArrowRight => continue,
 
 			// ignore ctrl+1..0 as those are used for context switching
@@ -1124,7 +1123,7 @@ pub fn input_keyboard(
 			_ => (),
 		}
 
-		if let Some(keycode_helix) = input::keyboard_input_to_keycode_helix(shift, keyboard_input) {
+		if let Some(keycode_helix) = input::keycode_helix_from_bevy(keyboard_input) {
 			input::send_keyboard_event(&keycode_helix, &modifiers_helix, &tokio_runtime, &mut app);
 		}
 	}
